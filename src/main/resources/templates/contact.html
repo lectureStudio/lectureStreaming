@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout-public}">
+
+<head>
+	<title th:text="#{index.contact}"></title>
+</head>
+
+<body>
+
+	<th:block layout:fragment="content">
+		<div class="container col-xxl-8 px-4 py-5">
+			<div>
+				<h2>Kontakt</h2>
+			</div>
+			<div>
+				Um technischen Support und Software-Unterstützung zu erhalten, wenden Sie sich bitte an <a class="link-primary" href="mailto:lecturestudio@esa.tu-darmstadt.de" title="E-Mail an: lecturestudio@esa.tu-darmstadt.de">lecturestudio@esa.tu-...</a>
+			</div>
+			<div class="pt-3">
+				Wenn Sie mit GitHub vertraut sind, können Sie auch auf der <a href="https://github.com/lectureStudio/lectureStudio" target="_blank">Projektseite in GitHub</a> Fehlerberichte und/oder Verbesserungsvorschläge melden.
+			</div>
+			<div class="pt-4">
+				<p>
+					<div class="pb-2"><b>Projektleitung</b></div>
+					<a href="mailto:andy.schuerr@es.tu-darmstadt.de" title="E-Mail an: andy.schuerr@es.tu-darmstadt.de">Prof. Dr. rer. nat. Andy Schürr</a>
+					<br>
+					<small>
+						Technische Universität Darmstadt
+						<br>
+						Fachbereich Elektrotechnik und Informationstechnik (FB18)
+						<br>
+						<a href="https://www.es.tu-darmstadt.de/start" target="_blank">Fachgebiet Echtzeitsysteme (ES)</a>
+					</small>
+				</p>
+			</div>
+			<div class="pt-2">
+				<p>
+					<div class="pb-2"><b>Projektentwicklung</b></div>
+					<a href="mailto:alexej.andres@es.tu-darmstadt.de" title="E-Mail an: alexej.andres@es.tu-darmstadt.de">Alexej Andres</a>
+					<br>
+					<small>
+						Technische Universität Darmstadt
+						<br>
+						Fachbereich Elektrotechnik und Informationstechnik (FB18)
+						<br>
+						<a href="https://www.es.tu-darmstadt.de/start" target="_blank">Fachgebiet Echtzeitsysteme (ES)</a>
+					</small>
+				</p>
+			</div>
+		</div>
+	</th:block>
+
+</body>
+
+</html>

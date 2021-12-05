@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout-public}">
+
+<body>
+
+	<th:block layout:fragment="content">
+		<div class="container col-xxl-8 px-4 py-5">
+			<div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+				<div class="col-10 col-sm-8 col-lg-6">
+					<img src="/images/index-logo.jpg" class="d-block mx-lg-auto img-fluid" width="700" height="500" loading="lazy">
+				</div>
+				<div class="col-lg-6">
+					<h1 th:text="#{index.welcome}" class="display-6 fw-bold lh-1 mb-3"></h1>
+					<p th:text="#{index.welcome.description}" class="lead"></p>
+					<div class="d-grid gap-2 d-md-flex justify-content-md-start">
+						<a th:href="@{/auth}" th:text="#{index.login}" class="btn btn-primary btn-lg px-4 me-md-2" role="button" aria-pressed="true"></a>
+						<a th:href="@{/manual/de/index.html}" target="_blank" th:text="#{index.manual}" class="btn btn-outline-secondary btn-lg px-4 me-md-2" role="button" aria-pressed="true"></a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</th:block>
+
+</body>
+
+</html>

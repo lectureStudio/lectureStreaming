@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout}">
+
+<head>
+	<title th:text="${course.title}"></title>
+</head>
+
+<body>
+	<th:block layout:fragment="content">
+		<div class="d-flex justify-content-between theme-content-head">
+			<div th:text="${course.title}"></div>
+		</div>
+		<div class="d-flex flex-column bg-light border rounded-3 p-4">
+			<div class="d-flex flex-column w-100">
+				<div class="">
+					<div class="row align-items-center">
+						<div class="col-md-auto">
+							<i class="h1 bi bi-shield-lock text-primary"></i>
+						</div>
+						<div class="col">
+							<span th:text="#{course.passcode.title}"></span>
+						</div>
+					</div>
+					<div class="col-12 pt-3">
+						<form id="course-form" th:action="@{/course/passcode/{id}(id=${course.id})}" th:object="${credentials}" method="post">
+							<div class="input-group">
+								<input type="password" class="form-control" id="passcode" name="passcode" th:value="*{passcode}" aria-describedby="passVisibility">
+								<button type="button" is="password-visibility" for="passcode" class="btn btn-outline-secondary"
+									id="passVisibility" data-class-visible="bi-eye" data-class-hidden="bi-eye-slash">
+									<i id="visibility-icon" class="bi bi-eye-slash"></i>
+								</button>
+							</div>
+							<div class="col-12 pt-1" th:if="${passcodeError}">
+								<span th:text="#{course.passcode.invalid}" id="passcode-feedback" class="invalid-feedback d-block"></span>
+							</div>
+							<div class="col-12 pt-3">
+								<button th:text="#{course.enter}" type="submit" class="btn btn-outline-primary"></button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</th:block>
+</body>
+
+</html>

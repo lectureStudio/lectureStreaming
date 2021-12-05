@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout}">
+
+<head>
+	<title th:text="#{settings.title}"></title>
+</head>
+
+<body>
+
+	<th:block layout:fragment="content">
+		<div class="d-flex justify-content-between theme-content-head">
+			<div th:text="#{settings.title}"></div>
+		</div>
+		<div class="bg-light border rounded-3 p-4">
+			<div class="row">
+				<h6 th:text="#{devices.settings}"></h6>
+			</div>
+			<div class="row alert alert-warning m-2 d-none" id="cameraBlockedAlert" role="alert">
+				<span th:text="#{devices.camera.blocked}"></span>
+			</div>
+			<div class="row">
+				<div class="col-md-4">
+					<video id="cameraPreview" class="py-2 ratio ratio-16x9" playsinline autoplay muted></video>
+				</div>
+				<div class="col-md-8">
+					<form id="deviceSelectForm">
+						<div class="mb-3" id="cameraSelectContainer">
+							<label th:text="#{devices.camera}" for="cameraSelect" class="form-label"></label>
+							<select name="videoInput" id="cameraSelect" class="form-select form-select-sm"
+								aria-label=".form-select-sm camera">
+								<option value="none" th:text="#{devices.none}"></option>
+							</select>
+						</div>
+						<div class="mb-3">
+							<label th:text="#{devices.microphone}" for="microphoneSelect" class="form-label"></label>
+							<select name="audioInput" id="microphoneSelect" class="form-select form-select-sm"
+								aria-label=".form-select-sm microphone">
+							</select>
+						</div>
+					</form>
+				</div>
+			</div>
+			<div class="row pb-3">
+				<canvas id="meter" width="300" height="3"></canvas>
+			</div>
+			<div class="">
+				<button th:text="#{devices.reset}" type="button" id="resetDeviceSelection"
+					class="btn btn-outline-secondary btn-sm me-2"></button>
+				<button th:text="#{devices.save.changes}" type="button" id="saveDeviceSelection"
+					class="btn btn-outline-primary btn-sm"></button>
+			</div>
+		</div>
+	</th:block>
+
+	<th:block layout:fragment="optional">
+		<script src="/js/settings.js"></script>
+	</th:block>
+
+</body>
+
+</html>

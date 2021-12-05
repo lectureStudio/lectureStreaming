@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.16">
+<meta name="author" content="Das lectureStudio-Team">
+<title>Anleitung zu lectureStreaming</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Anleitung zu lectureStreaming</h1>
+<div class="details">
+<span id="author" class="author">Das lectureStudio-Team</span><br>
+<span id="revnumber">version 1.0,</span>
+<span id="revdate">2021-11-10</span>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle">Inhaltsverzeichnis</div>
+<ul class="sectlevel1">
+<li><a href="#_historie">Historie</a></li>
+<li><a href="#_einführung">Einführung</a></li>
+<li><a href="#_technische_anforderungen">Technische Anforderungen</a>
+<ul class="sectlevel2">
+<li><a href="#_browser">Browser</a></li>
+<li><a href="#_netzwerkverbindung">Netzwerkverbindung</a></li>
+<li><a href="#_mikrofon_und_kamera">Mikrofon und Kamera</a></li>
+</ul>
+</li>
+<li><a href="#_login">Login</a></li>
+<li><a href="#_teilnehmerinnen">Teilnehmer/innen</a>
+<ul class="sectlevel2">
+<li><a href="#_hauptseite">Hauptseite</a></li>
+<li><a href="#_am_kurs_teilnehmen">Am Kurs teilnehmen</a>
+<ul class="sectlevel3">
+<li><a href="#_nicht_begonnene_kurse">Nicht begonnene Kurse</a></li>
+<li><a href="#_oberfläche">Oberfläche</a></li>
+<li><a href="#_automatische_wiedergabe_von_medien">Automatische Wiedergabe von Medien</a></li>
+<li><a href="#_textnachrichten">Textnachrichten</a></li>
+<li><a href="#speech">Sich melden</a></li>
+</ul>
+</li>
+<li><a href="#_einstellungen">Einstellungen</a></li>
+</ul>
+</li>
+<li><a href="#_dozenteninnen">Dozenten/innen</a>
+<ul class="sectlevel2">
+<li><a href="#_kurs_anbieten">Kurs anbieten</a>
+<ul class="sectlevel3">
+<li><a href="#_kurs_erstellen">Kurs erstellen</a></li>
+<li><a href="#_zugriffstoken">Zugriffstoken</a></li>
+<li><a href="#_stream_starten">Stream starten</a></li>
+</ul>
+</li>
+<li><a href="#_statusindikatoren">Statusindikatoren</a></li>
+<li><a href="#messages">Empfang von Nachrichten</a></li>
+<li><a href="#speeches">Meldungen</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div style="page-break-after: always;"></div>
+<div class="paragraph">
+<p>Copyright © 2021 Das lectureStudio-Team</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./images/by-sa.svg" alt="by sa">
+</div>
+</div>
+<div class="paragraph">
+<p>Dieses Werk ist lizenziert unter einer <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.de">Creative Commons Namensnennung - Weitergabe unter gleichen Bedingungen 4.0 International Lizenz</a></p>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_historie">Historie</h2>
+<div class="sectionbody">
+<table class="tableblock frame-ends grid-none stretch">
+<colgroup>
+<col style="width: 11.1111%;">
+<col style="width: 22.2222%;">
+<col style="width: 66.6667%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Version</th>
+<th class="tableblock halign-left valign-top">Datum</th>
+<th class="tableblock halign-left valign-top">Bemerkung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">14. Oktober 2021</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Dokumenterstellung</p></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_einführung">Einführung</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>lectureStreaming ist eine webbasierte Anwendung, mit der Sie an Echtzeit-basierten Kursen teilnehmen können. Sie müssen keine weitere Software installieren, da die Anwendung in Ihrem Browser läuft. lectureStreaming hebt sich von anderen Streamingplattformen ab, indem die präsentierten Folien samt Annotationen nicht als Bilder übermittelt werden, sondern die Folien als PDF und Annotationen als Vektorgrafiken. Damit wird eine bandbreitenschonende Übermittlung (Streaming) von Kursen erreicht.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_technische_anforderungen">Technische Anforderungen</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_browser">Browser</h3>
+<div class="paragraph">
+<p>lectureStreaming bietet Audio und Video in hoher Qualität unter Verwendung der in den Browser integrierten Unterstützung für WebRTC (Web Real Time Communication). WebRTC ist ein Standard, der von allen gängigen Browsern wie Chrome, Firefox, Safari und Safari Mobile unterstützt wird. Standardmäßig ist WebRTC im Browser aktiviert. Es kann jedoch vorkommen, dass Sie diese Funktion un-/absichtlich deaktiviert haben.</p>
+</div>
+<div class="paragraph">
+<p>Sie können den Browser Ihrer Wahl auf WebRTC-Funktionalität testen unter: <a href="https://test.webrtc.org" target="_blank" rel="noopener">https://test.webrtc.org</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_netzwerkverbindung">Netzwerkverbindung</h3>
+<div class="paragraph">
+<p>Der stabilste Internetzugang wird über ein LAN-Kabel bereitgestellt, aber auch WLAN funktioniert in der Regel. Ihre Internetverbindung sollte die folgenden Kriterien erfüllen: Mindestens 0.4 MBit/s Download- und 0.1 MBit/s Upload-Rate. Möchten Sie sich mit einer Kamera melden und sprechen, so wird eine Upload-Rate von mindestens 0.3 MBit/s vorausgesetzt.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_mikrofon_und_kamera">Mikrofon und Kamera</h3>
+<div class="paragraph">
+<p>Wenn Sie während eines Kurses sich melden und sprechen möchten, benötigen Sie ein Mikrofon, bzw. ein Headset. Wir empfehlen nicht die Verwendung externer Lautsprecher oder Mikrofone, die in Ihren Computer/Endgerät eingebaut sind. Diese können zu störenden Rückkopplungsgeräuschen und unerwünschten Hintergrundgeräuschen führen.</p>
+</div>
+<div class="paragraph">
+<p>Wenn Sie während Ihres Redebeitrags in einem Kurs von anderen Teilnehmern gesehen werden sollen, benötigen Sie zusätzlich eine Kamera (Webcam). In diesem Fall ist in der Regel die in Ihrem Computer oder Endgerät eingebaute Kamera ausreichend.</p>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_login">Login</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Der Login erfolgt beim Hochschulrechenzentrum (HRZ) der Technischen Universität
+Darmstadt über eine zentrale Web-Authentisierung per Single Sign-On (SSO). Jede/r Angehörige der TU Darmstadt hat eine TU-ID und ein Passwort, die den Zugang zu allen am SSO-System angeschlossenen Diensten ermöglicht. Das lectureStreaming ist an das SSO-System angebunden. Sobald Sie sich einmal am Single Sign-On-Server angemeldet haben, findet innerhalb einer Browser-Session keine weitere Authentifizierung statt. Ihr Passwort wird durch die zentrale Login-Seite geschützt, denn an angeschlossene Dienste werden die Login-Daten (Passwort) nicht weitergeleitet.</p>
+</div>
+<div class="paragraph">
+<p>Um Kurse anzubieten oder an Kursen teilzunehmen, müssen Sie sich einloggen. Der Loginvorgang wird nachfolgend beschrieben.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Klicken Sie auf der Startseite auf den Button <b class="button">Einloggen</b>. Sie werden auf die zentrale Loginseite der TU Darmstadt weitergeleitet (<a href="#login-1">Abbildung 1</a>). Geben Sie dort Ihre TU-ID und Passwort ein.</p>
+<div id="login-1" class="imageblock text-center">
+<div class="content">
+<img src="./images/login-1.png" alt="login 1" width="400">
+</div>
+<div class="title">Abbildung 1. Zentrale Loginseite der TU Darmstadt</div>
+</div>
+</li>
+<li>
+<p>Melden Sie sich das erste Mal an, so werden Sie nach der Informationsweitergabe gefragt (<a href="#login-2">Abbildung 2</a>). Die als <code>notwendig</code> markierten Attribute können nicht abgewählt werden, da diese für die Funktion der Webseite und die Teilnahme an Kursen erforderlich sind. Alle anderen Attribute sind optional und können abgewählt werden. Aktivierte optionale Attribute werden nicht weiter verarbeitet.</p>
+<div id="login-2" class="imageblock text-center">
+<div class="content">
+<img src="./images/login-2.png" alt="login 2" width="600">
+</div>
+<div class="title">Abbildung 2. Informationsweitergabe</div>
+</div>
+<div class="paragraph">
+<p>Stimmen Sie der Informationsweitergabe zu, so klicken Sie auf den Button <b class="button">Akzeptieren</b>. Sie werden auf die Seite mit allen verfügbaren Kursen weitergeleitet.</p>
+</div>
+</li>
+</ol>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+Klicken Sie auf <b class="button">Ablehnen</b>, dann ist das Anmelden auf der Webseite nicht möglich. Als Dozent/in können Sie keine Kurse anbieten. Als Teilnehmer/in können Sie an Kursen nicht teilnehmen.
+</td>
+</tr>
+</table>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_teilnehmerinnen">Teilnehmer/innen</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Teilnehmer/innen können keine Kurse anbieten. Sie nehmen passiv an Kursen teil, können aber auch ggf. aktiv mit Dozenten/innen interagieren, wenn Interaktionsfunktionen aktiviert wurden. Sie können andere Teilnehmer/innen in der Kursgruppe nicht beeinträchtigen. Im Folgenden wird gezeigt, wie Sie an Kursen teilnehmen.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Wichtig"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Um gestreamte Kurse ansehen zu können, müssen Sie Netzzugang zum Datennetz der TU Darmstadt haben. Alle TU-Angehörigen haben folgende Optionen zum Netzzugang:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://www.hrz.tu-darmstadt.de/services/it_services/wlan/index.de.jsp">WLAN (eduroam)</a>: Nahezu flächendeckender Internetzugang am Campus und im Kongresszentrum „darmstadtium“.</p>
+</li>
+<li>
+<p><a href="https://www.hrz.tu-darmstadt.de/support_und_anleitungen/hrz_anleitungen/tu_vpn/windows__macos_x_und_linux/index.de.jsp">TU VPN</a>: Sichere Verbindung ins TU-Netz und Zugang zu Services außerhalb des TU Datennetzes.</p>
+</li>
+</ul>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_hauptseite">Hauptseite</h3>
+<div class="paragraph">
+<p>Im aktuellen Entwicklungsstand ist die Seite (<a href="#courses">Abbildung 3</a>) schlicht gehalten. Diese besteht im Wesentlichen aus zwei Bereichen, der Navigationsleiste und dem Bereich für den Inhalt des jeweils angesteuerten Links aus der Navigationsleiste.</p>
+</div>
+<div class="paragraph">
+<p>Als Teilnehmer/in können Sie:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Alle angebotenen Kurse sehen</p>
+</li>
+<li>
+<p>An einem Kurs teilnehmen</p>
+</li>
+<li>
+<p>Einstellungen vornehmen</p>
+</li>
+</ol>
+</div>
+<div id="courses" class="imageblock text-center">
+<div class="content">
+<img src="./images/courses.png" alt="courses" width="600">
+</div>
+<div class="title">Abbildung 3. Hauptseite aus Sicht der Teilnehmer/innen</div>
+</div>
+<div class="paragraph">
+<p>Zu jedem Kurs werden Indikator-Icons angezeigt, je nachdem wie sich der aktuelle Status des Kurses ändert.</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/live.svg" alt="live" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Der Kurs hat begonnen und wird übertragen.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/messenger.svg" alt="messenger" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Textnachrichten sind für den Kurs aktiviert.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_am_kurs_teilnehmen">Am Kurs teilnehmen</h3>
+<div class="paragraph">
+<p>Um an einem Kurs teilzunehmen, klicken Sie in der Kursliste auf diesen Kurs. Je nach Zustand des Kurses, ob der Kurs begonnen hat oder nicht, bekommen Sie entweder den Kurs samt Medien oder eine Meldung über den nicht verfügbaren Kurs angezeigt.</p>
+</div>
+<div class="sect3">
+<h4 id="_nicht_begonnene_kurse">Nicht begonnene Kurse</h4>
+<div class="paragraph">
+<p>Wenn Sie wissen, dass bald ein Kurs losgeht, dann können Sie auch diesen Kurs auswählen und bekommen dann automatisch den Kurs angezeigt, sobald dieser von Dozenten/innen gestartet wurde. Sie bekommen zunächst die Meldung in <a href="#course-not-available">Abbildung 4</a> angezeigt.</p>
+</div>
+<div id="course-not-available" class="imageblock text-center">
+<div class="content">
+<img src="./images/course_not_available.png" alt="course not available" width="50%">
+</div>
+<div class="title">Abbildung 4. Kurs nicht verfügbar</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_oberfläche">Oberfläche</h4>
+<div class="paragraph">
+<p>Eine Übersicht über die Oberfläche eines laufenden Kurses ist in <a href="#course">Abbildung 5</a> gegeben. Die Oberfläche besteht aus drei Bereichen: Dem Präsentationsbereich für Folien samt Annotationen und Steuerelementen für die Medien, der Medienleiste rechts für die eingeschalteten Webcams sowie einem Eingabefeld für Textnachrichten und dem Bereich für die Beschreibung des Kurses ganz unten.</p>
+</div>
+<div id="course" class="imageblock text-center">
+<div class="content">
+<img src="./images/course.png" alt="course" width="70%">
+</div>
+<div class="title">Abbildung 5. Bedienüberfläche für einen Kurs</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Der Präsentationsbereich füllt den freien Platz in der Oberfläche. Hier werden die präsentierten Folien gezeigt.</p>
+</li>
+<li>
+<p>Die Steuerleiste enthält Bedienelemente für den laufenden Kurs.</p>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/volume.svg" alt="volume" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Audio-Wiedergabe stumm schalten. Mit dem Regler daneben kann die Lautstärke der Wiedergabe angepasst werden.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/hand.svg" alt="hand" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Hiermit können Sie sich melden. Diese Funktion wird in Abschnitt <a href="#speech">Sich melden</a> näher beschrieben.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/gear.svg" alt="gear" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Einstellungen für Mikrofon und Kamera vornehmen.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/fullscreen.svg" alt="fullscreen" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>In den Vollbildmodus wechseln.</p>
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Zeigt das Kamerabild von Dozierenden. Das Bild ist nur zu sehen, wenn das Kamerabild tatsächlich übertragen wird. Bei ausgeschalteter Kamera wird dieses Element ausgeblendet.</p>
+</li>
+<li>
+<p>Zeigt das Kamerabild von Teilnehmenden während eines Redebeitrags. Das Bild ist nur zu sehen, wenn der/die Teilnehmende die Kamera für den Redebeitrag aktiviert hat.</p>
+<div class="paragraph">
+<p>Teilnehmende, die den Redebeitrag führen, sehen hier ihr lokales Kamerabild.</p>
+</div>
+</li>
+<li>
+<p>Mit dem Eingabefeld für Textnachrichten können Sie Dozierenden Textnachrichten senden. Alle anderen Teilnehmer/innen können Ihre Nachricht nicht sehen. Dieses Eingabefeld ist nur sichtbar, wenn Dozierende diese Funktion aktiviert haben.</p>
+</li>
+<li>
+<p>Hier ist die ausführliche Beschreibung des Kurses zu sehen.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_automatische_wiedergabe_von_medien">Automatische Wiedergabe von Medien</h4>
+<div class="paragraph">
+<p>Browser können die automatische Wiedergabe von Audio und Video blockieren. In diesem Fall können Sie zwar die Folien sehen, aber den Ton sowie das Kamerabild von Dozierenden nicht hören bzw. sehen. Hierbei ist eine Interaktion mit dem Browser erforderlich.</p>
+</div>
+<div class="paragraph">
+<p>Es ist ein zusätzlicher Button <span class="image"><img src="./images/icons/play.svg" alt="play" width="22"></span> in der Steuerleiste zu sehen (<a href="#interactive-play">Abbildung 6</a>). Klicken Sie auf <span class="image"><img src="./images/icons/play.svg" alt="play" width="22"></span>, um die Wiedergabe von Audio und Video des Dozierenden zu aktivieren.</p>
+</div>
+<div id="interactive-play" class="imageblock text-center">
+<div class="content">
+<img src="./images/interactive-play.png" alt="interactive play" width="10%">
+</div>
+<div class="title">Abbildung 6. Interaktion mit dem Browser für Wiedergabe von Medien</div>
+</div>
+<div class="sect4">
+<h5 id="_firefox">Firefox</h5>
+<div class="paragraph">
+<p>In Firefox kann eine Berechtigung für die automatische Wiedergabe von Medien erteilt werden. Navigieren Sie hierzu in die Adresszeile des Browsers und erteilen die Erlaubnis, siehe <a href="#firefox-auto-playback">Abbildung 7</a>.</p>
+</div>
+<div id="firefox-auto-playback" class="imageblock text-center">
+<div class="content">
+<img src="./images/firefox-media.png" alt="firefox media" width="40%">
+</div>
+<div class="title">Abbildung 7. Firefox: Berechtigung für Medienwiedergabe</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_textnachrichten">Textnachrichten</h4>
+<div class="paragraph">
+<p>Mit den Textnachrichten können Sie Fragen stellen, ohne Dozenten/innen in ihrem Vortrag zu unterbrechen. Navigieren Sie dazu in das Nachrichtenfeld [5], geben dann Ihre Frage ein und klicken auf <b class="button">Senden</b>.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Wichtig"></i>
+</td>
+<td class="content">
+Bei Veranstaltungen mit vielen Teilnehmern kann der Chat schnell unübersichtlich werden. Hier ist Disziplin von allen Teilnehmern gefragt. Nutzen Sie die Textnachrichten daher nur nach Aufforderung der Dozenten/innen oder gemäß den für die Veranstaltung geltenden Kommunikationsregeln.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="speech">Sich melden</h4>
+<div class="paragraph">
+<p>Als Teilnehmer/in können Sie sich zu Wort melden. Die folgenden Schritte erläutern den Ablauf eines Redebeitrags.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Klicken Sie in der Steuerleiste auf den Button <span class="image"><img src="./images/icons/hand.svg" alt="hand" width="25"></span>.</p>
+</li>
+<li>
+<p>Wenn Sie sich zum ersten Mal für einen Redebeitrag melden, werden Sie aufgefordert, Ihrem Browser die Erlaubnis zur Verwendung des Mikrofons und optional der Kamera zu erteilen. Sie bekommen zunächst den Dialog in <a href="#speech-1">Abbildung 8</a> angezeigt.</p>
+<div id="speech-1" class="imageblock text-center">
+<div class="content">
+<img src="./images/speech-1.png" alt="speech 1" width="45%">
+</div>
+<div class="title">Abbildung 8. Geräteeinstellungen für Redebeitrag</div>
+</div>
+<div class="paragraph">
+<p>Falls Sie Ihre Kamera für den Redebeitrag einschalten möchten, dann aktivieren Sie die Option dafür im Dialog. Anschließend klicken Sie auf <b class="button">Weiter</b>.</p>
+</div>
+<div class="paragraph">
+<p>Sie können Ihre Meldung auch <b class="button">Abbrechen</b>.</p>
+</div>
+</li>
+<li>
+<p>Der Browser zeigt Ihnen einen Dialog, der nach der Kamera- und Mikrofonberechtigung fragt (<a href="#speech-2">Abbildung 9</a>). Hier stehen alle verfügbaren Kameras und Mikrofone zur Auswahl.</p>
+<div id="speech-2" class="imageblock text-center">
+<div class="content">
+<img src="./images/speech-2.png" alt="speech 2" width="35%">
+</div>
+<div class="title">Abbildung 9. Kamera- und Mikrofonberechtigungen für Browser</div>
+</div>
+<div class="paragraph">
+<p>Wählen Sie das Mikrofon, und sofern zuvor aktiviert, die Kamera aus, die Sie für den Redebeitrag verwenden möchten. Klicken Sie dann auf <b class="button">Erlauben</b>.</p>
+</div>
+</li>
+<li>
+<p>Ihre Meldung wurde erfolgreich an den/die Dozenten/in gesendet. Dozierende entscheiden, wann und ob sie die Meldung annehmen.</p>
+</li>
+<li>
+<p>Wurde Ihre Meldung angenommen, so werden Sie nochmal gefragt, ob der Redebeitrag nun beginnen kann (<a href="#speech-3">Abbildung 10</a>).</p>
+<div id="speech-3" class="imageblock text-center">
+<div class="content">
+<img src="./images/speech-3.png" alt="speech 3" width="45%">
+</div>
+<div class="title">Abbildung 10. Redebeitrag bestätigen</div>
+</div>
+<div class="paragraph">
+<p>Falls Sie es sich anders überlegt haben und die Meldung zurückziehen möchten, dann klicken Sie auf <b class="button">Abbrechen</b>.</p>
+</div>
+<div class="paragraph">
+<p>Um den Redebeitrag zu beginnen, klicken Sie auf <b class="button">Starten</b>.</p>
+</div>
+</li>
+<li>
+<p>Sie können jetzt sprechen. Dozierende und alle Teilnehmer/innen können Sie hören und sehen, wenn die Kamera aktiviert wurde.</p>
+</li>
+<li>
+<p>Den Redebeitrag beenden Sie durch erneutes Betätigen des Buttons <span class="image"><img src="./images/icons/hand.svg" alt="hand" width="25"></span>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_einstellungen">Einstellungen</h3>
+<div class="paragraph">
+<p>Unter Einstellungen können Sie im aktuellen Entwicklungsstand nur Geräteeinstellungen vornehmen (<a href="#device-settings">Abbildung 11</a>). Diese Einstellungen können Sie zum Beispiel nutzen, wenn Sie sich das erste Mal angemeldet haben und die <a href="#speech">Meldefunktion</a> nutzen möchten. So können Kamera und Mikrofon vorab konfiguriert werden.</p>
+</div>
+<div class="paragraph">
+<p>Haben Sie zuvor der Nutzung der Kamera zugestimmt und möchten diese nicht mehr aktiviert haben, so können Sie hier die Nutzung der Kamera deaktivieren, ohne in die Browsereinstellungen zu wechseln. Wählen Sie hierzu in der Kameraauswahl <code>Keine</code> aus.</p>
+</div>
+<div id="device-settings" class="imageblock text-center">
+<div class="content">
+<img src="./images/device-settings.png" alt="device settings" width="45%">
+</div>
+<div class="title">Abbildung 11. Geräteeinstellungen</div>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Hier ist das Kamerabild der ausgewählten Kamera zu sehen.</p>
+</li>
+<li>
+<p>Zeigt den sich verändernden Eingangs-Pegel des ausgewählten Mikrofons an. Hiermit können Sie die Mikrofon-Lautstärke überprüfen.</p>
+</li>
+</ol>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_dozenteninnen">Dozenten/innen</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_kurs_anbieten">Kurs anbieten</h3>
+<div class="paragraph">
+<p>Um einen Kurs mit lecturePresenter streamen zu können, müssen Sie einen Kurs erstellt haben. Es können auch mehrere Kurse erstellt werden, wenn Sie mehrere Lehrveranstaltungen anbieten. Des Weiteren muss ein Zugriffstoken generiert werden, der Ihre lecturePresenter-Instanz gegenüber dem Streamingdienst authentifiziert. Wie Sie das bewältigen wird im Folgenden erklärt.</p>
+</div>
+<div class="sect3">
+<h4 id="_kurs_erstellen">Kurs erstellen</h4>
+<div class="paragraph">
+<p>Ein Kurs kann in wenigen Schritten erstellt werden.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Klicken Sie in der Navigationsleiste auf <b class="button">Kurs hinzufügen</b>.</p>
+</li>
+<li>
+<p>Füllen Sie die Felder mit ihren kursspezifischen Inhalten aus.</p>
+</li>
+<li>
+<p>Anschließend klicken Sie auf <b class="button">Erstellen</b>.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_zugriffstoken">Zugriffstoken</h4>
+<div class="paragraph">
+<p>Das Zugriffstoken wird benötigt, um lecturePresenter gegenüber dem Streamingdienst zu authentifizieren. Es handelt sich hierbei um eine zufällig generierte Folge von alphanumerischen Zeichen. Einen Zugriffstoken zu verwenden hat den Vorteil, dass Sie sich im Werkzeug lecturePresenter nicht mit Ihren Logindaten (TU-ID und Passwort) einloggen müssen und somit auf sichere Weise geschützte Web-Dienste nutzen können. Das Zugriffstoken verwalten Sie mit folgenden Schritten.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Klicken Sie in der Navigationsleiste auf <b class="button">Persönliches Zugriffstoken</b>.</p>
+</li>
+<li>
+<p>Um ein neues Zugriffstoken zu generieren, klicken Sie auf <b class="button">Neues Token erzeugen</b>.</p>
+</li>
+<li>
+<p>Sie bekommen Ihr neues persönliches Zugriffstoken angezeigt. Bitte kopieren Sie dieses Token, denn es wird Ihnen nicht nochmal angezeigt.</p>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Hinweis"></i>
+</td>
+<td class="content">
+Haben Sie das Zugriffstoken verloren, gelöscht oder haben Bedenken hinsichtlich der Verwendung, dann können Sie sich jederzeit ein neues Zugriffstoken generieren. Dabei wird das alte Zugriffstoken gelöscht und mit dem neuen überschrieben.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Starten Sie lecturePresenter und öffnen die Einstellungen über das Menü <span class="menuseq"><b class="menu">Bearbeiten</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Einstellungen</b></span>.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+Gehen Sie sicher, dass erweiterte Einstellungen aktiviert sind: Menü <span class="menuseq"><b class="menu">Ansicht</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Erweiterte Einstellungen</b></span>
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Navigieren Sie in den Stream-Tab.</p>
+</li>
+<li>
+<p>Das Zugriffstoken in das Textfeld unter <code>Zugriffstoken</code> einfügen.</p>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Hinweis"></i>
+</td>
+<td class="content">
+Um zu überprüfen, ob das Zugriffstoken funktioniert, klicken Sie auf den Button <b class="button">Prüfen</b>. Gehen Sie hierbei auch sicher, dass Sie eine Internetverbindung haben. Wurde das Zugriffstoken akzeptiert, so nimmt das Textfeld die Farbe Grün an.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Sie können die Einstellungen wieder mit dem Button <b class="button">Schließen</b> verlassen und sind nun bereit einen Stream zu starten.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Wenn Sie Bedenken hinsichtlich der Verwendung des Zugriffstokens haben, können Sie das Zugriffstoken löschen.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_stream_starten">Stream starten</h4>
+<div class="paragraph">
+<p>Sofern Sie einen Kurs und Zugriffstoken auf der Webseite erstellt haben, können Sie mit dem Streamen loslegen. In lecturePresenter haben Sie zwei Möglichkeiten einen Stream zu starten.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Über das Menü <span class="menuseq"><b class="menu">Vortrag</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Stream starten</b></span>.</p>
+</li>
+<li>
+<p>Über die Werkzeugleiste mit dem Button <span class="image"><img src="./images/icons/stream.svg" alt="stream" width="25"></span>.</p>
+<div class="paragraph">
+<p>Sobald Sie einen Stream starten, wird zunächst ein Dialog wie in <a href="#stream-start">Abbildung 12</a> gezeigt.</p>
+</div>
+<div id="stream-start" class="imageblock text-center">
+<div class="content">
+<img src="./images/stream-start.png" alt="stream start" width="30%">
+</div>
+<div class="title">Abbildung 12. Stream starten</div>
+</div>
+</li>
+<li>
+<p>In der Auswahlliste werden alle von Ihnen erstellten Kurse aufgelistet. Wählen Sie hier den Kurs aus, der zu Ihrem aktuellen Vortrag passt.</p>
+</li>
+<li>
+<p>Sie haben hier noch die Wahl, ob Sie den Kurs mit eingeschaltetem Mikrofon oder eingeschalteter Kamera beginnen möchten.</p>
+<div class="paragraph">
+<p>Falls Sie den Empfang von unidirektionalen Textnachrichten für den Kurs einschalten möchten, dann aktivieren Sie die Option <code>Messenger</code>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+All diese Funktionen lassen sich auch während des laufenden Streams ein- und ausschalten.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Um den Stream zu beginnen, klicken Sie auf <b class="button">Start</b>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_statusindikatoren">Statusindikatoren</h3>
+<div class="paragraph">
+<p>lecturePresenter hat in der rechten oberen Ecke der Oberfläche Indikatoren für den aktuellen Status des Streamings integriert (<a href="#stream-indicators">Abbildung 13</a>).</p>
+</div>
+<div id="stream-indicators" class="imageblock text-center">
+<div class="content">
+<img src="./images/stream-indicators.png" alt="stream indicators" width="15%">
+</div>
+<div class="title">Abbildung 13. Stream-Indikatoren</div>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/messenger-indicator.svg" alt="messenger indicator" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Zeigt an, ob Textnachrichten aktiviert sind. Daneben wird die Anzahl unbearbeiteter Nachrichten angezeigt. Textnachrichten werden im Abschnitt <a href="#messages">Empfang von Nachrichten</a> näher beschrieben.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/hand.svg" alt="hand" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Zeigt die Anzahl offener Meldungen an. Die Abwicklung wird im Abschnitt <a href="#speeches">Meldungen</a> näher beschrieben.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/stream.svg" alt="stream" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Zeigt an, ob ein Stream läuft und wie viele Teilnehmende sich den Stream anschauen.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="messages">Empfang von Nachrichten</h3>
+<div class="paragraph">
+<p>Textnachrichten können empfangen werden, wenn die Funktion <code>Messenger</code> aktiviert wurde. Empfangene Nachrichten sind in lecturePresenter unter der Folienanzeige zu sehen (<a href="#presenter-messages">Abbildung 14</a>). Eine Textnachricht enthält den Vor- und Nachnamen des/der Verfassenden, die Uhrzeit und den Text der Nachricht selbst.</p>
+</div>
+<div id="presenter-messages" class="imageblock text-center">
+<div class="content">
+<img src="./images/presenter-messages.png" alt="presenter messages" width="42%">
+</div>
+<div class="title">Abbildung 14. Empfangene Nachrichten in lecturePresenter</div>
+</div>
+<div class="paragraph">
+<p>Während eines Vortrags mit sehr vielen Teilnehmenden kann es vorkommen, dass Sie eine große Anzahl von Nachrichten bekommen. Wenn Sie auf eine Nachricht eingegangen sind oder eine Nachricht für unwichtig halten, dann kann diese mit dem Button <b class="button">Bearbeitet</b> entfernt werden.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="speeches">Meldungen</h3>
+<div class="paragraph">
+<p>Meldungen sehen Sie dort, wo auch Textnachrichten in lecturePresenter angezeigt werden, unter der Folienanzeige (<a href="#presenter-speeches">Abbildung 15</a>). Eine Meldung enthält den Vor- und Nachnamen des/der Meldenden und die Uhrzeit. Sie können eine Meldung annehmen oder ablehnen. In beiden Fällen wird die Meldung entfernt.</p>
+</div>
+<div id="presenter-speeches" class="imageblock text-center">
+<div class="content">
+<img src="./images/presenter-speech-request.png" alt="presenter speech request" width="42%">
+</div>
+<div class="title">Abbildung 15. Meldungen in lecturePresenter</div>
+</div>
+<div class="paragraph">
+<p>Haben Sie eine Meldung angenommen und der/die Meldende hat den Redebeitrag gestartet, dann sehen Sie in lecturePresenter rechts oben über der Folienvorschau den Namen und das Kamerabild, falls aktiviert, des/der Meldenden sowie Steuerelemente für den Redebeitrag. Zu diesem Zeitpunkt ist auch der/die Meldende für Sie und alle Teilnehmer/innen zu hören.</p>
+</div>
+<div id="presenter-speeche" class="imageblock text-center">
+<div class="content">
+<img src="./images/presenter-speech.png" alt="presenter speech" width="42%">
+</div>
+<div class="title">Abbildung 16. Laufender Redebeitrag in lecturePresenter</div>
+</div>
+<div class="paragraph">
+<p>Audio und Video des Redebeitrags können Sie steuern.</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/microphone.svg" alt="25" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Schaltet den Ton des/der Meldenden für Sie und alle Teilnehmer/innen stumm. Durch erneutes Betätigen kann der Ton wieder eingeschaltet werden.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/camera.svg" alt="25" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Schaltet das Kamerabild des/der Meldenden für Sie und alle Teilnehmer/innen stumm. Durch erneutes Betätigen kann das Kamerabild wieder eingeschaltet werden.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+Wurde die Nutzung der Kamera auf Seite des/der Meldenden deaktiviert, dann hat diese Funktion keine Wirkung.
+</td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Der Redebeitrag wird beendet durch:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Klicken auf <b class="button">Stop</b> in der Steuerleiste.</p>
+</li>
+<li>
+<p>Meldende selbst.</p>
+</li>
+</ul>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

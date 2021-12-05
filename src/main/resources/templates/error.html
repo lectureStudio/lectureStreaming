@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head th:replace="fragments/head :: head(~{::title},~{})">
+	<title>Error</title>
+</head>
+<body>
+	<div class="page-wrap d-flex flex-row align-items-center">
+		<div class="container">
+			<div class="row justify-content-center">
+				<div class="col-md-12 text-center">
+					<h1>
+						Something went wrong!
+					</h1>
+					<h5 class="py-3">
+						Our Engineers are on it
+					</h5>
+					<div class="error-actions">
+						<a href="/" class="btn btn-sm btn-outline-primary">
+							<span class="glyphicon glyphicon-home"></span>
+							Take Me Home
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

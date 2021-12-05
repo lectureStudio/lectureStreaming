@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout}">
+
+<head>
+	<title th:text="${edit} ? #{course.form.edit.course} : #{course.form.add.course}"></title>
+
+	<link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
+	<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+</head>
+
+<body>
+
+	<th:block layout:fragment="content">
+		<div class="d-flex justify-content-between theme-content-head">
+			<div th:text="${edit} ? #{course.form.edit.course} : #{course.form.add.course}"></div>
+		</div>
+		<div class="bg-light border rounded-3 p-4">
+			<form id="course-form" th:action="${edit} ? @{/course/edit/{id}(id=${course.id})} : @{/course/new}" th:object="${course}" method="post">
+				<input type="hidden" th:field="*{description}" id="course-description">
+				<div class="mb-3">
+					<label th:text="#{course.form.title}" for="title" class="form-label"></label>
+					<input type="text" class="form-control" id="title" th:field="*{title}" th:errorclass="is-invalid" aria-describedby="title-feedback">
+					<div id="title-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+					<div id="titleHelpBlock" class="form-text">
+						<span th:text="#{course.form.title.description}"></span> <span th:text="#{form.required}" class="badge bg-light text-dark"></span>
+					</div>
+				</div>
+				<div class="mb-3">
+					<label th:text="#{course.form.description}" for="description" class="form-label"></label>
+					<div class="bg-body border rounded-2" id="description-editor"></div>
+				</div>
+				<div class="mb-3">
+					<label th:text="#{course.form.passcode}" for="passcode" class="form-label"></label>
+					<div class="input-group">
+						<input type="password" class="form-control" id="passcode" name="passcode" th:value="*{passcode}" aria-describedby="passVisibility">
+						<button type="button" is="password-visibility" for="passcode" class="btn btn-outline-secondary" id="passVisibility" data-class-visible="bi-eye" data-class-hidden="bi-eye-slash"><i id="visibility-icon" class="bi bi-eye-slash"></i></button>
+					</div>
+					<div th:text="#{course.form.passcode.description}" id="pinHelpBlock" class="form-text"></div>
+				</div>
+				<div class="col-12">
+					<button th:text="${edit} ? #{course.form.update} : #{course.form.create}" type="submit" class="btn btn-outline-primary btn-sm"></button>
+				</div>
+			</form>
+		</div>
+	</th:block>
+
+	<th:block layout:fragment="optional">
+		<script>
+			const form = document.getElementById("course-form");
+			const description = document.getElementById("course-description");
+
+			const quill = new Quill("#description-editor", {
+				theme: "snow"
+			});
+
+			quill.root.innerHTML = description.value;
+
+			form.onsubmit = function () {
+				description.value = quill.root.innerHTML;
+				return true;
+			}
+		</script>
+
+		<style>
+			.ql-toolbar.ql-snow {
+				border: none;
+				padding: 0 0 0.5em 0;
+			}
+			.ql-container.ql-snow {
+				
+			}
+		</style>
+	</th:block>
+</body>
+
+</html>

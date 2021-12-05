@@ -1,0 +1,33 @@
+<div th:fragment="quiz">
+	<div class="theme-content-head">
+		<small><i class="bi bi-card-checklist"></i>&nbsp;[[#{course.feature.quiz}]]</small>
+	</div>
+	<form id="course-quiz-form" th:action="@{/course/quiz/post/{id}(id=${course.id})}" method="post">
+		<input type="hidden" name="serviceId" th:value="${course.quizFeature.featureId}" />
+		
+		<div th:utext="${course.quizFeature.question}" class="mb-1"></div>
+		
+		<div class="py-2">
+			<th:block th:each="option, iter: ${course.quizFeature.options}">
+				<th:block th:switch="${course.quizFeature.type}">
+					<div class="form-check" th:case="${T(org.lecturestudio.web.api.model.quiz.Quiz$QuizType).MULTIPLE}">
+						<input class="form-check-input" type="checkbox" name="options" th:value="${iter.index}" th:id="|option-${iter.index}|">
+						<label class="form-check-label" th:for="|option-${iter.index}|" th:text="${option}"></label>
+					</div>
+					<div class="form-check" th:case="${T(org.lecturestudio.web.api.model.quiz.Quiz$QuizType).SINGLE}">
+						<input class="form-check-input" type="radio" name="options" th:value="${iter.index}" th:id="|option-${iter.index}|">
+						<label class="form-check-label" th:for="|option-${iter.index}|" th:text="${option}"></label>
+					</div>
+					<div class="form-check" th:case="${T(org.lecturestudio.web.api.model.quiz.Quiz$QuizType).NUMERIC}">
+						<label th:text="${option}" th:for="|option-${iter.index}|" class="form-label"></label>
+						<input type="text" class="form-control form-control-sm" th:id="|option-${iter.index}|">
+					</div>
+				</th:block>
+			</th:block>
+		</div>
+		
+		<div class="col-auto">
+			<button th:text="#{course.feature.message.send}" type="submit" class="btn btn-outline-primary btn-sm" id="quizSubmit"></button>
+		</div>
+	</form>
+</div>

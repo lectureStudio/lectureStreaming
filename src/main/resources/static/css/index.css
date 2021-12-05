@@ -1,0 +1,62 @@
+html, body {
+	height: 100%;
+}
+
+.theme-header {
+	line-height: 1;
+	border-bottom: 1px solid #e5e5e5;
+}
+.theme-header-logo {
+	font-size: 2rem;
+	text-decoration: none;
+}
+
+.theme-footer {
+	padding: 2rem 0;
+	color: #727272;
+	text-align: center;
+	background-color: #f9f9f9;
+	border-top: .05rem solid #e5e5e5;
+}
+.theme-footer p:last-child {
+	margin-bottom: 0;
+}
+
+.theme-content-head {
+	font-size: 1.25em;
+	border-bottom: 1px solid #e5e5e5;
+	line-height: 2em;
+	margin-bottom: 0.5em;
+}
+
+.overlay-link {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	right: 0;
+}
+.inner-link {
+	position: relative;
+	pointer-events: none;
+	z-index: 1;
+}
+.inner-link a,
+.inner-link button {
+	pointer-events: all;
+	position: relative;
+}
+
+.shrink {
+	height: 3px;
+}
+
+@media (min-width: 768px) {
+	.navbar-brand.abs
+		{
+			position: absolute;
+			width: 100%;
+			left: 0;
+			text-align: center;
+		}
+}

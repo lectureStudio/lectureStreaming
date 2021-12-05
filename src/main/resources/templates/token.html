@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout}">
+
+<head>
+	<title th:text="#{personal.access.token.title}"></title>
+</head>
+
+<body>
+
+	<th:block layout:fragment="content">
+		<div class="d-flex justify-content-between theme-content-head">
+			<div th:text="#{personal.access.token.title}"></div>
+			<div class="ml-auto">
+				<form action="#" th:action="@{/token/new}" method="post">
+					<button th:text="#{personal.access.token.generate}" type="submit" class="btn btn-outline-primary btn-sm"></button>
+				</form>
+			</div>
+		</div>
+		<div class="bg-light border rounded-3 p-4">
+			<div>
+				<span th:text="#{personal.access.token.description}"></span>
+				<p class="pt-1"><strong th:text="#{please.note}"></strong> <span th:text="#{personal.access.token.note}"></span></p>
+			</div>
+			<div th:if="${token}" class="list-group pb-3">
+				<div class="list-group-item">
+					<div class="d-flex justify-content-between align-items-center">
+						<div th:text="#{personal.access.token}"></div>
+						<div class="ml-auto">
+							<form action="#" th:action="@{/token/delete}" method="post">
+								<button th:text="#{personal.access.token.delete}" type="submit"
+									class="btn btn-outline-danger btn-sm"></button>
+							</form>
+						</div>
+					</div>
+					<div class="row justify-content-start">
+						<div class="col-md-2 text-end">
+							<small th:text="#{personal.access.token.created}"></small>
+						</div>
+						<div class="col-md-10">
+							<small class="badge bg-light text-dark"
+								th:text="${#temporals.format(@zonedDateTime.convert(token.dateCreated), 'dd. MMMM yyyy - HH:mm z')}"></small>
+						</div>
+					</div>
+					<div class="row justify-content-start">
+						<div class="col-md-2 text-end">
+							<small th:text="#{personal.access.token.last.used}"></small>
+						</div>
+						<div class="col-md-10">
+							<small class="badge bg-light text-dark"
+								th:text="${token.dateLastUsed} ? ${#temporals.format(@zonedDateTime.convert(token.dateLastUsed), 'dd. MMMM yyyy - HH:mm z')} : #{personal.access.token.never.used}"></small>
+						</div>
+					</div>
+					<div class="input-group pt-3">
+						<input type="password" class="form-control" id="token" name="token" th:value="*{token.token}" aria-describedby="passVisibility">
+						<button is="clipboard-copy" for="token" class="btn btn-outline-success btn-sm"><i
+							class="bi bi-clipboard"></i> [[#{personal.access.token.copy}]]</button>
+						</button>
+					</div>
+				</div>
+			</div>
+			<div th:if="${generated}" class="alert alert-success" role="alert">
+				<p th:text="#{personal.access.token.copy.note}" class="fw-bold"></p>
+				<div class="row justify-content-between">
+					<div class="col-md-9 text-break" id="new-token" th:text="${token.token}"></div>
+					<div class="col-md-3 ml-auto text-end">
+						<button is="clipboard-copy" for="new-token" class="btn btn-outline-success btn-sm"><i
+								class="bi bi-clipboard"></i> [[#{personal.access.token.copy}]]</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</th:block>
+
+</body>
+
+</html>

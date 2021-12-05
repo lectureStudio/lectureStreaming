@@ -1,0 +1,12 @@
+<div th:fragment="messenger">
+	<form id="course-message-form" th:action="@{/course/message/post/{id}(id=${course.id})}" method="post">
+		<input type="hidden" name="serviceId" th:value="${course.messageFeature.featureId}" />
+		<div class="mb-2">
+			<small><label th:text="#{course.feature.message.description}" for="messageTextarea"></label></small>
+			<textarea name="text" class="form-control" rows="3" id="messageTextarea" style="height: 120px"></textarea>
+		</div>
+		<div class="">
+			<button th:text="#{course.feature.message.send}" type="submit" class="btn btn-outline-primary btn-sm" id="messageSubmit"></button>
+		</div>
+	</form>
+</div>

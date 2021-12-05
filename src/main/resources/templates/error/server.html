@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head th:replace="fragments/head :: head(~{::title},~{})">
+	<title>Error</title>
+</head>
+<body>
+	<div class="page-wrap d-flex flex-row align-items-center">
+		<div class="container">
+			<div class="row justify-content-center">
+				<div class="col-md-12 text-center mt-5">
+					<h1 th:text="|${code} ${phrase}|"></h1>
+					<a href="/" class="btn btn-sm btn-outline-primary mt-3">
+						<span class="glyphicon glyphicon-home"></span>
+						Take Me Home
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

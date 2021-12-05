@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout}">
+
+<head>
+	<title th:text="#{home.courses}"></title>
+</head>
+
+<body>
+
+	<th:block layout:fragment="content">
+		<div class="d-flex justify-content-between theme-content-head">
+			<div th:text="#{home.courses}"></div>
+		</div>
+		<div class="list-group bg-light border rounded-3 p-4">
+			<div th:each="course: ${courses}" class="list-group-item" aria-current="true">
+				<a th:href="@{/course/{id}(id=${course.id})}" class="overlay-link"></a>
+				<div class="d-flex w-100 justify-content-between">
+					<h6 th:text="${course.title}" class="mb-1"></h6>
+				</div>
+				<div class="d-flex w-100">
+					<small>
+						<th:block th:each="author: ${course.authors}" th:text="|#{course.by} ${author.firstName} ${author.familyName}| + (${!authorStat.last ? ', ' : ''})"></th:block>
+					</small>
+				</div>
+				<div class="d-flex w-100 justify-content-between pt-1">
+					<small>
+						<i class="h5 bi bi-shield-lock text-primary" th:if="${course.isProtected}"></i>
+						<i class="h5 bi bi-chat-square-text text-primary" th:classappend="${course.messageFeature != null ? '' : 'd-none'}" th:id="|course-messenger-${course.id}|"></i>
+						<i class="h5 bi bi-card-checklist text-primary" th:classappend="${course.quizFeature != null ? '' : 'd-none'}" th:id="|course-quiz-${course.id}|"></i>
+						<i class="h5 bi bi-play-btn text-success" th:classappend="${course.isLive ? '' : 'd-none'}" th:id="|course-live-${course.id}|"></i>
+					</small>
+					<div class="btn-group" role="group">
+						<div th:if="${course.canEdit}" class="list-inline-item">
+							<input type="hidden" th:id="|course-url-${course.id}|" th:value="${course.url}" />
+							<button is="clipboard-copy" class="btn btn-outline-success btn-sm" th:for="|course-url-${course.id}|">
+								[[#{course.copy.url}]]
+							</button>
+						</div>
+						<form th:if="${course.canEdit}" class="list-inline-item" th:action="@{/course/edit/{id}(id=${course.id})}" method="get">
+							<button th:text="#{course.edit}" class="btn btn-outline-primary btn-sm"></button>
+						</form>
+						<form th:if="${course.canDelete}" class="list-inline-item" th:action="@{/course/delete/{id}(id=${course.id})}" method="post">
+							<button th:text="#{course.delete}" class="btn btn-outline-danger btn-sm"></button>
+						</form>
+					</div>
+				</div>
+				<div class="inner-link">
+					<div class="accordion accordion-flush py-2" th:id="|accordion-description-${course.id}|">
+						<div class="accordion-item">
+							<div class="accordion-header" th:id="|flush-description-${course.id}|">
+								<button class="accordion-button collapsed p-0 p-1" type="button" data-bs-toggle="collapse"
+									th:attr="data-bs-target=|#flush-collapse-description-${course.id}|,aria-controls=|flush-collapse-description-${course.id}|" aria-expanded="false">
+									<i class="bi bi-card-text"></i>&nbsp;[[#{course.description}]]
+								</button>
+							</div>
+							<div th:id="|flush-collapse-description-${course.id}|" th:attr="data-bs-parent=|#accordion-description-${course.id}|,aria-labelledby=|flush-description-${course.id}|" class="accordion-collapse collapse">
+								<div class="accordion-body">
+									<small th:utext="${course.description}" class="mb-1"></small>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</th:block>
+</body>
+
+</html>

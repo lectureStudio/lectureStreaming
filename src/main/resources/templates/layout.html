@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+	<link rel="stylesheet" href="/css/index.css">
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+	<script src="/js/portal.js"></script>
+
+	<title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">lectureStreaming</title>
+</head>
+
+<body class="d-flex flex-column">
+	<div class="container d-flex flex-column flex-grow-1">
+		<nav class="navbar navbar-expand-md navbar-light bg-light border-bottom">
+			<div class="container-fluid">
+				<a th:text="${appName}" class="navbar-brand abs"></a>
+				<button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNavbar">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="navbar-collapse collapse" id="collapseNavbar">
+					<div class="navbar-nav align-items-end">
+						<i class="h5 bi bi-person-square text-muted"></i>
+						<span th:text="|${user.firstName} ${user.familyName}|" class="px-2 py-2"></span>
+					</div>
+					<div class="navbar-nav ms-auto">
+						
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<div class="d-flex flex-column flex-grow-1 py-3" style="top: 0; bottom: 0; width: 100%;">
+			<div class="row g-5 d-flex flex-grow-1">
+				<div class="col-md-3">
+					<div class="position-sticky">
+						<div class="bg-light border rounded-3 p-2">
+							<div class="list-group pb-3">
+								<a th:href="@{/}" th:text="#{home.courses}" class="list-group-item list-group-item-action" role="tab"></a>
+							</div>
+							<h5 th:text="#{home.account}" class="text-muted"></h5>
+							<div sec:authorize="hasAnyRole('EMPLOYEE', 'FACULTY', 'MEMBER', 'AFFILIATE')" class="list-group">
+								<a th:href="@{/course/new}" th:text="#{home.add.course}" class="list-group-item list-group-item-action" role="tab"></a>
+								<a th:href="@{/token}" th:text="#{home.personal.access.token}" class="list-group-item list-group-item-action" role="tab"></a>
+							</div>
+							<div class="list-group list-group-flush pt-2">
+								<a th:href="@{/settings}" th:text="#{home.settings}" class="list-group-item bg-transparent"></a>
+								<a th:href="@{/saml/logout}" class="list-group-item bg-transparent">
+									<i class="bi bi-box-arrow-left"></i>
+									[[#{home.logout}]]
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="d-flex flex-column flex-grow-1 col-md-9">
+					<section layout:fragment="content">
+						<p>This is filled by the content template.</p>
+					</section>
+				</div>
+			</div>
+		</div>
+	</div>
+	<footer th:fragment="footer" class="theme-footer mt-auto">
+		<div class="pb-2">
+			<a th:href="@{/contact}" th:text="#{index.contact}" class="link-primary px-2"></a>
+			<a th:href="@{/imprint}" th:text="#{index.imprint}" class="link-primary px-2"></a>
+			<a th:href="@{/privacy}" th:text="#{index.privacy.policy}" class="link-primary px-2"></a>
+			<a th:href="@{/manual/de/index.html}" target="_blank" th:text="#{index.manual}" class="link-primary px-2"></a>
+		</div>
+		<p th:text="|&copy; 2021 ${appName}|"></p>
+	</footer>
+
+	<th:block layout:fragment="optional" />
+</body>
+
+</html>
