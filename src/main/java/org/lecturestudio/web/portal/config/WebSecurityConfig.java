@@ -9,6 +9,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
+import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
+import org.keycloak.adapters.springsecurity.KeycloakSecurityComponents;
+import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
+import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
+
 import org.lecturestudio.web.portal.security.TokenAuthenticationProvider;
 import org.lecturestudio.web.portal.security.TokenSecurityConfiguration;
 
@@ -33,6 +39,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -40,10 +47,14 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.saml.*;
 import org.springframework.security.saml.context.SAMLMessageContext;
 import org.springframework.security.saml.key.KeyManager;
 import org.springframework.security.saml.metadata.*;
+import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.FilterChainProxy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -66,172 +77,224 @@ public class WebSecurityConfig {
 	);
 
 
+	// @Configuration
+    // @Order(1)
+	// public static class SamlConfigurerAdatper extends WebSecurityConfigurerAdapter {
+	// 	@Value("${saml.sp}")
+	// 	private String samlAudience;
+
+	// 	@Autowired
+	// 	@Qualifier("saml")
+	// 	private SavedRequestAwareAuthenticationSuccessHandler samlAuthSuccessHandler;
+
+	// 	@Autowired
+	// 	@Qualifier("saml")
+	// 	private SimpleUrlAuthenticationFailureHandler samlAuthFailureHandler;
+
+	// 	@Autowired
+	// 	private SAMLEntryPoint samlEntryPoint;
+
+	// 	@Autowired
+	// 	private SAMLLogoutFilter samlLogoutFilter;
+
+	// 	@Autowired
+	// 	private SAMLLogoutProcessingFilter samlLogoutProcessingFilter;
+
+	// 	@Autowired
+	// 	private SAMLAuthenticationProvider samlAuthenticationProvider;
+
+	// 	@Autowired
+	// 	private ExtendedMetadata extendedMetadata;
+
+	// 	@Autowired
+	// 	private KeyManager keyManager;
+
+
+	// 	@Bean
+	// 	public SAMLDiscovery samlDiscovery() {
+	// 		return new SAMLDiscovery();
+	// 	}
+
+	// 	@Bean
+	// 	public MetadataDisplayFilter metadataDisplayFilter() {
+	// 		return new MetadataDisplayFilter() {
+
+	// 			@Override
+	// 			protected void processMetadataDisplay(HttpServletRequest request, HttpServletResponse response)
+	// 					throws IOException, ServletException {
+	// 				try {
+	// 					SAMLMessageContext context = contextProvider.getLocalEntity(request, response);
+	// 					String entityId = context.getLocalEntityId();
+
+	// 					response.setContentType("text/xml");
+	// 					response.setCharacterEncoding("UTF-8");
+
+	// 					displayMetadata(entityId, response.getWriter());
+	// 				}
+	// 				catch (MetadataProviderException e) {
+	// 					throw new ServletException("Error initializing metadata", e);
+	// 				}
+	// 			}
+	// 		};
+	// 	}
+
+	// 	public MetadataGenerator metadataGenerator() {
+	// 		MetadataGenerator metadataGenerator = new MetadataGenerator() {
+
+	// 			@Override
+	// 			public EntityDescriptor generateMetadata() {
+	// 				final EntityDescriptor entityDescriptor = super.generateMetadata();
+	// 				final SPSSODescriptor spDescriptor = entityDescriptor.getSPSSODescriptor("urn:oasis:names:tc:SAML:2.0:protocol");
+	// 				final AttributeConsumingService attributeService = new AttributeConsumingServiceBuilder().buildObject();
+
+	// 				for (var entry : SSO_REQUESTED_ATTRIBUTES.entrySet()) {
+	// 					final RequestedAttribute requestAttribute = new RequestedAttributeBuilder().buildObject();
+	// 					requestAttribute.setIsRequired(true);
+	// 					requestAttribute.setName(entry.getValue());
+	// 					requestAttribute.setFriendlyName(entry.getKey());
+	// 					requestAttribute.setNameFormat(Attribute.URI_REFERENCE);
+
+	// 					attributeService.getRequestAttributes().add(requestAttribute);
+	// 				}
+
+	// 				spDescriptor.getAttributeConsumingServices().add(attributeService);
+
+	// 				ContactPerson contactPerson = new ContactPersonBuilder().buildObject();
+	// 				contactPerson.setType(ContactPersonTypeEnumeration.TECHNICAL);
+
+	// 				GivenName givenName = new GivenNameBuilder().buildObject();
+	// 				givenName.setName("Alex Andres");
+
+	// 				EmailAddress emailAddress = new EmailAddressBuilder().buildObject();
+	// 				emailAddress.setAddress("alexej.andres@es.tu-darmstadt.de");
+
+	// 				contactPerson.setGivenName(givenName);
+	// 				contactPerson.getEmailAddresses().add(emailAddress);
+
+	// 				entityDescriptor.getContactPersons().add(contactPerson);
+
+	// 				return entityDescriptor;
+	// 			}
+	// 		};
+	// 		metadataGenerator.setEntityId(samlAudience);
+	// 		metadataGenerator.setEntityBaseURL(samlAudience);
+	// 		metadataGenerator.setExtendedMetadata(extendedMetadata);
+	// 		metadataGenerator.setIncludeDiscoveryExtension(false);
+	// 		metadataGenerator.setKeyManager(keyManager);
+
+	// 		return metadataGenerator;
+	// 	}
+
+	// 	@Bean
+	// 	public SAMLProcessingFilter samlWebSSOProcessingFilter() throws Exception {
+	// 		SAMLProcessingFilter samlWebSSOProcessingFilter = new SAMLProcessingFilter();
+	// 		samlWebSSOProcessingFilter.setAuthenticationManager(authenticationManager());
+	// 		samlWebSSOProcessingFilter.setAuthenticationSuccessHandler(samlAuthSuccessHandler);
+	// 		samlWebSSOProcessingFilter.setAuthenticationFailureHandler(samlAuthFailureHandler);
+	
+	// 		return samlWebSSOProcessingFilter;
+	// 	}
+
+	// 	@Bean
+	// 	public SAMLWebSSOHoKProcessingFilter samlWebSSOHoKProcessingFilter() throws Exception {
+	// 		SAMLWebSSOHoKProcessingFilter samlWebSSOHoKProcessingFilter = new SAMLWebSSOHoKProcessingFilter();
+	// 		samlWebSSOHoKProcessingFilter.setAuthenticationSuccessHandler(samlAuthSuccessHandler);
+	// 		samlWebSSOHoKProcessingFilter.setAuthenticationManager(authenticationManager());
+	// 		samlWebSSOHoKProcessingFilter.setAuthenticationFailureHandler(samlAuthFailureHandler);
+	// 		return samlWebSSOHoKProcessingFilter;
+	// 	}
+
+	// 	@Bean
+	// 	public FilterChainProxy samlFilter() throws Exception {
+	// 		List<SecurityFilterChain> chains = new ArrayList<>();
+	// 		chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/login/**"), samlEntryPoint));
+	// 		chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/logout/**"), samlLogoutFilter));
+	// 		chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/metadata/**"), metadataDisplayFilter()));
+	// 		chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/SSO/**"), samlWebSSOProcessingFilter()));
+	// 		chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/SSOHoK/**"), samlWebSSOHoKProcessingFilter()));
+	// 		chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/discovery/**"), samlDiscovery()));
+	// 		chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/SingleLogout/**"), samlLogoutProcessingFilter));
+
+	// 		return new FilterChainProxy(chains);
+	// 	}
+
+	// 	@Bean
+	// 	@Override
+	// 	public AuthenticationManager authenticationManagerBean() throws Exception {
+	// 		return super.authenticationManagerBean();
+	// 	}
+
+	// 	@Bean
+	// 	public MetadataGeneratorFilter metadataGeneratorFilter() {
+	// 		return new MetadataGeneratorFilter(metadataGenerator());
+	// 	}
+
+	// 	@Override
+	// 	protected void configure(HttpSecurity http) throws Exception {
+	// 		http
+	// 			.csrf()
+	// 			.disable();
+
+	// 		http
+	// 			.httpBasic()
+	// 				.authenticationEntryPoint(samlEntryPoint);
+
+	// 		http
+	// 			.addFilterBefore(metadataGeneratorFilter(), ChannelProcessingFilter.class)
+	// 			.addFilterAfter(samlFilter(), BasicAuthenticationFilter.class)
+	// 			.addFilterBefore(samlFilter(), CsrfFilter.class);
+
+	// 		http
+	// 			.authorizeRequests()
+	// 				.antMatchers("/").permitAll()
+	// 				.antMatchers("/contact").permitAll()
+	// 				.antMatchers("/imprint").permitAll()
+	// 				.antMatchers("/privacy").permitAll()
+	// 				.antMatchers("/janus/**").permitAll()
+	// 				.antMatchers("/css/**").permitAll()
+	// 				.antMatchers("/images/**").permitAll()
+	// 				.antMatchers("/js/**").permitAll()
+	// 				.antMatchers("/manual/**").permitAll()
+	// 				.antMatchers("/api/publisher/**").permitAll()	// Will be handled by the personal token authentification.
+	// 				.antMatchers("/saml/**").permitAll()
+	// 				.anyRequest().authenticated();
+
+	// 		http
+	// 			.logout().disable();
+	// 	}
+
+	// 	@Override
+	// 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+	// 		auth.authenticationProvider(samlAuthenticationProvider);
+	// 	}
+	// }
+
 	@Configuration
     @Order(1)
-	public static class SamlConfigurerAdatper extends WebSecurityConfigurerAdapter {
-		@Value("${saml.sp}")
-		private String samlAudience;
+	@ComponentScan(basePackageClasses = KeycloakSecurityComponents.class)
+	public static class KeycloakSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
 
 		@Autowired
-		@Qualifier("saml")
-		private SavedRequestAwareAuthenticationSuccessHandler samlAuthSuccessHandler;
-
-		@Autowired
-		@Qualifier("saml")
-		private SimpleUrlAuthenticationFailureHandler samlAuthFailureHandler;
-
-		@Autowired
-		private SAMLEntryPoint samlEntryPoint;
-
-		@Autowired
-		private SAMLLogoutFilter samlLogoutFilter;
-
-		@Autowired
-		private SAMLLogoutProcessingFilter samlLogoutProcessingFilter;
-
-		@Autowired
-		private SAMLAuthenticationProvider samlAuthenticationProvider;
-
-		@Autowired
-		private ExtendedMetadata extendedMetadata;
-
-		@Autowired
-		private KeyManager keyManager;
-
-
-		@Bean
-		public SAMLDiscovery samlDiscovery() {
-			return new SAMLDiscovery();
+		public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+			KeycloakAuthenticationProvider keycloakAuthenticationProvider = keycloakAuthenticationProvider();
+			keycloakAuthenticationProvider.setGrantedAuthoritiesMapper(new SimpleAuthorityMapper());
+			auth.authenticationProvider(keycloakAuthenticationProvider);
 		}
 
 		@Bean
-		public MetadataDisplayFilter metadataDisplayFilter() {
-			return new MetadataDisplayFilter() {
-
-				@Override
-				protected void processMetadataDisplay(HttpServletRequest request, HttpServletResponse response)
-						throws IOException, ServletException {
-					try {
-						SAMLMessageContext context = contextProvider.getLocalEntity(request, response);
-						String entityId = context.getLocalEntityId();
-
-						response.setContentType("text/xml");
-						response.setCharacterEncoding("UTF-8");
-
-						displayMetadata(entityId, response.getWriter());
-					}
-					catch (MetadataProviderException e) {
-						throw new ServletException("Error initializing metadata", e);
-					}
-				}
-			};
+		public KeycloakSpringBootConfigResolver KeycloakConfigResolver() {
+			return new KeycloakSpringBootConfigResolver();
 		}
-
-		public MetadataGenerator metadataGenerator() {
-			MetadataGenerator metadataGenerator = new MetadataGenerator() {
-
-				@Override
-				public EntityDescriptor generateMetadata() {
-					final EntityDescriptor entityDescriptor = super.generateMetadata();
-					final SPSSODescriptor spDescriptor = entityDescriptor.getSPSSODescriptor("urn:oasis:names:tc:SAML:2.0:protocol");
-					final AttributeConsumingService attributeService = new AttributeConsumingServiceBuilder().buildObject();
-
-					for (var entry : SSO_REQUESTED_ATTRIBUTES.entrySet()) {
-						final RequestedAttribute requestAttribute = new RequestedAttributeBuilder().buildObject();
-						requestAttribute.setIsRequired(true);
-						requestAttribute.setName(entry.getValue());
-						requestAttribute.setFriendlyName(entry.getKey());
-						requestAttribute.setNameFormat(Attribute.URI_REFERENCE);
-
-						attributeService.getRequestAttributes().add(requestAttribute);
-					}
-
-					spDescriptor.getAttributeConsumingServices().add(attributeService);
-
-					ContactPerson contactPerson = new ContactPersonBuilder().buildObject();
-					contactPerson.setType(ContactPersonTypeEnumeration.TECHNICAL);
-
-					GivenName givenName = new GivenNameBuilder().buildObject();
-					givenName.setName("Alex Andres");
-
-					EmailAddress emailAddress = new EmailAddressBuilder().buildObject();
-					emailAddress.setAddress("alexej.andres@es.tu-darmstadt.de");
-
-					contactPerson.setGivenName(givenName);
-					contactPerson.getEmailAddresses().add(emailAddress);
-
-					entityDescriptor.getContactPersons().add(contactPerson);
-
-					return entityDescriptor;
-				}
-			};
-			metadataGenerator.setEntityId(samlAudience);
-			metadataGenerator.setEntityBaseURL(samlAudience);
-			metadataGenerator.setExtendedMetadata(extendedMetadata);
-			metadataGenerator.setIncludeDiscoveryExtension(false);
-			metadataGenerator.setKeyManager(keyManager);
-
-			return metadataGenerator;
-		}
-
-		@Bean
-		public SAMLProcessingFilter samlWebSSOProcessingFilter() throws Exception {
-			SAMLProcessingFilter samlWebSSOProcessingFilter = new SAMLProcessingFilter();
-			samlWebSSOProcessingFilter.setAuthenticationManager(authenticationManager());
-			samlWebSSOProcessingFilter.setAuthenticationSuccessHandler(samlAuthSuccessHandler);
-			samlWebSSOProcessingFilter.setAuthenticationFailureHandler(samlAuthFailureHandler);
 	
-			return samlWebSSOProcessingFilter;
-		}
-
-		@Bean
-		public SAMLWebSSOHoKProcessingFilter samlWebSSOHoKProcessingFilter() throws Exception {
-			SAMLWebSSOHoKProcessingFilter samlWebSSOHoKProcessingFilter = new SAMLWebSSOHoKProcessingFilter();
-			samlWebSSOHoKProcessingFilter.setAuthenticationSuccessHandler(samlAuthSuccessHandler);
-			samlWebSSOHoKProcessingFilter.setAuthenticationManager(authenticationManager());
-			samlWebSSOHoKProcessingFilter.setAuthenticationFailureHandler(samlAuthFailureHandler);
-			return samlWebSSOHoKProcessingFilter;
-		}
-
-		@Bean
-		public FilterChainProxy samlFilter() throws Exception {
-			List<SecurityFilterChain> chains = new ArrayList<>();
-			chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/login/**"), samlEntryPoint));
-			chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/logout/**"), samlLogoutFilter));
-			chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/metadata/**"), metadataDisplayFilter()));
-			chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/SSO/**"), samlWebSSOProcessingFilter()));
-			chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/SSOHoK/**"), samlWebSSOHoKProcessingFilter()));
-			chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/discovery/**"), samlDiscovery()));
-			chains.add(new DefaultSecurityFilterChain(new AntPathRequestMatcher("/saml/SingleLogout/**"), samlLogoutProcessingFilter));
-
-			return new FilterChainProxy(chains);
-		}
-
 		@Bean
 		@Override
-		public AuthenticationManager authenticationManagerBean() throws Exception {
-			return super.authenticationManagerBean();
+		protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
+			return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
 		}
-
-		@Bean
-		public MetadataGeneratorFilter metadataGeneratorFilter() {
-			return new MetadataGeneratorFilter(metadataGenerator());
-		}
-
+	
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
-			http
-				.csrf()
-				.disable();
-
-			http
-				.httpBasic()
-					.authenticationEntryPoint(samlEntryPoint);
-
-			http
-				.addFilterBefore(metadataGeneratorFilter(), ChannelProcessingFilter.class)
-				.addFilterAfter(samlFilter(), BasicAuthenticationFilter.class)
-				.addFilterBefore(samlFilter(), CsrfFilter.class);
+			super.configure(http);
 
 			http
 				.authorizeRequests()
@@ -245,20 +308,10 @@ public class WebSecurityConfig {
 					.antMatchers("/js/**").permitAll()
 					.antMatchers("/manual/**").permitAll()
 					.antMatchers("/api/publisher/**").permitAll()	// Will be handled by the personal token authentification.
-					.antMatchers("/saml/**").permitAll()
 					.anyRequest().authenticated();
-
-			http
-				.logout().disable();
 		}
 
-		@Override
-		protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-			auth.authenticationProvider(samlAuthenticationProvider);
-		}
 	}
-
-
 
 	@Configuration
 	@Order(2)

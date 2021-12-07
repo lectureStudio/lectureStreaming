@@ -47,241 +47,241 @@ import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 
-@Configuration
-public class SamlSecurityConfig implements InitializingBean, DisposableBean {
+// @Configuration
+public class SamlSecurityConfig /*implements InitializingBean, DisposableBean*/ {
 
-	@Value("${saml.keystore.location}")
-	private String samlKeystoreLocation;
+	// @Value("${saml.keystore.location}")
+	// private String samlKeystoreLocation;
 
-	@Value("${saml.keystore.password}")
-	private String samlKeystorePassword;
+	// @Value("${saml.keystore.password}")
+	// private String samlKeystorePassword;
 
-	@Value("${saml.keystore.alias}")
-	private String samlKeystoreAlias;
+	// @Value("${saml.keystore.alias}")
+	// private String samlKeystoreAlias;
 
-	@Value("${saml.idp}")
-	private String defaultIdp;
+	// @Value("${saml.idp}")
+	// private String defaultIdp;
 
-	@Value("#{'${saml.idp.key.aliases}'.split(',')}")
-	private Set<String> idpKeyAliases;
+	// @Value("#{'${saml.idp.key.aliases}'.split(',')}")
+	// private Set<String> idpKeyAliases;
 
-	@Autowired
-	private UserService userService;
+	// @Autowired
+	// private UserService userService;
 
-	private Timer backgroundTaskTimer;
+	// private Timer backgroundTaskTimer;
 
-	private MultiThreadedHttpConnectionManager httpConnectionManager;
+	// private MultiThreadedHttpConnectionManager httpConnectionManager;
 
 
-	@Override
-	public void destroy() throws Exception {
-		backgroundTaskTimer.purge();
-		backgroundTaskTimer.cancel();
+	// @Override
+	// public void destroy() throws Exception {
+	// 	backgroundTaskTimer.purge();
+	// 	backgroundTaskTimer.cancel();
 
-		httpConnectionManager.shutdown();
-	}
+	// 	httpConnectionManager.shutdown();
+	// }
 
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		backgroundTaskTimer = new Timer(true);
-		httpConnectionManager = new MultiThreadedHttpConnectionManager();
-	}
+	// @Override
+	// public void afterPropertiesSet() throws Exception {
+	// 	backgroundTaskTimer = new Timer(true);
+	// 	httpConnectionManager = new MultiThreadedHttpConnectionManager();
+	// }
 
-	@Bean
-    public HttpClient httpClient() {
-        return new HttpClient(httpConnectionManager);
-    }
+	// @Bean
+    // public HttpClient httpClient() {
+    //     return new HttpClient(httpConnectionManager);
+    // }
 
-	@Bean(initMethod = "initialize")
-	public StaticBasicParserPool parserPool() {
-		return new StaticBasicParserPool();
-	}
+	// @Bean(initMethod = "initialize")
+	// public StaticBasicParserPool parserPool() {
+	// 	return new StaticBasicParserPool();
+	// }
 
-	@Bean
-	public SAMLAuthenticationProvider samlAuthenticationProvider() {
-		SAMLAuthenticationProvider samlAuthenticationProvider = new SAMLAuthenticationProvider();
-        // samlAuthenticationProvider.setUserDetails(samlUserDetailsServiceImpl);
-        samlAuthenticationProvider.setForcePrincipalAsString(false);
-        return samlAuthenticationProvider;
-		// return new SAMLAuthenticationProvider();
-	}
+	// @Bean
+	// public SAMLAuthenticationProvider samlAuthenticationProvider() {
+	// 	SAMLAuthenticationProvider samlAuthenticationProvider = new SAMLAuthenticationProvider();
+    //     // samlAuthenticationProvider.setUserDetails(samlUserDetailsServiceImpl);
+    //     samlAuthenticationProvider.setForcePrincipalAsString(false);
+    //     return samlAuthenticationProvider;
+	// 	// return new SAMLAuthenticationProvider();
+	// }
 
-	@Bean
-	public SAMLUserDetailsService samlUserDetailsService() {
-		return new LectSAMLUserDetailsService(userService);
-	}
+	// @Bean
+	// public SAMLUserDetailsService samlUserDetailsService() {
+	// 	return new LectSAMLUserDetailsService(userService);
+	// }
 
-	@Bean
-	public SAMLContextProviderImpl contextProvider() {
-		return new SAMLContextProviderImpl();
-	}
+	// @Bean
+	// public SAMLContextProviderImpl contextProvider() {
+	// 	return new SAMLContextProviderImpl();
+	// }
 
-	@Bean
-	public static SAMLBootstrap samlBootstrap() {
-		return new SAMLBootstrap();
-	}
+	// @Bean
+	// public static SAMLBootstrap samlBootstrap() {
+	// 	return new SAMLBootstrap();
+	// }
 
-	@Bean
-	public SAMLDefaultLogger samlLogger() {
-		return new SAMLDefaultLogger();
-	}
+	// @Bean
+	// public SAMLDefaultLogger samlLogger() {
+	// 	return new SAMLDefaultLogger();
+	// }
 
-	@Bean
-	public WebSSOProfileConsumer webSSOprofileConsumer() {
-		return new WebSSOProfileConsumerImpl();
-	}
+	// @Bean
+	// public WebSSOProfileConsumer webSSOprofileConsumer() {
+	// 	return new WebSSOProfileConsumerImpl();
+	// }
 
-	@Bean
-	@Qualifier("hokWebSSOprofileConsumer")
-	public WebSSOProfileConsumerHoKImpl hokWebSSOProfileConsumer() {
-		return new WebSSOProfileConsumerHoKImpl();
-	}
+	// @Bean
+	// @Qualifier("hokWebSSOprofileConsumer")
+	// public WebSSOProfileConsumerHoKImpl hokWebSSOProfileConsumer() {
+	// 	return new WebSSOProfileConsumerHoKImpl();
+	// }
 
-	@Bean
-	public WebSSOProfile webSSOprofile() {
-		return new WebSSOProfileImpl();
-	}
+	// @Bean
+	// public WebSSOProfile webSSOprofile() {
+	// 	return new WebSSOProfileImpl();
+	// }
 
-	@Bean
-	public WebSSOProfileConsumerHoKImpl hokWebSSOProfile() {
-		return new WebSSOProfileConsumerHoKImpl();
-	}
+	// @Bean
+	// public WebSSOProfileConsumerHoKImpl hokWebSSOProfile() {
+	// 	return new WebSSOProfileConsumerHoKImpl();
+	// }
 
-	@Bean
-	public WebSSOProfileECPImpl ecpProfile() {
-		return new WebSSOProfileECPImpl();
-	}
+	// @Bean
+	// public WebSSOProfileECPImpl ecpProfile() {
+	// 	return new WebSSOProfileECPImpl();
+	// }
 
-	@Bean
-	public SingleLogoutProfile logoutProfile() {
-		return new SingleLogoutProfileImpl();
-	}
+	// @Bean
+	// public SingleLogoutProfile logoutProfile() {
+	// 	return new SingleLogoutProfileImpl();
+	// }
 
-	@Bean
-	public KeyManager keyManager() {
-		DefaultResourceLoader loader = new DefaultResourceLoader();
-		Resource storeFile = loader.getResource(samlKeystoreLocation);
-		Map<String, String> passwords = new HashMap<>();
-		passwords.put(samlKeystoreAlias, samlKeystorePassword);
+	// @Bean
+	// public KeyManager keyManager() {
+	// 	DefaultResourceLoader loader = new DefaultResourceLoader();
+	// 	Resource storeFile = loader.getResource(samlKeystoreLocation);
+	// 	Map<String, String> passwords = new HashMap<>();
+	// 	passwords.put(samlKeystoreAlias, samlKeystorePassword);
 
-		return new JKSKeyManager(storeFile, samlKeystorePassword, passwords, samlKeystoreAlias);
-	}
+	// 	return new JKSKeyManager(storeFile, samlKeystorePassword, passwords, samlKeystoreAlias);
+	// }
 
-	@Bean
-	public WebSSOProfileOptions defaultWebSSOProfileOptions() {
-		WebSSOProfileOptions webSSOProfileOptions = new WebSSOProfileOptions();
-		webSSOProfileOptions.setIncludeScoping(false);
+	// @Bean
+	// public WebSSOProfileOptions defaultWebSSOProfileOptions() {
+	// 	WebSSOProfileOptions webSSOProfileOptions = new WebSSOProfileOptions();
+	// 	webSSOProfileOptions.setIncludeScoping(false);
 
-		return webSSOProfileOptions;
-	}
+	// 	return webSSOProfileOptions;
+	// }
 
-	@Bean
-	public SAMLEntryPoint samlEntryPoint() {
-		SAMLEntryPoint samlEntryPoint = new SAMLEntryPoint();
-		samlEntryPoint.setDefaultProfileOptions(defaultWebSSOProfileOptions());
+	// @Bean
+	// public SAMLEntryPoint samlEntryPoint() {
+	// 	SAMLEntryPoint samlEntryPoint = new SAMLEntryPoint();
+	// 	samlEntryPoint.setDefaultProfileOptions(defaultWebSSOProfileOptions());
 
-		return samlEntryPoint;
-	}
+	// 	return samlEntryPoint;
+	// }
 
-	@Bean
-	public ExtendedMetadata extendedMetadata() {
-		ExtendedMetadata extendedMetadata = new ExtendedMetadata();
-		extendedMetadata.setIdpDiscoveryEnabled(false);
-		extendedMetadata.setSignMetadata(false);
+	// @Bean
+	// public ExtendedMetadata extendedMetadata() {
+	// 	ExtendedMetadata extendedMetadata = new ExtendedMetadata();
+	// 	extendedMetadata.setIdpDiscoveryEnabled(false);
+	// 	extendedMetadata.setSignMetadata(false);
 
-		return extendedMetadata;
-	}
+	// 	return extendedMetadata;
+	// }
 
-	@Bean
-	public ExtendedMetadataDelegate extendedMetadataProvider() throws MetadataProviderException {
-		AbstractReloadingMetadataProvider provider = new HTTPMetadataProvider(backgroundTaskTimer, httpClient(), defaultIdp);
-		provider.setParserPool(parserPool());
+	// @Bean
+	// public ExtendedMetadataDelegate extendedMetadataProvider() throws MetadataProviderException {
+	// 	AbstractReloadingMetadataProvider provider = new HTTPMetadataProvider(backgroundTaskTimer, httpClient(), defaultIdp);
+	// 	provider.setParserPool(parserPool());
 
-		ExtendedMetadataDelegate delegate = new ExtendedMetadataDelegate(provider, extendedMetadata());
-		delegate.setMetadataTrustedKeys(idpKeyAliases);
-		delegate.setMetadataTrustCheck(true);
-		//delegate.setMetadataRequireSignature(true);
+	// 	ExtendedMetadataDelegate delegate = new ExtendedMetadataDelegate(provider, extendedMetadata());
+	// 	delegate.setMetadataTrustedKeys(idpKeyAliases);
+	// 	delegate.setMetadataTrustCheck(true);
+	// 	//delegate.setMetadataRequireSignature(true);
 
-		return delegate;
-	}
+	// 	return delegate;
+	// }
 
-	@Bean
-	@Qualifier("metadata")
-	public CachingMetadataManager metadata() throws MetadataProviderException, ResourceException {
-		List<MetadataProvider> providers = new ArrayList<>();
-		providers.add(extendedMetadataProvider());
+	// @Bean
+	// @Qualifier("metadata")
+	// public CachingMetadataManager metadata() throws MetadataProviderException, ResourceException {
+	// 	List<MetadataProvider> providers = new ArrayList<>();
+	// 	providers.add(extendedMetadataProvider());
 
-		CachingMetadataManager metadataManager = new CachingMetadataManager(providers);
-		metadataManager.setDefaultIDP(defaultIdp);
+	// 	CachingMetadataManager metadataManager = new CachingMetadataManager(providers);
+	// 	metadataManager.setDefaultIDP(defaultIdp);
 
-		return metadataManager;
-	}
+	// 	return metadataManager;
+	// }
 
-	@Bean
-	@Qualifier("saml")
-	public SavedRequestAwareAuthenticationSuccessHandler successRedirectHandler() {
-		SavedRequestAwareAuthenticationSuccessHandler successRedirectHandler = new SavedRequestAwareAuthenticationSuccessHandler();
-		successRedirectHandler.setDefaultTargetUrl("/home");
+	// @Bean
+	// @Qualifier("saml")
+	// public SavedRequestAwareAuthenticationSuccessHandler successRedirectHandler() {
+	// 	SavedRequestAwareAuthenticationSuccessHandler successRedirectHandler = new SavedRequestAwareAuthenticationSuccessHandler();
+	// 	successRedirectHandler.setDefaultTargetUrl("/home");
 
-		return successRedirectHandler;
-	}
+	// 	return successRedirectHandler;
+	// }
 
-	@Bean
-	@Qualifier("saml")
-	public SimpleUrlAuthenticationFailureHandler samlAuthenticationFailureHandler() {
-		SimpleUrlAuthenticationFailureHandler failureHandler = new SimpleUrlAuthenticationFailureHandler();
-		failureHandler.setUseForward(true);
-		failureHandler.setDefaultFailureUrl("/error");
+	// @Bean
+	// @Qualifier("saml")
+	// public SimpleUrlAuthenticationFailureHandler samlAuthenticationFailureHandler() {
+	// 	SimpleUrlAuthenticationFailureHandler failureHandler = new SimpleUrlAuthenticationFailureHandler();
+	// 	failureHandler.setUseForward(true);
+	// 	failureHandler.setDefaultFailureUrl("/error");
 
-		return failureHandler;
-	}
+	// 	return failureHandler;
+	// }
 
-	@Bean
-	public SimpleUrlLogoutSuccessHandler successLogoutHandler() {
-		SimpleUrlLogoutSuccessHandler successLogoutHandler = new SimpleUrlLogoutSuccessHandler();
-		successLogoutHandler.setDefaultTargetUrl("/");
+	// @Bean
+	// public SimpleUrlLogoutSuccessHandler successLogoutHandler() {
+	// 	SimpleUrlLogoutSuccessHandler successLogoutHandler = new SimpleUrlLogoutSuccessHandler();
+	// 	successLogoutHandler.setDefaultTargetUrl("/");
 
-		return successLogoutHandler;
-	}
+	// 	return successLogoutHandler;
+	// }
 
-	@Bean
-	public SecurityContextLogoutHandler logoutHandler() {
-		SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
-		logoutHandler.setInvalidateHttpSession(true);
-		logoutHandler.setClearAuthentication(true);
+	// @Bean
+	// public SecurityContextLogoutHandler logoutHandler() {
+	// 	SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
+	// 	logoutHandler.setInvalidateHttpSession(true);
+	// 	logoutHandler.setClearAuthentication(true);
 
-		return logoutHandler;
-	}
+	// 	return logoutHandler;
+	// }
 
-	@Bean
-	public SAMLLogoutProcessingFilter samlLogoutProcessingFilter() {
-		return new SAMLLogoutProcessingFilter(successLogoutHandler(), logoutHandler());
-	}
+	// @Bean
+	// public SAMLLogoutProcessingFilter samlLogoutProcessingFilter() {
+	// 	return new SAMLLogoutProcessingFilter(successLogoutHandler(), logoutHandler());
+	// }
 
-	@Bean
-	public SAMLLogoutFilter samlLogoutFilter() {
-		return new SAMLLogoutFilter(successLogoutHandler(),
-			new LogoutHandler[] { logoutHandler() },
-			new LogoutHandler[] { logoutHandler() }
-		);
-	}
+	// @Bean
+	// public SAMLLogoutFilter samlLogoutFilter() {
+	// 	return new SAMLLogoutFilter(successLogoutHandler(),
+	// 		new LogoutHandler[] { logoutHandler() },
+	// 		new LogoutHandler[] { logoutHandler() }
+	// 	);
+	// }
 
-	@Bean
-	public HTTPPostBinding httpPostBinding() {
-		return new HTTPPostBinding(parserPool(), VelocityFactory.getEngine());
-	}
+	// @Bean
+	// public HTTPPostBinding httpPostBinding() {
+	// 	return new HTTPPostBinding(parserPool(), VelocityFactory.getEngine());
+	// }
 
-	@Bean
-	public HTTPRedirectDeflateBinding httpRedirectDeflateBinding() {
-		return new HTTPRedirectDeflateBinding(parserPool());
-	}
+	// @Bean
+	// public HTTPRedirectDeflateBinding httpRedirectDeflateBinding() {
+	// 	return new HTTPRedirectDeflateBinding(parserPool());
+	// }
 
-	@Bean
-	public SAMLProcessorImpl processor() {
-		ArrayList<SAMLBinding> bindings = new ArrayList<>();
-		bindings.add(httpRedirectDeflateBinding());
-		bindings.add(httpPostBinding());
+	// @Bean
+	// public SAMLProcessorImpl processor() {
+	// 	ArrayList<SAMLBinding> bindings = new ArrayList<>();
+	// 	bindings.add(httpRedirectDeflateBinding());
+	// 	bindings.add(httpPostBinding());
 
-		return new SAMLProcessorImpl(bindings);
-	}
+	// 	return new SAMLProcessorImpl(bindings);
+	// }
 }
