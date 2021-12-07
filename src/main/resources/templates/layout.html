@@ -47,13 +47,13 @@
 								<a th:href="@{/}" th:text="#{home.courses}" class="list-group-item list-group-item-action" role="tab"></a>
 							</div>
 							<h5 th:text="#{home.account}" class="text-muted"></h5>
-							<div sec:authorize="hasAnyRole('EMPLOYEE', 'FACULTY', 'MEMBER', 'AFFILIATE')" class="list-group">
+							<div class="list-group">
 								<a th:href="@{/course/new}" th:text="#{home.add.course}" class="list-group-item list-group-item-action" role="tab"></a>
 								<a th:href="@{/token}" th:text="#{home.personal.access.token}" class="list-group-item list-group-item-action" role="tab"></a>
 							</div>
 							<div class="list-group list-group-flush pt-2">
 								<a th:href="@{/settings}" th:text="#{home.settings}" class="list-group-item bg-transparent"></a>
-								<a th:href="@{/saml/logout}" class="list-group-item bg-transparent">
+								<a th:href="@{/logout}" class="list-group-item bg-transparent">
 									<i class="bi bi-box-arrow-left"></i>
 									[[#{home.logout}]]
 								</a>

@@ -28,6 +28,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import javax.servlet.http.HttpServletRequest;
+
 @Controller
 public class HomeController {
 
@@ -41,6 +43,13 @@ public class HomeController {
 	@RequestMapping("/")
 	public String index(Principal principal, Authentication authentication, Model model) {
 		return nonNull(principal) ? home(authentication, model) : "index";
+	}
+
+	@GetMapping("/logout")
+	public String logout(HttpServletRequest request) throws Exception {
+		request.logout();
+
+		return "redirect:/";
 	}
 
 	@GetMapping(value = "/auth")
