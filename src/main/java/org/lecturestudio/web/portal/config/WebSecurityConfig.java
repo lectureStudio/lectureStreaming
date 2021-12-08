@@ -80,7 +80,7 @@ public class WebSecurityConfig {
 					.antMatchers("/images/**").permitAll()
 					.antMatchers("/js/**").permitAll()
 					.antMatchers("/manual/**").permitAll()
-					.antMatchers("/api/publisher/**").permitAll()	// Will be handled by the personal token authentification.
+					.antMatchers("/api/publisher/**").permitAll()	// Will be handled by the personal token authentication.
 					.anyRequest().authenticated();
 		}
 

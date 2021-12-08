@@ -7,13 +7,11 @@ import org.keycloak.representations.AccessToken;
 
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.service.UserService;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
-import java.security.Principal;
 import java.util.Optional;
-
-import static java.util.Objects.requireNonNull;
 
 public class KeycloakUserDetailsAuthenticationProvider extends KeycloakAuthenticationProvider {
 
@@ -39,10 +37,6 @@ public class KeycloakUserDetailsAuthenticationProvider extends KeycloakAuthentic
         String firstName = accessToken.getGivenName();
         String familyName = accessToken.getFamilyName();
 
-        System.out.println(userService);
-        System.out.println(username + " " + token.getAuthorities());
-        System.out.println();
-
         Optional<User> userOpt = userService.findById(username);
 
         if (userOpt.isEmpty()) {
@@ -59,13 +53,4 @@ public class KeycloakUserDetailsAuthenticationProvider extends KeycloakAuthentic
         return new KeycloakAuthenticationToken(detailsAccount, token.isInteractive(), token.getAuthorities());
     }
 
-    protected String resolveUsername(KeycloakAuthenticationToken token) {
-        requireNonNull(token, "KeycloakAuthenticationToken required");
-        requireNonNull(token.getAccount(), "KeycloakAuthenticationToken.getAccount() cannot be return null");
-
-        OidcKeycloakAccount account = token.getAccount();
-        Principal principal = account.getPrincipal();
-
-        return principal.getName();
-    }
 }

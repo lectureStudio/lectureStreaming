@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpHeaders;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -18,6 +18,9 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 
 public class TokenAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
+	private static final String API_KEY_HEADER = "ApiKey";
+
+
 	public TokenAuthenticationFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
 		super(requiresAuthenticationRequestMatcher);
 	}
@@ -25,10 +28,9 @@ public class TokenAuthenticationFilter extends AbstractAuthenticationProcessingF
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 			throws AuthenticationException, IOException, ServletException {
-		String token = StringUtils.isNotEmpty(request.getHeader(HttpHeaders.AUTHORIZATION))
-				? request.getHeader(HttpHeaders.AUTHORIZATION)
+		String token = StringUtils.isNotEmpty(request.getHeader(API_KEY_HEADER))
+				? request.getHeader(API_KEY_HEADER)
 				: "";
-		token = StringUtils.removeStart(token, "Bearer").trim();
 
 		Authentication requestAuthentication = new UsernamePasswordAuthenticationToken(token, token);
 
