@@ -50,10 +50,10 @@
 			<a th:href="@{/contact}" th:text="#{index.contact}" class="link-primary px-2"></a>
 			<a th:href="@{/imprint}" th:text="#{index.imprint}" class="link-primary px-2"></a>
 			<a th:href="@{/privacy}" th:text="#{index.privacy.policy}" class="link-primary px-2"></a>
-			<a th:href="@{/manual/de/index.html}" target="_blank" th:text="#{index.manual}"
-				class="link-primary px-2"></a>
+			<a th:href="@{/manual/de/index.html}" target="_blank" th:text="#{index.manual}" class="link-primary px-2"></a>
 		</div>
 		<p th:text="|&copy; 2021 ${appName}|"></p>
+		<p th:text="|Version ${appVersion}|"></p>
 	</footer>
 
 	<th:block layout:fragment="optional" />
