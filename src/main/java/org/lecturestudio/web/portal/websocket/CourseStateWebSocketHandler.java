@@ -25,11 +25,12 @@ import org.lecturestudio.web.api.stream.action.StreamPageAction;
 import org.lecturestudio.web.api.stream.action.StreamPageActionsAction;
 import org.lecturestudio.web.api.stream.action.StreamPagePlaybackAction;
 import org.lecturestudio.web.api.stream.action.StreamStartAction;
+import org.lecturestudio.web.portal.model.CourseConnectionRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStatePage;
 import org.lecturestudio.web.portal.model.CourseStates;
-
+import org.lecturestudio.web.portal.service.CourseConnectionRequestService;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -48,10 +49,13 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 	private final ObjectMapper objectMapper;
 
+	private final CourseConnectionRequestService connectionRequestService;
 
-	public CourseStateWebSocketHandler(CourseStates courseStates, ObjectMapper objectMapper) {
+
+	public CourseStateWebSocketHandler(CourseStates courseStates, ObjectMapper objectMapper, CourseConnectionRequestService connectionRequestService) {
 		this.courseStates = courseStates;
 		this.objectMapper = objectMapper;
+		this.connectionRequestService = connectionRequestService;
 	}
 
 	@Override
@@ -236,6 +240,16 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		CourseState state = initStates.remove(courseId);
 
 		courseStates.setCourseState(courseId, state);
+		System.out.println("session Started");
+		for (CourseConnectionRequest connectionRequest : this.connectionRequestService.getAllByCourseId(courseId)) {
+			CourseParticipantMessage message = new CourseParticipantMessage();
+			message.setConnected(true);
+			message.setUsername(connectionRequest.getUserId());
+			message.setFirstName(connectionRequest.getFirstName());
+			message.setFamilyName(connectionRequest.getFamilyName());
+			
+			state.postParticipantMessage(courseId, message);
+		}
 	}
 
 	private static void updateDocumentState(CourseState courseState, StreamDocumentAction action) {

@@ -25,7 +25,6 @@ public class CourseState {
 
 	private CourseStateDocument avtiveDocument;
 
-
 	public CourseState(long courseId, BiConsumer<Long, SpeechBaseMessage> speechListener, BiConsumer<Long, CourseParticipantMessage> connectedListener) {
 		this.courseId = courseId;
 		this.speechListener = speechListener;
@@ -83,7 +82,7 @@ public class CourseState {
 		documentMap.remove(stateDoc.getDocumentId());
 	}
 
-	private void postParticipantMessage(Long courseId, CourseParticipantMessage message) {
+	public void postParticipantMessage(Long courseId, CourseParticipantMessage message) {
 		connectedListener.accept(courseId, message);
 	}
 }

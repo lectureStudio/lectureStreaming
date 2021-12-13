@@ -11,6 +11,7 @@ class Course {
 		this.player = null;
 		this.courseId = null;
 		this.speechRequestId = null;
+		this.userConnectionRequestId = null;
 		this.startTime = null;
 		this.dict = null;
 	}
@@ -24,6 +25,8 @@ class Course {
 		this.contentContainer = document.getElementById("course-content");
 		this.messengerContainer = document.getElementById("messenger-content");
 		this.quizContainer = document.getElementById("quiz-content");
+
+		this.onUserConnected();
 
 		window.portalApp.addOnCourseState((event) => {
 			if (event.started) {
@@ -99,6 +102,34 @@ class Course {
 		this.player.setOnShowQuiz(this.onShowQuiz.bind(this));
 		this.player.start()
 			.catch(this.onPlayerError.bind(this));
+	}
+
+	onUserConnected() {
+		window.addEventListener("beforeunload", () => {
+			this.sendConnectionRequest(false);
+		})
+
+		this.sendConnectionRequest(true);
+	}
+
+	sendConnectionRequest(connected) {
+		if (connected) {
+			fetch("/course/connect/" + this.courseId, {
+				method: "POST"
+			}).then(response => {
+				return response.text();
+			})
+			.then(requestId => {
+				this.userConnectionRequestId = requestId;
+			})
+			.catch(error => console.error(error));
+		}
+		else {
+			fetch("/course/connect/" + this.courseId + "/" + this.userConnectionRequestId, {
+				method: "DELETE"
+			})
+			.catch(error => console.error(error));
+		}
 	}
 
 	onPlayerError(error) {

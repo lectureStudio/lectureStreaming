@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.service.CourseConnectionRequestService;
 import org.lecturestudio.web.portal.websocket.CourseFeatureWebSocketHandler;
 import org.lecturestudio.web.portal.websocket.CourseStateWebSocketHandler;
 
@@ -28,11 +29,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	@Autowired
+	private CourseConnectionRequestService connectionRequestService;
+
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		registry
-			.addHandler(new CourseStateWebSocketHandler(courseStates, objectMapper), "/api/publisher/course-state")
+			.addHandler(new CourseStateWebSocketHandler(courseStates, objectMapper, connectionRequestService), "/api/publisher/course-state")
 				.setAllowedOrigins("*")
 			.addHandler(new CourseFeatureWebSocketHandler(courseFeatureState, objectMapper), "/api/publisher/messages")
 				.setAllowedOrigins("*");

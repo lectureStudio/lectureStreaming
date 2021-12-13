@@ -13,6 +13,7 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
 import org.lecturestudio.core.recording.RecordedPage;
+import org.lecturestudio.web.portal.service.CourseConnectionRequestService;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
@@ -20,6 +21,7 @@ import org.lecturestudio.web.portal.service.SubscriberEmitterService;
 import org.lecturestudio.web.portal.validator.MessageValidator;
 import org.lecturestudio.web.portal.validator.QuizAnswerValidator;
 import org.lecturestudio.web.portal.validator.SpeechValidator;
+import org.lecturestudio.web.api.message.CourseParticipantMessage;
 import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.QuizAnswerMessage;
 import org.lecturestudio.web.api.message.SpeechCancelMessage;
@@ -30,6 +32,7 @@ import org.lecturestudio.web.api.model.quiz.QuizAnswer;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.DocumentNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
+import org.lecturestudio.web.portal.model.CourseConnectionRequest;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
@@ -79,6 +82,9 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private CourseFeatureService courseFeatureService;
+
+	@Autowired
+	private CourseConnectionRequestService connectionRequestService;
 
 	@Autowired
 	private CourseSpeechRequestService speechRequestService;
@@ -258,6 +264,66 @@ public class CourseSubscriberController {
 		}
 
 		return response;
+	}
+
+	 @PostMapping(value = "/connect/{courseId}", produces = MediaType.APPLICATION_JSON_VALUE)
+	 public ResponseEntity<Long> connectMessage(@PathVariable("courseId") long courseId, 
+		Authentication authentication) {
+			CourseState courseState = courseStates.getCourseState(courseId);
+
+
+			LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+			CourseConnectionRequest connectionRequest = CourseConnectionRequest.builder()
+				.requestId(new SecureRandom().nextLong())
+				.userId(details.getUsername())
+				.firstName(details.getUsername())
+				.familyName(details.getFamilyName())
+				.courseId(courseId)
+				.build();
+
+			connectionRequestService.saveRequest(connectionRequest);
+
+			if (! isNull(courseState)) {
+				CourseParticipantMessage message = new CourseParticipantMessage();
+				message.setConnected(true);
+				message.setFamilyName(details.getFamilyName());
+				message.setFirstName(details.getFirstName());
+				message.setUsername(details.getUsername());
+				System.out.println(message.getUsername());
+	
+				courseState.postParticipantMessage(courseId, message);
+			}
+
+			return ResponseEntity.ok().body(connectionRequest.getRequestId());
+	}
+
+	@DeleteMapping("/connect/{courseId}/{requestId}")
+	public ResponseEntity<ClassroomServiceResponse> disconnectMessage(@PathVariable("courseId") long courseId,
+		@PathVariable("requestId") long requestId, Authentication authentication) {
+			CourseState courseState = courseStates.getCourseState(courseId);
+
+			LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+			Optional<CourseConnectionRequest> connectionRequestOpt = connectionRequestService.findByRequestId(requestId);
+
+			if (! connectionRequestOpt.isEmpty()) {
+				CourseConnectionRequest connectionRequest = connectionRequestOpt.get();
+
+				connectionRequestService.deleteById(connectionRequest.getId());
+			}
+
+			if (! isNull(courseState)) {
+				CourseParticipantMessage message = new CourseParticipantMessage();
+				message.setConnected(false);
+				message.setFamilyName(details.getFamilyName());
+				message.setFirstName(details.getFirstName());
+				message.setUsername(details.getUsername());
+				
+				courseState.postParticipantMessage(courseId, message);
+			}
+
+			return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/message/post/{courseId}")
