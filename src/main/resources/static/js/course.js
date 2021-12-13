@@ -52,6 +52,10 @@ class Course {
 			}
 		});
 		window.portalApp.addOnMessengerState((event) => {
+			if (event.courseId !== this.courseId) {
+				return;
+			}
+
 			if (event.started) {
 				this.loadMessenger();
 			}
@@ -68,6 +72,10 @@ class Course {
 			}
 		});
 		window.portalApp.addOnQuizState((event) => {
+			if (event.courseId !== this.courseId) {
+				return;
+			}
+
 			if (event.started) {
 				this.loadQuiz();
 			}
