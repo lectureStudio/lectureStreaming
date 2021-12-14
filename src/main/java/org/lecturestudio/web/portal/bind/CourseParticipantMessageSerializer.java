@@ -18,6 +18,9 @@ public class CourseParticipantMessageSerializer extends JsonSerializer<CoursePar
 		generator.writeStartObject();
 		generator.writeStringField("type", message.getClass().getSimpleName());
 		generator.writeBooleanField("connected", message.getConnected());
+		generator.writeStringField("firstName", message.getFirstName());
+		generator.writeStringField("familyName", message.getFamilyName());
+		generator.writeStringField("username", message.getUsername());
 		generator.writeEndObject();
 	}
 }

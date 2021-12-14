@@ -290,7 +290,6 @@ public class CourseSubscriberController {
 				message.setFamilyName(details.getFamilyName());
 				message.setFirstName(details.getFirstName());
 				message.setUsername(details.getUsername());
-				System.out.println(message.getUsername());
 	
 				courseState.postParticipantMessage(courseId, message);
 			}

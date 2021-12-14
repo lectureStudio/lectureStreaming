@@ -218,7 +218,8 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		}
 
 		try {
-			session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
+			String mess = objectMapper.writeValueAsString(message);
+			session.sendMessage(new TextMessage(mess));
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -240,7 +241,6 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		CourseState state = initStates.remove(courseId);
 
 		courseStates.setCourseState(courseId, state);
-		System.out.println("session Started");
 		for (CourseConnectionRequest connectionRequest : this.connectionRequestService.getAllByCourseId(courseId)) {
 			CourseParticipantMessage message = new CourseParticipantMessage();
 			message.setConnected(true);
