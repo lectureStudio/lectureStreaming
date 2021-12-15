@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.List;
 
 import org.lecturestudio.web.portal.model.CourseConnectionRequest;
 import org.lecturestudio.web.portal.repository.CourseConnectionRequestRepository;
@@ -35,7 +36,11 @@ public class CourseConnectionRequestService {
 		this.requestRepository.deleteAll();
 	}
 
-	public Iterable<CourseConnectionRequest> getAllByCourseId(long courseId) {
-		return this.requestRepository.findByCourseId(courseId);
+	public List<CourseConnectionRequest> getAllByCourseId(long courseId) {
+		return this.requestRepository.findUsersByCourseId(courseId);
+	}
+
+	public Long findNumRequestsToCourseOfUser(String userId, Long courseId) {
+		return this.requestRepository.findNumRequestsToCourseOfUser(userId, courseId);
 	}
 }

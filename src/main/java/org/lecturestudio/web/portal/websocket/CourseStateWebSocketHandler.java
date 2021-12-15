@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -241,14 +242,19 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		CourseState state = initStates.remove(courseId);
 
 		courseStates.setCourseState(courseId, state);
+
+		HashSet<String> considered = new HashSet<>();
 		for (CourseConnectionRequest connectionRequest : this.connectionRequestService.getAllByCourseId(courseId)) {
-			CourseParticipantMessage message = new CourseParticipantMessage();
-			message.setConnected(true);
-			message.setUsername(connectionRequest.getUserId());
-			message.setFirstName(connectionRequest.getFirstName());
-			message.setFamilyName(connectionRequest.getFamilyName());
-			
-			state.postParticipantMessage(courseId, message);
+			if (! considered.contains(connectionRequest.getUserId())) {
+				CourseParticipantMessage message = new CourseParticipantMessage();
+				message.setConnected(true);
+				message.setUsername(connectionRequest.getUserId());
+				message.setFirstName(connectionRequest.getFirstName());
+				message.setFamilyName(connectionRequest.getFamilyName());
+				
+				state.postParticipantMessage(courseId, message);
+				considered.add(connectionRequest.getUserId());
+			}
 		}
 	}
 

@@ -284,7 +284,8 @@ public class CourseSubscriberController {
 
 			connectionRequestService.saveRequest(connectionRequest);
 
-			if (! isNull(courseState)) {
+
+			if (! isNull(courseState) && this.connectionRequestService.findNumRequestsToCourseOfUser(details.getUsername(), courseId) == 1) {
 				CourseParticipantMessage message = new CourseParticipantMessage();
 				message.setConnected(true);
 				message.setFamilyName(details.getFamilyName());
@@ -312,7 +313,7 @@ public class CourseSubscriberController {
 				connectionRequestService.deleteById(connectionRequest.getId());
 			}
 
-			if (! isNull(courseState)) {
+			if (! isNull(courseState) && this.connectionRequestService.findNumRequestsToCourseOfUser(details.getUsername(), courseId) == 0) {
 				CourseParticipantMessage message = new CourseParticipantMessage();
 				message.setConnected(false);
 				message.setFamilyName(details.getFamilyName());
