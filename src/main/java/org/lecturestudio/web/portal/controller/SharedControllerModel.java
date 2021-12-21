@@ -24,7 +24,7 @@ public class SharedControllerModel {
 
 	@ModelAttribute("appVersion")
 	String appVersion() {
-		return gitProperties.get("build.version") + "-" + gitProperties.get("total.commit.count");
+		return gitProperties.get("build.version").replace("-SNAPSHOT", "") + "-" + gitProperties.get("total.commit.count");
 	}
 
 	@ModelAttribute("user")

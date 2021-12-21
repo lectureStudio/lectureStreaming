@@ -8,6 +8,7 @@ class Course {
 		this.messengerElement = null;
 		this.quizContainer = null;
 		this.quizElement = null;
+		this.quizModal = null;
 		this.player = null;
 		this.courseId = null;
 		this.speechRequestId = null;
@@ -29,9 +30,23 @@ class Course {
 			if (event.started) {
 				this.startTime = event.createdTimestamp;
 
+				if (this.messengerElement) {
+					this.messengerContainer.removeChild(this.messengerElement);
+				}
+				if (this.quizElement) {
+					removeAllChildNodes(this.quizContainer);
+	
+					const submitButton = this.quizElement.querySelector("#quizSubmit");
+					submitButton.classList.add("d-none");
+				}
+
 				this.initPlayer();
 			}
 			else {
+				if (this.quizModal) {
+					this.quizModal.hide();
+				}
+
 				this.player = null;
 			}
 		});
@@ -80,6 +95,10 @@ class Course {
 				this.loadQuiz();
 			}
 			else {
+				if (this.quizModal) {
+					this.quizModal.hide();
+				}
+
 				if (this.player) {
 					this.player.setQuizActive(false);
 				}
@@ -125,8 +144,6 @@ class Course {
 				this.player.setContainerA(this.messengerElement);
 			}
 			if (this.quizElement) {
-				removeAllChildNodes(this.quizContainer);
-
 				this.player.setQuizActive(true);
 			}
 
@@ -139,6 +156,9 @@ class Course {
 				this.messengerContainer.appendChild(this.messengerElement);
 			}
 			if (this.quizElement) {
+				const submitButton = this.quizElement.querySelector("#quizSubmit");
+				submitButton.classList.remove("d-none");
+
 				this.quizContainer.appendChild(this.quizElement);
 			}
 
@@ -377,6 +397,9 @@ class Course {
 		});
 
 		if (this.player) {
+			const submitButton = quizForm.querySelector("#quizSubmit");
+			submitButton.classList.add("d-none");
+
 			this.player.setQuizActive(true);
 		}
 		else {
@@ -388,7 +411,7 @@ class Course {
 		const quizModalElement = document.getElementById("quizModal");
 		const quizModalContent = document.getElementById("quizModalContent");
 
-		const quizModal = bootstrap.Modal.getOrCreateInstance(quizModalElement, {
+		this.quizModal = bootstrap.Modal.getOrCreateInstance(quizModalElement, {
 			backdrop: "static",
 			keyboard: false
 		});
@@ -396,17 +419,20 @@ class Course {
 		const hiddenHandler = () => {
 			quizModalElement.removeEventListener("hidden.bs.modal", hiddenHandler);
 
-			this.player.setShowQuiz(false);
+			if (this.player) {
+				this.player.setShowQuiz(false);
+			}
 
 			removeAllChildNodes(quizModalContent);
 
-			quizModal.dispose();
+			this.quizModal.dispose();
+			this.quizModal = null;
 		};
 
 		quizModalElement.addEventListener("hidden.bs.modal", hiddenHandler);
 		quizModalContent.appendChild(this.quizElement);
 
-		quizModal.show();
+		this.quizModal.show();
 	}
 
 	speechAccepted() {
