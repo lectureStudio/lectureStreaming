@@ -17,6 +17,7 @@ import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeature;
 import org.lecturestudio.web.portal.model.CourseFeatureEvent;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseSpeechEvent;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
@@ -62,6 +63,9 @@ public class CoursePublisherController {
 
 	@Autowired
 	private SubscriberEmitterService subscriberEmmiter;
+
+	@Autowired	
+	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
 
 
 	@GetMapping("/courses")
@@ -188,6 +192,9 @@ public class CoursePublisherController {
 			course.getFeatures().add(feature);
 
 			courseService.saveCourse(course);
+			if (feature instanceof CourseMessageFeature) {
+				messengerFeatureSaveFeature.addCourseHistory(courseId);
+			}
 
 			// Send feature state event.
 			sendFeatureState(course.getId(), feature, true);
@@ -213,6 +220,10 @@ public class CoursePublisherController {
 		courseService.saveCourse(course);
 
 		courseFeatureService.deleteById(courseFeature.getId());
+
+		if (courseFeature instanceof CourseMessageFeature) {
+			messengerFeatureSaveFeature.removeCourseHistory(courseId);
+		}
 
 		// Send feature state event.
 		sendFeatureState(course.getId(), courseFeature, false);

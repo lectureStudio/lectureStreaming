@@ -13,6 +13,7 @@ class Course {
 		this.speechRequestId = null;
 		this.startTime = null;
 		this.dict = null;
+		this.stompClient = null;
 	}
 
 	init(courseId, startTime, dict) {
@@ -24,6 +25,7 @@ class Course {
 		this.contentContainer = document.getElementById("course-content");
 		this.messengerContainer = document.getElementById("messenger-content");
 		this.quizContainer = document.getElementById("quiz-content");
+
 
 		window.portalApp.addOnCourseState((event) => {
 			if (event.started) {
@@ -56,6 +58,7 @@ class Course {
 				this.loadMessenger();
 			}
 			else {
+				this.teardownMessengerConnection();
 				if (this.player) {
 					this.player.setContainerA(null);
 				}
@@ -82,6 +85,23 @@ class Course {
 				this.unavailableVisible(true);
 			}
 		});
+	}
+
+	establishMessengerConnection() {
+		var socket = new SockJS('/gs-guide-websocket');
+		this.stompClient = Stomp.over(socket);
+
+		this.stompClient.connect({}, (frame) => {
+			this.stompClient.subscribe('/topic/chat/' + this.courseId, (message) => {
+				this.onChatMessageReceive(this.stompMessageToMessageObject(message));
+			});
+		});
+	}
+
+	teardownMessengerConnection() {
+		this.stompClient.disconnect(() => {
+			console.log("Disconnected From STOMP broker");
+		})
 	}
 
 	initPlayer() {
@@ -121,6 +141,9 @@ class Course {
 
 				this.player.setQuizActive(true);
 			}
+			if (this.messengerContainer) {
+				this.messengerContainer.classList.remove("h-100");
+			}
 
 			this.loadingVisible(false);
 			this.unavailableVisible(false);
@@ -133,12 +156,55 @@ class Course {
 			if (this.quizElement) {
 				this.quizContainer.appendChild(this.quizElement);
 			}
+			if (this.messengerContainer) {
+				this.messengerContainer.classList.add("h-100");
+			}
 
 			this.playerVisible(false);
 			this.unavailableVisible(true);
 		}
 
 		window.dispatchEvent(new Event('resize'));
+	}
+
+	stompMessageToMessageObject(stompMessage) {
+		const messageBody = stompMessage.body;
+		return JSON.parse(messageBody);
+	}
+
+	async onChatMessageReceive(message) {
+		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
+		var params = {timestamp: message.time, content: message.text, from: message.username};
+
+		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+		const response = await fetch(url, {
+			method: "GET",
+		})
+		.then((response) => {
+			return response.text();
+		})
+		.then(html => {
+			if (html) {
+				const doc = new DOMParser().parseFromString(html, "text/html");
+
+				const chatHistory = this.messengerElement.querySelector("#chat-history-list")
+
+				if (chatHistory) {
+					for (const child of doc.body.children) {
+						chatHistory.appendChild(child);
+					}
+				}
+
+				const chat = this.messengerElement.querySelector("#chat-history")
+				console.log(chatHistory.scrollHeight);
+				chatHistory.scrollTop = chatHistory.scrollHeight - 500;
+			}
+		})
+		.catch(error => console.error(error));
+
+
+		return response;
 	}
 
 	onPlayerSettings() {
@@ -237,6 +303,7 @@ class Course {
 	}
 
 	loadMessenger() {
+		this.establishMessengerConnection();
 		fetch("/course/messenger/" + this.courseId, {
 			method: "GET",
 		})
@@ -248,6 +315,7 @@ class Course {
 				const doc = new DOMParser().parseFromString(html, "text/html");
 
 				this.messengerElement = document.createElement("div");
+				this.messengerElement.classList.add("h-100");
 
 				for (const child of doc.body.children) {
 					this.messengerElement.appendChild(child);
@@ -264,6 +332,42 @@ class Course {
 			}
 		})
 		.catch(error => console.error(error));
+
+		this.reloadMessengerHistory();
+	}
+
+	reloadMessengerHistory() {
+		fetch("/course/messenger/history/" + this.courseId, {
+			method: "GET",
+		})
+		.then((response) => {
+			return response.text();
+		})
+		.then( async json => {
+			const messengerHistoryDto = JSON.parse(json);
+			const messengerHistory = messengerHistoryDto.messengerHistory;
+			/*
+			messengerHistory.sort(function(a, b) {
+				const aDate = new Date(a.time);
+				const bDate = new Date(b.time);
+				const aTime = aDate.getTime();
+				const bTime = bDate.getTime();
+				if (aTime < bTime) {
+					return -1;
+				}
+				else if (aTime > bTime) {
+					return 1;
+				}
+				else {
+					return 0;
+				}
+			})
+			*/
+
+			for (let mm of messengerHistory) {
+				await this.onChatMessageReceive(mm);
+			}
+		})
 	}
 
 	initMessenger() {
@@ -284,25 +388,22 @@ class Course {
 
 			const data = new FormData(event.target);
 			const value = Object.fromEntries(data.entries());
+			
+			if (this.stompClient.connected) {
+				this.sendOverSTOMP(value)
+			}
+			else {
+				this.loadMessenger();
+			}
 
-			fetch(messageForm.getAttribute("action"), {
-				method: "POST",
-				body: JSON.stringify(value),
-				headers: {
-					"Content-Type": "application/json"
-				}
-			})
-			.then(response => {
-				const toastId = (response.status === 200) ? "toast-success" : "toast-warn";
-				const toastMessage = (response.status === 200) ? "course.feature.message.sent" : "course.feature.message.send.error";
 
-				this.showToast(toastId, toastMessage);
-
-				messageForm.reset();
-				submitButton.disabled = false;
-			})
-			.catch(error => console.error(error));
+			messageForm.reset();
+			submitButton.disabled = false;
 		});
+	}
+
+	sendOverSTOMP(value) {
+		this.stompClient.send("/app/message/" + this.courseId, {}, JSON.stringify(value));
 	}
 
 	loadQuiz() {

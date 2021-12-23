@@ -3,6 +3,8 @@ package org.lecturestudio.web.portal.controller;
 import static java.util.Objects.nonNull;
 
 import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import org.lecturestudio.web.portal.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -284,6 +287,22 @@ public class CourseController {
 		model.addAttribute("course", courseDto);
 
 		return "fragments/messenger :: messenger";
+	}
+
+	@RequestMapping("/messenger/messageReceived")
+	public String getMessageReceived(@RequestParam("timestamp") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date, @RequestParam("content") String content,
+		@RequestParam("from") String from, Authentication authentication) {
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		String time = String.format("%02d:%02d", date.getHour(), date.getMinute());
+
+		if (details.getUsername().equals(from)) {
+			return String.format("fragments/messenger-message :: messenger-message(timestamp='%s', content='%s')", time, content);
+		}
+		else {
+			return String.format("fragments/messenger-other-message :: messenger-other-message(timestamp='%s', content='%s', from='%s')", time, content, from);
+		}
 	}
 
 	@RequestMapping("/quiz/{id}")

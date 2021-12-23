@@ -7,11 +7,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
+import org.joda.time.LocalDate;
 import org.lecturestudio.core.recording.RecordedPage;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
@@ -33,12 +36,14 @@ import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStateListener;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.CourseStateDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 
@@ -51,6 +56,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.messaging.MessageHandler;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -94,6 +104,9 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private QuizAnswerValidator quizAnswerValidator;
+
+	@Autowired
+	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
 
 
 	@PostConstruct
@@ -283,6 +296,12 @@ public class CourseSubscriberController {
 		return response;
 	}
 
+	@GetMapping("/messenger/history/{courseId}")
+	public CourseMessengerHistoryDto getMessengerHistoryOfCourse(@PathVariable("courseId") long courseId, Authentication authentication) {
+		CourseMessengerHistoryDto dto = new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId));
+		return dto;
+	}
+
 	@PostMapping("/quiz/post/{courseId}")
 	public ResponseEntity<ClassroomServiceResponse> postQuizAnswer(@PathVariable("courseId") long courseId,
 			@RequestBody QuizAnswer quizAnswer, Authentication authentication, HttpServletRequest request) {
@@ -331,6 +350,35 @@ public class CourseSubscriberController {
 			.contentType(MediaType.parseMediaType(contentType))
 			.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
 			.body(file);
+	}
+
+	@MessageMapping("/message/{courseId}")
+    @SendTo("/topic/chat/{courseId}")
+    public MessengerMessage sendMessage(@Payload Message message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
+		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
+				.orElseThrow(() -> new FeatureNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		// Validate input.
+		ResponseEntity<ClassroomServiceResponse> response = messageValidator.validate(feature, message);
+
+		if (! (response.getStatusCode().value() == HttpStatus.OK.value())) {
+			throw new Exception(response.toString());
+		}
+
+		MessengerMessage mMessage = new MessengerMessage(message, details.getUsername(), ZonedDateTime.now());
+		mMessage.setFirstName(details.getFirstName());
+		mMessage.setFamilyName(details.getFamilyName());
+
+		courseFeatureState.postCourseFeatureMessage(courseId, mMessage);
+
+		return mMessage;
+    }
+
+	@MessageExceptionHandler
+	public void messengerMessageError(Exception exc) {
+		System.out.println(exc.getMessage());
 	}
 
 	private void sendCourseEvent(CourseState state, long courseId, boolean started) {
