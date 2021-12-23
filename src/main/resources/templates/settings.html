@@ -33,9 +33,15 @@
 							</select>
 						</div>
 						<div class="mb-3">
-							<label th:text="#{devices.microphone}" for="microphoneSelect" class="form-label"></label>
+							<label th:text="#{devices.audio.input}" for="microphoneSelect" class="form-label"></label>
 							<select name="audioInput" id="microphoneSelect" class="form-select form-select-sm"
 								aria-label=".form-select-sm microphone">
+							</select>
+						</div>
+						<div class="mb-3" id="settingsAudioInputContainer">
+							<label th:text="#{devices.audio.output}" for="microphoneSelect" class="form-label"></label>
+							<select name="audioOutput" id="speakerSelect" class="form-select form-select-sm"
+								aria-label=".form-select-sm speaker">
 							</select>
 						</div>
 					</form>

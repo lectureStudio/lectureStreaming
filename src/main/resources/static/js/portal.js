@@ -209,6 +209,7 @@ function enumerateDevices(useVideo, useSettings) {
 
 function clearDeviceChoice() {
 	localStorage.removeItem("audioinput");
+	localStorage.removeItem("audiooutput");
 	localStorage.removeItem("videoinput");
 }
 
@@ -219,6 +220,14 @@ function saveDeviceChoice(devices) {
 		}
 		else {
 			localStorage.setItem("audioinput", devices.audioInput);
+		}
+	}
+	if (devices.audioOutput) {
+		if (devices.audioOutput === "none") {
+			localStorage.removeItem("audioOutput");
+		}
+		else {
+			localStorage.setItem("audiooutput", devices.audioOutput);
 		}
 	}
 	if (devices.videoInput) {

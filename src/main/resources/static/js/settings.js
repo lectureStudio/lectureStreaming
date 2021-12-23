@@ -1,10 +1,12 @@
 function fillForm(devices, stream, constraints) {
 	const audioInputs = devices.filter(device => device.kind === "audioinput");
+	const audioOutputs = devices.filter(device => device.kind === "audiooutput");
 	const videoInputs = devices.filter(device => device.kind === "videoinput");
 
 	const cameraBlockedAlert = document.getElementById("cameraBlockedAlert");
 	const cameraSelect = document.getElementById("cameraSelect");
 	const microphoneSelect = document.getElementById("microphoneSelect");
+	const speakerSelect = document.getElementById("speakerSelect");
 	const meterCanvas = document.getElementById("meter");
 
 	const saveButton = document.getElementById("saveDeviceSelection");
@@ -16,10 +18,12 @@ function fillForm(devices, stream, constraints) {
 		window.saveDeviceChoice(devices);
 	});
 
+	const audioInputContainer = document.getElementById("settingsAudioInputContainer");
+
 	const video = document.getElementById("cameraPreview");
 	video.srcObject = stream;
 
-	const onAudioDeviceChange = () => {
+	const onAudioInputDeviceChange = () => {
 		window.stopAudioTracks(video.srcObject);
 
 		const audioSource = microphoneSelect.value;
@@ -41,6 +45,18 @@ function fillForm(devices, stream, constraints) {
 				if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
 					this.showDevicePermissionDeniedModal();
 				}
+			});
+	};
+	const onAudioOutputDeviceChange = () => {
+		if (!('sinkId' in HTMLMediaElement.prototype)) {
+			return;
+		}
+
+		const audioSink = speakerSelect.value;
+
+		video.setSinkId(audioSink)
+			.catch(error => {
+				console.error(error);
 			});
 	};
 	const onVideoDeviceChange = () => {
@@ -86,24 +102,36 @@ function fillForm(devices, stream, constraints) {
 	};
 
 	cameraSelect.onchange = onVideoDeviceChange;
-	microphoneSelect.onchange = onAudioDeviceChange;
+	microphoneSelect.onchange = onAudioInputDeviceChange;
+	speakerSelect.onchange = onAudioOutputDeviceChange;
 
 	const resetButton = document.getElementById("resetDeviceSelection");
 	resetButton.addEventListener("click", () => {
 		cameraSelect.selectedIndex = 0;
 		microphoneSelect.selectedIndex = 0;
+		speakerSelect.selectedIndex = 0;
 
 		window.clearDeviceChoice();
 
-		onAudioDeviceChange();
+		onAudioInputDeviceChange();
+		onAudioOutputDeviceChange();
 		onVideoDeviceChange();
 	});
+
+	const audioSink = localStorage.getItem("audiooutput");
 
 	for (const device of audioInputs) {
 		const index = microphoneSelect.options.length;
 		const selected = constraints.audio.deviceId?.exact == device.deviceId;
 
 		microphoneSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
+	}
+
+	for (const device of audioOutputs) {
+		const index = speakerSelect.options.length;
+		const selected = audioSink == device.deviceId;
+
+		speakerSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
 	}
 
 	for (const device of videoInputs) {
@@ -117,6 +145,7 @@ function fillForm(devices, stream, constraints) {
 		window.stopVideoTracks(stream);
 	}
 
+	audioInputContainer.style.display = audioOutputs.length ? "block" : "none";
 	video.style.display = (cameraSelect.value === "none") ? "none" : "block";
 
 	window.getAudioLevel(stream.getAudioTracks()[0], meterCanvas);
