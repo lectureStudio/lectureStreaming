@@ -156,24 +156,37 @@ customElements.define("password-visibility", PasswordVisibilityElement, { extend
 window.portalApp = new PortalApp();
 
 
-function enumerateDevices(useVideo) {
-	const audioSource = localStorage.getItem("audioinput");
-	const videoSource = localStorage.getItem("videoinput");
+function enumerateDevices(useVideo, useSettings) {
+	let constraints;
 
-	const constraints = {
-		audio: {
-			deviceId: audioSource ? { exact: audioSource } : undefined
-		},
-		video: {
-			deviceId: videoSource ? { exact: videoSource } : undefined,
-			width: 1280,
-			height: 720,
-			facingMode: "user"
+	if (useSettings) {
+		const audioSource = localStorage.getItem("audioinput");
+		const videoSource = localStorage.getItem("videoinput");
+	
+		constraints = {
+			audio: {
+				deviceId: audioSource ? { exact: audioSource } : undefined
+			},
+			video: {
+				deviceId: videoSource ? { exact: videoSource } : undefined,
+				width: 1280,
+				height: 720,
+				facingMode: "user"
+			}
+		};
+	
+		if (!useVideo) {
+			delete constraints.video;
 		}
-	};
-
-	if (!useVideo) {
-		delete constraints.video;
+	}
+	else {
+		constraints = {
+			audio: true,
+			video: {
+				width: 1280,
+				height: 720
+			}
+		};
 	}
 
 	return navigator.mediaDevices.getUserMedia(constraints)

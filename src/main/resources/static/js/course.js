@@ -170,7 +170,7 @@ class Course {
 	}
 
 	onPlayerSettings() {
-		window.enumerateDevices(true)
+		window.enumerateDevices(true, true)
 			.then(result => {
 				this.showDeviceChooserModal(result.devices, result.stream, result.constraints, false);
 			})
@@ -178,7 +178,7 @@ class Course {
 				console.error(error);
 
 				if (error.name == "NotReadableError") {
-					window.enumerateDevices(false)
+					window.enumerateDevices(false, true)
 						.then(result => {
 							this.showDeviceChooserModal(result.devices, result.stream, result.constraints, true);
 						})
@@ -188,7 +188,16 @@ class Course {
 				}
 				else if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
 					this.showDevicePermissionDeniedModal();
-				} 
+				}
+				else {
+					window.enumerateDevices(false, false)
+						.then(result => {
+							this.showDeviceChooserModal(result.devices, result.stream, result.constraints, false);
+						})
+						.catch(error => {
+							console.error(error);
+						});
+				}
 			});
 	}
 

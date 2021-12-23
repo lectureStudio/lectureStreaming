@@ -122,7 +122,7 @@ function fillForm(devices, stream, constraints) {
 	window.getAudioLevel(stream.getAudioTracks()[0], meterCanvas);
 }
 
-window.enumerateDevices(true)
+window.enumerateDevices(true, true)
 	.then(result => {
 		fillForm(result.devices, result.stream, result.constraints);
 	})
@@ -133,7 +133,16 @@ window.enumerateDevices(true)
 			const cameraBlockedAlert = document.getElementById("cameraBlockedAlert");
 			cameraBlockedAlert.classList.toggle("d-none");
 
-			window.enumerateDevices(false)
+			window.enumerateDevices(false, true)
+				.then(result => {
+					fillForm(result.devices, result.stream, result.constraints);
+				})
+				.catch(error => {
+					console.error(error);
+				});
+		}
+		else {
+			window.enumerateDevices(false, false)
 				.then(result => {
 					fillForm(result.devices, result.stream, result.constraints);
 				})
