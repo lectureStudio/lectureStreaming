@@ -162,6 +162,8 @@ class Course {
 				this.quizContainer.appendChild(this.quizElement);
 			}
 
+			this.player = null;
+
 			this.playerVisible(false);
 			this.unavailableVisible(true);
 		}
