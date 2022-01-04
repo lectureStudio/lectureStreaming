@@ -12,6 +12,8 @@ public class JanusVideoRoomEvent extends JanusPluginEvent {
 
 	private final BigInteger peerId;
 
+	private String opaqueId;
+
 
 	/**
 	 * Create a new {@code JanusVideoRoomEvent} with the specified parameters.
@@ -54,5 +56,23 @@ public class JanusVideoRoomEvent extends JanusPluginEvent {
 	 */
 	public BigInteger getPeerId() {
 		return peerId;
+	}
+
+	/**
+	 * Get the opaque ID this event belongs to.
+	 *
+	 * @return The opaque ID.
+	 */
+	public String getOpaqueId() {
+		return opaqueId;
+	}
+
+	/**
+	 * Set the opaque ID this event belongs to.
+	 *
+	 * @param id The opaque ID.
+	 */
+	public void setOpaqueId(String id) {
+		this.opaqueId = id;
 	}
 }
