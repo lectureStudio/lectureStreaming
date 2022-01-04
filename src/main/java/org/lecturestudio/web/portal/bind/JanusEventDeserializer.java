@@ -61,9 +61,14 @@ public class JanusEventDeserializer extends JsonDeserializer<JanusEvent> {
 			}
 
 			String pluginName = eventNode.get("plugin").textValue();
+			String opaqueId = null;
+
+			if (node.hasNonNull("opaque_id")) {
+				opaqueId = node.get("opaque_id").textValue();
+			}
 
 			if (pluginName.equals(JanusVideoRoomEvent.PLUGIN_NAME)) {
-				return createVideoRoomEvent(getSessionId(node), eventNode);
+				return createVideoRoomEvent(getSessionId(node), opaqueId, eventNode);
 			}
 		}
 
@@ -78,7 +83,7 @@ public class JanusEventDeserializer extends JsonDeserializer<JanusEvent> {
 		return null;
 	}
 
-	private static JanusEvent createVideoRoomEvent(BigInteger sessionId, JsonNode node) {
+	private static JanusEvent createVideoRoomEvent(BigInteger sessionId, String opaqueId, JsonNode node) {
 		final JsonNode data = node.path("data");
 
 		if (!data.hasNonNull("event") || !data.hasNonNull("room")) {
@@ -97,7 +102,10 @@ public class JanusEventDeserializer extends JsonDeserializer<JanusEvent> {
 			case SUBSCRIBED:
 			case UNSUBSCRIBED:
 			case PUBLISHED:
-				return new JanusVideoRoomEvent(type, sessionId, roomId, peerId);
+				JanusVideoRoomEvent event = new JanusVideoRoomEvent(type, sessionId, roomId, peerId);
+				event.setOpaqueId(opaqueId);
+
+				return event;
 
 			default:
 				return null;

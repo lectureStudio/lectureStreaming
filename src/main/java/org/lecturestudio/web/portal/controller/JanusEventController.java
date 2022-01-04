@@ -39,7 +39,9 @@ public class JanusEventController {
 						CourseState state = courseStates.getCourseState(courseId);
 
 						if (nonNull(state)) {
-							state.addSessionId(roomEvent.getSessionId());
+							if (nonNull(roomEvent.getOpaqueId())) {
+								state.addSessionId(roomEvent.getSessionId());
+							}
 						}
 					}
 					else if (roomEvent.getEventType() == JanusVideoRoomEventType.UNSUBSCRIBED) {
