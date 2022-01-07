@@ -115,7 +115,14 @@ class Course {
 		this.loadingVisible(true);
 		this.unavailableVisible(false);
 
+		const deviceConstraints = {
+			audioInput: localStorage.getItem("audioinput"),
+			audioOutput: localStorage.getItem("audiooutput"),
+			videoInput: localStorage.getItem("videoinput")
+		};
+
 		this.player = new lect.LecturePlayer();
+		this.player.setDeviceConstraints(deviceConstraints);
 		this.player.setContainer(this.contentContainer);
 		this.player.setRoomId(this.courseId);
 		this.player.setStartTime(this.startTime);
