@@ -88,12 +88,15 @@ class Course {
 	}
 
 	establishMessengerConnection() {
-		var socket = new SockJS('/gs-guide-websocket');
+		var socket = new SockJS('/messenger');
 		this.stompClient = Stomp.over(socket);
 
 		this.stompClient.connect({}, (frame) => {
 			this.stompClient.subscribe('/topic/chat/' + this.courseId, (message) => {
 				this.onChatMessageReceive(this.stompMessageToMessageObject(message));
+			},
+			(frame) => {
+				console.log("Connection could not be established!");
 			});
 		});
 	}
