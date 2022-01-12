@@ -10,13 +10,15 @@ class Course {
 		this.quizElement = null;
 		this.quizModal = null;
 		this.player = null;
+		this.userId = null;
 		this.courseId = null;
 		this.speechRequestId = null;
 		this.startTime = null;
 		this.dict = null;
 	}
 
-	init(courseId, startTime, dict) {
+	init(userId, courseId, startTime, dict) {
+		this.userId = userId;
 		this.courseId = courseId;
 		this.startTime = startTime;
 		this.dict = dict;
@@ -124,6 +126,7 @@ class Course {
 		this.player = new lect.LecturePlayer();
 		this.player.setDeviceConstraints(deviceConstraints);
 		this.player.setContainer(this.contentContainer);
+		this.player.setUserId(this.userId);
 		this.player.setRoomId(this.courseId);
 		this.player.setStartTime(this.startTime);
 		this.player.setOnConnectedState(this.onPlayerConnectedState.bind(this));

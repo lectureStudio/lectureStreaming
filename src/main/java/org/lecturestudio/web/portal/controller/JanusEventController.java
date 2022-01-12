@@ -40,7 +40,9 @@ public class JanusEventController {
 
 						if (nonNull(state)) {
 							if (nonNull(roomEvent.getOpaqueId())) {
-								state.addSessionId(roomEvent.getSessionId());
+								String participantId = roomEvent.getOpaqueId();
+
+								state.setParticipantSession(participantId, roomEvent.getSessionId());
 							}
 						}
 					}
@@ -49,7 +51,7 @@ public class JanusEventController {
 						CourseState state = courseStates.getCourseState(courseId);
 
 						if (nonNull(state)) {
-							state.removeSessionId(roomEvent.getSessionId());
+							state.removeParticipantWithSessionId(roomEvent.getSessionId());
 						}
 					}
 				}
