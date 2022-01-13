@@ -200,7 +200,6 @@ class Course {
 				}
 
 				const chat = this.messengerElement.querySelector("#chat-history")
-				console.log(chatHistory.scrollHeight);
 				chatHistory.scrollTop = chatHistory.scrollHeight - 500;
 			}
 		})
@@ -306,6 +305,7 @@ class Course {
 	}
 
 	loadMessenger() {
+		console.log("Hello");
 		this.establishMessengerConnection();
 		fetch("/course/messenger/" + this.courseId, {
 			method: "GET",

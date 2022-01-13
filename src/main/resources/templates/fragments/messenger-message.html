@@ -1,7 +1,7 @@
 <div th:fragment="messenger-message (timestamp, content)">
     <li class="chat-right">
         <div class="chat-hour" th:text="${timestamp}"></div>
-        <div class="chat-text" th:text="${content}"></div>
+        <div class="chat-text" ><p style="overflow-wrap: break-word;" th:text="${content}"></p></div>
         <div class="chat-avatar">
             <div class="chat-name">Ich</div>
         </div>
