@@ -401,6 +401,8 @@ class Course {
 
 
 			messageForm.reset();
+			const messageTextArea = messageForm.querySelector("#messageTextarea");
+			messageTextArea.setAttribute("style", "resize: none; overflow:hidden");
 			submitButton.disabled = false;
 		});
 	}
