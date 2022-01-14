@@ -99,7 +99,21 @@ html, body {
     text-align: center;
 }
 
-.chat-container li .chat-text {
+.chat-container .chat-right .chat-text {
+    padding: .4rem 1rem;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    background: #0d6efd;
+    color: #ffffff;
+    font-weight: 300;
+    line-height: 150%;
+    position: relative;
+    max-width: 50%;
+    overflow-wrap: break-word;
+}
+
+.chat-container .chat-left .chat-text {
     padding: .4rem 1rem;
     -webkit-border-radius: 4px;
     -moz-border-radius: 4px;
@@ -130,7 +144,7 @@ html, body {
 
 .chat-container li.chat-right > .chat-text:before {
     right: -20px;
-    border-color: transparent transparent transparent #ffffff;
+    border-color: transparent transparent transparent #0d6efd;
     left: inherit;
 }
 
