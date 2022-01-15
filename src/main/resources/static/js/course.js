@@ -87,17 +87,25 @@ class Course {
 		});
 	}
 
-	establishMessengerConnection() {
+	async establishMessengerConnection() {
 		var socket = new SockJS('/messenger');
 		this.stompClient = Stomp.over(socket);
+		const messengerConnectionWarning = this.messengerElement.querySelector("#messenger-connection-warning");
 
-		this.stompClient.connect({}, (frame) => {
+		this.stompClient.connect({}, async (frame) => {
+			if (! messengerConnectionWarning.classList.contains('hidden')) {
+				messengerConnectionWarning.classList.add('hidden');
+			}
 			this.stompClient.subscribe('/topic/chat/' + this.courseId, (message) => {
 				this.onChatMessageReceive(this.stompMessageToMessageObject(message));
-			},
-			(frame) => {
-				console.log("Connection could not be established!");
 			});
+			await this.reloadMessengerHistory();
+			this.setMessengerForm(false);
+		},
+			(frame) => {
+				this.setMessengerForm(true);
+				console.log("Lost connection!");
+				messengerConnectionWarning.classList.remove('hidden');
 		});
 	}
 
@@ -191,7 +199,7 @@ class Course {
 			if (html) {
 				const doc = new DOMParser().parseFromString(html, "text/html");
 
-				const chatHistory = this.messengerElement.querySelector("#chat-history-list")
+				const chatHistory = this.messengerElement.querySelector("#chat-history-list");
 
 				if (chatHistory) {
 					for (const child of doc.body.children) {
@@ -199,8 +207,7 @@ class Course {
 					}
 				}
 
-				const chat = this.messengerElement.querySelector("#chat-history")
-				chatHistory.scrollTop = chatHistory.scrollHeight - 500;
+				chatHistory.scrollTop = chatHistory.scrollHeight;
 			}
 		})
 		.catch(error => console.error(error));
@@ -304,10 +311,8 @@ class Course {
 		
 	}
 
-	loadMessenger() {
-		console.log("Hello");
-		this.establishMessengerConnection();
-		fetch("/course/messenger/" + this.courseId, {
+	async loadMessenger() {
+		await fetch("/course/messenger/" + this.courseId, {
 			method: "GET",
 		})
 		.then((response) => {
@@ -335,12 +340,18 @@ class Course {
 			}
 		})
 		.catch(error => console.error(error));
-
-		this.reloadMessengerHistory();
+		this.establishMessengerConnection();
 	}
 
-	reloadMessengerHistory() {
-		fetch("/course/messenger/history/" + this.courseId, {
+	async reloadMessengerHistory() {
+		const submitButton = this.messengerElement.querySelector("#messageSubmit");
+		const chatHistory = this.messengerElement.querySelector("#chat-history");
+		const chatHistoryList = this.messengerElement.querySelector("#chat-history-list");
+
+		this.setMessengerForm(true);
+		chatHistory.classList.add("hidden");
+
+		await fetch("/course/messenger/history/" + this.courseId, {
 			method: "GET",
 		})
 		.then((response) => {
@@ -349,28 +360,14 @@ class Course {
 		.then( async json => {
 			const messengerHistoryDto = JSON.parse(json);
 			const messengerHistory = messengerHistoryDto.messengerHistory;
-			/*
-			messengerHistory.sort(function(a, b) {
-				const aDate = new Date(a.time);
-				const bDate = new Date(b.time);
-				const aTime = aDate.getTime();
-				const bTime = bDate.getTime();
-				if (aTime < bTime) {
-					return -1;
-				}
-				else if (aTime > bTime) {
-					return 1;
-				}
-				else {
-					return 0;
-				}
-			})
-			*/
 
 			for (let mm of messengerHistory) {
 				await this.onChatMessageReceive(mm);
 			}
 		})
+		chatHistory.classList.remove("hidden");
+		chatHistoryList.scrollTop = chatHistoryList.scrollHeight;
+		this.setMessengerForm(false);
 	}
 
 	initMessenger() {
@@ -387,15 +384,17 @@ class Course {
 			event.preventDefault();
 
 			const submitButton = messageForm.querySelector("#messageSubmit");
-			submitButton.disabled = true;
+			this.setMessengerForm(true);
 
 			const data = new FormData(event.target);
 			const value = Object.fromEntries(data.entries());
-			
+			console.log(this.stompClient);
 			if (this.stompClient.connected) {
-				this.sendOverSTOMP(value)
+				this.sendOverSTOMP(value);
+				this.showToast("toast-success", "course.feature.message.sent");
 			}
 			else {
+				this.showToast("toast-warn", "course.feature.message.send.error");
 				this.loadMessenger();
 			}
 
@@ -403,12 +402,19 @@ class Course {
 			messageForm.reset();
 			const messageTextArea = messageForm.querySelector("#messageTextarea");
 			messageTextArea.setAttribute("style", "resize: none; overflow:hidden");
-			submitButton.disabled = false;
+			this.setMessengerForm(false);
 		});
 	}
 
 	sendOverSTOMP(value) {
 		this.stompClient.send("/app/message/" + this.courseId, {}, JSON.stringify(value));
+	}
+
+	setMessengerForm(disabled) {
+		if (this.messengerElement) {
+			const messageSubmitButton = this.messengerElement.querySelector("#messageSubmit");
+			messageSubmitButton.disabled = disabled;
+		}
 	}
 
 	loadQuiz() {
