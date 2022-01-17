@@ -17,7 +17,7 @@
 <div class="details">
 <span id="author" class="author">Das lectureStudio-Team</span><br>
 <span id="revnumber">version 1.0,</span>
-<span id="revdate">2021-11-10</span>
+<span id="revdate">2022-01-17</span>
 </div>
 <div id="toc" class="toc">
 <div id="toctitle">Inhaltsverzeichnis</div>
@@ -41,10 +41,11 @@
 <li><a href="#_oberfläche">Oberfläche</a></li>
 <li><a href="#_automatische_wiedergabe_von_medien">Automatische Wiedergabe von Medien</a></li>
 <li><a href="#_textnachrichten">Textnachrichten</a></li>
+<li><a href="#quiz-paticipate">Am Quiz teilnehmen</a></li>
 <li><a href="#speech">Sich melden</a></li>
 </ul>
 </li>
-<li><a href="#_einstellungen">Einstellungen</a></li>
+<li><a href="#settings">Einstellungen</a></li>
 </ul>
 </li>
 <li><a href="#_dozenteninnen">Dozenten/innen</a>
@@ -53,10 +54,17 @@
 <ul class="sectlevel3">
 <li><a href="#_kurs_erstellen">Kurs erstellen</a></li>
 <li><a href="#_zugriffstoken">Zugriffstoken</a></li>
-<li><a href="#_stream_starten">Stream starten</a></li>
+<li><a href="#stream-start">Stream starten</a></li>
 </ul>
 </li>
 <li><a href="#_statusindikatoren">Statusindikatoren</a></li>
+<li><a href="#quizzes">Quizze</a>
+<ul class="sectlevel3">
+<li><a href="#_quiz_erstellen">Quiz erstellen</a></li>
+<li><a href="#_quiz_aus_der_quizsammlung_auswählen">Quiz aus der Quizsammlung auswählen</a></li>
+<li><a href="#_quiz_modi">Quiz-Modi</a></li>
+</ul>
+</li>
 <li><a href="#messages">Empfang von Nachrichten</a></li>
 <li><a href="#speeches">Meldungen</a></li>
 </ul>
@@ -99,6 +107,12 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">17. Januar 2022</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">„<a href="#stream-start">Stream starten</a>“ aktualisiert und Abschnitte „<a href="#quiz-paticipate">Am Quiz teilnehmen</a>“ und „<a href="#quizzes">Quizze</a>“ eingeführt.</p>
+<p class="tableblock">Neue <a href="#chromium-audio">Einstellung</a>: Auswahl eines Audio-Ausgabegeräts unter Chromium-basierten Browsern.</p></td>
+</tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1.0</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">14. Oktober 2021</p></td>
@@ -275,6 +289,14 @@ Klicken Sie auf <b class="button">Ablehnen</b>, dann ist das Anmelden auf der We
 <p>Textnachrichten sind für den Kurs aktiviert.</p>
 </td>
 </tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/quiz-button.svg" alt="quiz button" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Ein Quiz wurde gestellt.</p>
+</td>
+</tr>
 </table>
 </div>
 </div>
@@ -329,6 +351,14 @@ Klicken Sie auf <b class="button">Ablehnen</b>, dann ist das Anmelden auf der We
 </td>
 <td class="hdlist2">
 <p>Hiermit können Sie sich melden. Diese Funktion wird in Abschnitt <a href="#speech">Sich melden</a> näher beschrieben.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/quiz-button.svg" alt="quiz button" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Ein Quiz ist aktiv und kann durch einen Klick auf diesen Button angezeigt werden.</p>
 </td>
 </tr>
 <tr>
@@ -414,6 +444,30 @@ Bei Veranstaltungen mit vielen Teilnehmern kann der Chat schnell unübersichtlic
 </div>
 </div>
 <div class="sect3">
+<h4 id="quiz-paticipate">Am Quiz teilnehmen</h4>
+<div class="paragraph">
+<p>Ein Quiz kann mit oder ohne einen laufenden Stream zum Kurs gestellt werden. Wird ein Quiz ohne einen gerade laufenden Stream gestellt, so wird das Quiz anstelle des Streams auf der Webseite angezeigt. Wenn ein Stream zum Kurs läuft, und ein Quiz gestellt wird, dann bekommen Sie einen zusätzlichen Button <span class="image"><img src="./images/icons/quiz-button.svg" alt="quiz button" width="22"></span> in der Steuerleiste zu sehen (<a href="#quiz-button">Abbildung 8</a>). Klicken Sie auf diesen Button, um das Quiz zu öffnen.</p>
+</div>
+<div id="quiz-button" class="imageblock text-center">
+<div class="content">
+<img src="./images/open-quiz.png" alt="open quiz" width="14%">
+</div>
+<div class="title">Abbildung 8. Quiz öffnen</div>
+</div>
+<div class="paragraph">
+<p>Die Oberfläche eines Quiz ist in <a href="#quiz">Abbildung 9</a> zu sehen.</p>
+</div>
+<div id="quiz" class="imageblock text-center">
+<div class="content">
+<img src="./images/quiz.png" alt="quiz" width="45%">
+</div>
+<div class="title">Abbildung 9. Quizoberfläche</div>
+</div>
+<div class="paragraph">
+<p>Wählen Sie die Antwortmöglichkeiten aus und klicken auf <b class="button">Senden</b>, um die Antwort einzureichen.</p>
+</div>
+</div>
+<div class="sect3">
 <h4 id="speech">Sich melden</h4>
 <div class="paragraph">
 <p>Als Teilnehmer/in können Sie sich zu Wort melden. Die folgenden Schritte erläutern den Ablauf eines Redebeitrags.</p>
@@ -424,12 +478,12 @@ Bei Veranstaltungen mit vielen Teilnehmern kann der Chat schnell unübersichtlic
 <p>Klicken Sie in der Steuerleiste auf den Button <span class="image"><img src="./images/icons/hand.svg" alt="hand" width="25"></span>.</p>
 </li>
 <li>
-<p>Wenn Sie sich zum ersten Mal für einen Redebeitrag melden, werden Sie aufgefordert, Ihrem Browser die Erlaubnis zur Verwendung des Mikrofons und optional der Kamera zu erteilen. Sie bekommen zunächst den Dialog in <a href="#speech-1">Abbildung 8</a> angezeigt.</p>
+<p>Wenn Sie sich zum ersten Mal für einen Redebeitrag melden, werden Sie aufgefordert, Ihrem Browser die Erlaubnis zur Verwendung des Mikrofons und optional der Kamera zu erteilen. Sie bekommen zunächst den Dialog in <a href="#speech-1">Abbildung 10</a> angezeigt.</p>
 <div id="speech-1" class="imageblock text-center">
 <div class="content">
 <img src="./images/speech-1.png" alt="speech 1" width="45%">
 </div>
-<div class="title">Abbildung 8. Geräteeinstellungen für Redebeitrag</div>
+<div class="title">Abbildung 10. Geräteeinstellungen für Redebeitrag</div>
 </div>
 <div class="paragraph">
 <p>Falls Sie Ihre Kamera für den Redebeitrag einschalten möchten, dann aktivieren Sie die Option dafür im Dialog. Anschließend klicken Sie auf <b class="button">Weiter</b>.</p>
@@ -439,12 +493,12 @@ Bei Veranstaltungen mit vielen Teilnehmern kann der Chat schnell unübersichtlic
 </div>
 </li>
 <li>
-<p>Der Browser zeigt Ihnen einen Dialog, der nach der Kamera- und Mikrofonberechtigung fragt (<a href="#speech-2">Abbildung 9</a>). Hier stehen alle verfügbaren Kameras und Mikrofone zur Auswahl.</p>
+<p>Der Browser zeigt Ihnen einen Dialog, der nach der Kamera- und Mikrofonberechtigung fragt (<a href="#speech-2">Abbildung 11</a>). Hier stehen alle verfügbaren Kameras und Mikrofone zur Auswahl.</p>
 <div id="speech-2" class="imageblock text-center">
 <div class="content">
 <img src="./images/speech-2.png" alt="speech 2" width="35%">
 </div>
-<div class="title">Abbildung 9. Kamera- und Mikrofonberechtigungen für Browser</div>
+<div class="title">Abbildung 11. Kamera- und Mikrofonberechtigungen für Browser</div>
 </div>
 <div class="paragraph">
 <p>Wählen Sie das Mikrofon, und sofern zuvor aktiviert, die Kamera aus, die Sie für den Redebeitrag verwenden möchten. Klicken Sie dann auf <b class="button">Erlauben</b>.</p>
@@ -454,12 +508,12 @@ Bei Veranstaltungen mit vielen Teilnehmern kann der Chat schnell unübersichtlic
 <p>Ihre Meldung wurde erfolgreich an den/die Dozenten/in gesendet. Dozierende entscheiden, wann und ob sie die Meldung annehmen.</p>
 </li>
 <li>
-<p>Wurde Ihre Meldung angenommen, so werden Sie nochmal gefragt, ob der Redebeitrag nun beginnen kann (<a href="#speech-3">Abbildung 10</a>).</p>
+<p>Wurde Ihre Meldung angenommen, so werden Sie nochmal gefragt, ob der Redebeitrag nun beginnen kann (<a href="#speech-3">Abbildung 12</a>).</p>
 <div id="speech-3" class="imageblock text-center">
 <div class="content">
 <img src="./images/speech-3.png" alt="speech 3" width="45%">
 </div>
-<div class="title">Abbildung 10. Redebeitrag bestätigen</div>
+<div class="title">Abbildung 12. Redebeitrag bestätigen</div>
 </div>
 <div class="paragraph">
 <p>Falls Sie es sich anders überlegt haben und die Meldung zurückziehen möchten, dann klicken Sie auf <b class="button">Abbrechen</b>.</p>
@@ -479,18 +533,21 @@ Bei Veranstaltungen mit vielen Teilnehmern kann der Chat schnell unübersichtlic
 </div>
 </div>
 <div class="sect2">
-<h3 id="_einstellungen">Einstellungen</h3>
+<h3 id="settings">Einstellungen</h3>
 <div class="paragraph">
-<p>Unter Einstellungen können Sie im aktuellen Entwicklungsstand nur Geräteeinstellungen vornehmen (<a href="#device-settings">Abbildung 11</a>). Diese Einstellungen können Sie zum Beispiel nutzen, wenn Sie sich das erste Mal angemeldet haben und die <a href="#speech">Meldefunktion</a> nutzen möchten. So können Kamera und Mikrofon vorab konfiguriert werden.</p>
+<p>Unter Einstellungen können Sie im aktuellen Entwicklungsstand nur Geräteeinstellungen vornehmen (<a href="#device-settings">Abbildung 13</a>). Diese Einstellungen können Sie zum Beispiel nutzen, wenn Sie sich das erste Mal angemeldet haben und die <a href="#speech">Meldefunktion</a> nutzen möchten. So können Kamera und Mikrofon vorab konfiguriert werden.</p>
 </div>
 <div class="paragraph">
 <p>Haben Sie zuvor der Nutzung der Kamera zugestimmt und möchten diese nicht mehr aktiviert haben, so können Sie hier die Nutzung der Kamera deaktivieren, ohne in die Browsereinstellungen zu wechseln. Wählen Sie hierzu in der Kameraauswahl <code>Keine</code> aus.</p>
 </div>
+<div id="chromium-audio" class="paragraph">
+<p>In Chromium-basierten Browsern (z.B. Google Chrome, Opera, Microsoft Edge,&#8230;&#8203;) kann das Audio-Ausgabegerät eingestellt werden. Browser wie z.B. Firefox unterstützen diese Einstellungsmöglichkeit noch nicht.</p>
+</div>
 <div id="device-settings" class="imageblock text-center">
 <div class="content">
-<img src="./images/device-settings.png" alt="device settings" width="45%">
+<img src="./images/device-settings.png" alt="device settings" width="50%">
 </div>
-<div class="title">Abbildung 11. Geräteeinstellungen</div>
+<div class="title">Abbildung 13. Geräteeinstellungen</div>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -604,7 +661,7 @@ Um zu überprüfen, ob das Zugriffstoken funktioniert, klicken Sie auf den Butto
 </div>
 </div>
 <div class="sect3">
-<h4 id="_stream_starten">Stream starten</h4>
+<h4 id="stream-start">Stream starten</h4>
 <div class="paragraph">
 <p>Sofern Sie einen Kurs und Zugriffstoken auf der Webseite erstellt haben, können Sie mit dem Streamen loslegen. In lecturePresenter haben Sie zwei Möglichkeiten einen Stream zu starten.</p>
 </div>
@@ -616,20 +673,23 @@ Um zu überprüfen, ob das Zugriffstoken funktioniert, klicken Sie auf den Butto
 <li>
 <p>Über die Werkzeugleiste mit dem Button <span class="image"><img src="./images/icons/stream.svg" alt="stream" width="25"></span>.</p>
 <div class="paragraph">
-<p>Sobald Sie einen Stream starten, wird zunächst ein Dialog wie in <a href="#stream-start">Abbildung 12</a> gezeigt.</p>
+<p>Sobald Sie einen Stream starten, wird zunächst ein Dialog wie in <a href="#stream-start-image">Abbildung 14</a> gezeigt.</p>
 </div>
-<div id="stream-start" class="imageblock text-center">
+<div id="stream-start-image" class="imageblock text-center">
 <div class="content">
-<img src="./images/stream-start.png" alt="stream start" width="30%">
+<img src="./images/stream-start.png" alt="stream start" width="60%">
 </div>
-<div class="title">Abbildung 12. Stream starten</div>
+<div class="title">Abbildung 14. Stream starten</div>
 </div>
 </li>
 <li>
 <p>In der Auswahlliste werden alle von Ihnen erstellten Kurse aufgelistet. Wählen Sie hier den Kurs aus, der zu Ihrem aktuellen Vortrag passt.</p>
 </li>
 <li>
-<p>Sie haben hier noch die Wahl, ob Sie den Kurs mit eingeschaltetem Mikrofon oder eingeschalteter Kamera beginnen möchten.</p>
+<p>Sie haben hier noch die Möglichkeit die richtigen Ein- und Ausgabegeräte einzustellen und diese zu testen. Zudem haben Sie die Wahl, ob Sie den Kurs mit eingeschaltetem Mikrofon oder eingeschalteter Kamera beginnen möchten.</p>
+</li>
+<li>
+<p>Die Einstellung des Lautsprechers ist nur dann relevant, wenn Sie Redebeiträge annehmen. Das Audio von Redebeiträgen wird dann auf dem ausgewählten Lautsprecher wiedergegeben.</p>
 <div class="paragraph">
 <p>Falls Sie den Empfang von unidirektionalen Textnachrichten für den Kurs einschalten möchten, dann aktivieren Sie die Option <code>Messenger</code>.</p>
 </div>
@@ -656,16 +716,24 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 <div class="sect2">
 <h3 id="_statusindikatoren">Statusindikatoren</h3>
 <div class="paragraph">
-<p>lecturePresenter hat in der rechten oberen Ecke der Oberfläche Indikatoren für den aktuellen Status des Streamings integriert (<a href="#stream-indicators">Abbildung 13</a>).</p>
+<p>lecturePresenter hat in der rechten oberen Ecke der Oberfläche Indikatoren für den aktuellen Status des Streamings integriert (<a href="#stream-indicators">Abbildung 15</a>).</p>
 </div>
 <div id="stream-indicators" class="imageblock text-center">
 <div class="content">
-<img src="./images/stream-indicators.png" alt="stream indicators" width="15%">
+<img src="./images/stream-indicators.png" alt="stream indicators" width="17%">
 </div>
-<div class="title">Abbildung 13. Stream-Indikatoren</div>
+<div class="title">Abbildung 15. Stream-Indikatoren</div>
 </div>
 <div class="hdlist">
 <table>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/quiz-indicator.svg" alt="quiz indicator" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Zeigt an, ob ein Quiz aktiv ist. Daneben wird die Anzahl der Antworten angezeigt. Ein Teilnehmer kann nur einmal am aktiven Quiz teilnehmen.</p>
+</td>
+</tr>
 <tr>
 <td class="hdlist1">
 <span class="image"><img src="./images/icons/messenger-indicator.svg" alt="messenger indicator" width="25"></span>
@@ -694,15 +762,97 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 </div>
 </div>
 <div class="sect2">
+<h3 id="quizzes">Quizze</h3>
+<div class="sect3">
+<h4 id="_quiz_erstellen">Quiz erstellen</h4>
+<div class="paragraph">
+<p>lecturePresenter erlaubt es Ihnen, während der Vorlesung in Echtzeit Quizze zu starten, an denen die Teilnehmer über einen Browser teilnehmen können. Um ein Quiz zu erstellen, müssen Sie dieses zunächst anlegen. Wählen Sie dazu den Menüpunkt Vortrag Quiz erstellen. Es öffnet sich eine Bedienoberfläche (<a href="#quiz-create">Abbildung 16</a>), über die Sie das Quiz erstellen.</p>
+</div>
+<div id="quiz-create" class="imageblock text-center">
+<div class="content">
+<img src="./images/create-quiz.png" alt="create quiz" width="60%">
+</div>
+<div class="title">Abbildung 16. Quiz erstellen</div>
+</div>
+<div class="paragraph">
+<p>Geben Sie eine Quizfrage ein [1]. Verschiedene Formatierungsmöglichkeiten sind in der Werkzeugleiste [2] zu finden. Die Quizfrage wird mit HTML formatiert. Auf diese Weise wird die Frage in allen Browsern mit der gleichen Formatierung angezeigt.</p>
+</div>
+<div class="paragraph">
+<p>Wählen Sie den Quizstil [3] aus. Es stehen drei Stile zur Verfügung; <code>Multiple choice</code> (Mehrfachauswahl), <code>Eine Antwort</code> und <code>Numerisch</code>.</p>
+</div>
+<div class="sect4">
+<h5 id="_multiple_choice_und_eine_antwort">Multiple Choice und Eine Antwort</h5>
+<div class="paragraph">
+<p>Die Antwortmöglichkeiten werden im Feld [4] als Text eingegeben. Neue Antwortmöglichkeiten erstellen Sie mit dem Button [5] oder mit der Taste Tab . Um eine Antwort zu löschen, klicken Sie den Button <span class="image"><img src="./images/icons/delete.svg" alt="delete" width="25"></span> [6]. Mit den aufwärts und abwärts Buttons [7] können Sie die Reihenfolge der Antworten verändern.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_numerische_antworten">Numerische Antworten</h5>
+<div class="paragraph">
+<p>Für Fragen vom Stil <code>Numerisch</code> können Sie einen oder mehrere Einträge hinzufügen. Jede Antwortmöglichkeit (<a href="#quiz-create-numeric">Abbildung 17</a>) besitzt eine Beschreibung [1] und ein erlaubtes Werteintervall in Form von Min- und Max-Feldern[2][3], für die Eingabe bei der Teilnahme am Quiz. Numerische Antworten lassen sich ebenfalls sortieren und entfernen, wie im vorherigen Abschnitt beschrieben.</p>
+</div>
+<div id="quiz-create-numeric" class="imageblock text-center">
+<div class="content">
+<img src="./images/create-quiz-numeric.png" alt="create quiz numeric" width="60%">
+</div>
+<div class="title">Abbildung 17. Numerische Quizantwort</div>
+</div>
+<div class="paragraph">
+<p>Nachdem Sie alles Gewünschte eingegeben haben, haben Sie die Möglichkeit das Quiz zu speichern, bevor Sie das Quiz freigeben. Zum Speichern drücken Sie den Button <b class="button">Quiz speichern</b>. Um das Quiz freizugeben, klicken Sie <b class="button">Quiz stellen</b>.</p>
+</div>
+<div class="paragraph">
+<p>Sobald das Quiz erfolgreich freigegeben wurde, öffnet sich ein neues Dokument mit dem Namen <code>Quiz</code> und das Quiz ist jetzt für die Teilnehmer über einen Browser zugänglich. Das Quiz-Dokument wird in Echtzeit aktualisiert während die Antworten eintreffen. Um die Quizergebnisse anzuzeigen, wechseln sie auf die nächste Folie des Quiz-Dokuments.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_quiz_aus_der_quizsammlung_auswählen">Quiz aus der Quizsammlung auswählen</h4>
+<div class="paragraph">
+<p>Um den Teilnehmern eine ihrer angelegten Fragen aus ihrer Quizsammlung zu stellen, wählen Sie den Menüpunkt <span class="menuseq"><b class="menu">Vortrag</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Quiz auswählen</b></span>. Es öffnet sich die Fragenliste, in der Sie bestehende Fragen bearbeiten, löschen oder stellen können. Wählen Sie die gewünschte Frage aus und klicken <b class="button">Quiz stellen</b>.</p>
+</div>
+<div id="quiz-select" class="imageblock text-center">
+<div class="content">
+<img src="./images/select-quiz.png" alt="select quiz" width="60%">
+</div>
+<div class="title">Abbildung 18. Quiz auswählen</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_quiz_modi">Quiz-Modi</h4>
+<div class="paragraph">
+<p>Ein Quiz kann mit oder ohne einen laufenden Stream gestellt werden. Wird ein Quiz ohne einen gerade laufenden Stream gestellt, so wird das Quiz anstelle des Streams auf der Webseite angezeigt. Ein aktives Quiz kann auf zwei Wegen beendet werden: Durch den Menüpunkt <span class="menuseq"><b class="menu">Vortrag</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Quiz beenden</b></span> oder den Button <b class="button">Beenden</b> unter den Vorschaufolien.</p>
+</div>
+<div class="paragraph">
+<p>Stellen Sie ein Quiz während der Stream zum Vortrag läuft, so sehen Sie unter den Vorschaufolien einen zusätzlichen Button <b class="button">Teilen</b>. Dieser Button ist dafür da, um die Quizergebnisse mit den Teilnehmern zu teilen. Denn die Teilnehmer können die Ergebnisse so lange nicht sehen, bis diese geteilt wurden. Die Ergebnisse können auch nur dann geteilt werden, wenn Sie das Quiz beenden.</p>
+</div>
+<div class="paragraph">
+<p>Quizergebnisse können Sie mit folgenden Schritten den Teilnehmern präsentieren:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Das Quiz z.B. mit dem Button <b class="button">Beenden</b> stoppen.</p>
+</li>
+<li>
+<p>Mit dem Button <b class="button">Teilen</b> die Ergebnisse an die Teilnehmer freigeben.</p>
+</li>
+<li>
+<p>Die Folien mit Diagrammen, die alle Antworten zusammenfassen, auswählen und präsentieren.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect2">
 <h3 id="messages">Empfang von Nachrichten</h3>
 <div class="paragraph">
-<p>Textnachrichten können empfangen werden, wenn die Funktion <code>Messenger</code> aktiviert wurde. Empfangene Nachrichten sind in lecturePresenter unter der Folienanzeige zu sehen (<a href="#presenter-messages">Abbildung 14</a>). Eine Textnachricht enthält den Vor- und Nachnamen des/der Verfassenden, die Uhrzeit und den Text der Nachricht selbst.</p>
+<p>Textnachrichten können empfangen werden, wenn die Funktion <code>Messenger</code> aktiviert wurde. Empfangene Nachrichten sind in lecturePresenter unter der Folienanzeige zu sehen (<a href="#presenter-messages">Abbildung 19</a>). Eine Textnachricht enthält den Vor- und Nachnamen des/der Verfassenden, die Uhrzeit und den Text der Nachricht selbst.</p>
 </div>
 <div id="presenter-messages" class="imageblock text-center">
 <div class="content">
 <img src="./images/presenter-messages.png" alt="presenter messages" width="42%">
 </div>
-<div class="title">Abbildung 14. Empfangene Nachrichten in lecturePresenter</div>
+<div class="title">Abbildung 19. Empfangene Nachrichten in lecturePresenter</div>
 </div>
 <div class="paragraph">
 <p>Während eines Vortrags mit sehr vielen Teilnehmenden kann es vorkommen, dass Sie eine große Anzahl von Nachrichten bekommen. Wenn Sie auf eine Nachricht eingegangen sind oder eine Nachricht für unwichtig halten, dann kann diese mit dem Button <b class="button">Bearbeitet</b> entfernt werden.</p>
@@ -711,13 +861,13 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 <div class="sect2">
 <h3 id="speeches">Meldungen</h3>
 <div class="paragraph">
-<p>Meldungen sehen Sie dort, wo auch Textnachrichten in lecturePresenter angezeigt werden, unter der Folienanzeige (<a href="#presenter-speeches">Abbildung 15</a>). Eine Meldung enthält den Vor- und Nachnamen des/der Meldenden und die Uhrzeit. Sie können eine Meldung annehmen oder ablehnen. In beiden Fällen wird die Meldung entfernt.</p>
+<p>Meldungen sehen Sie dort, wo auch Textnachrichten in lecturePresenter angezeigt werden, unter der Folienanzeige (<a href="#presenter-speeches">Abbildung 20</a>). Eine Meldung enthält den Vor- und Nachnamen des/der Meldenden und die Uhrzeit. Sie können eine Meldung annehmen oder ablehnen. In beiden Fällen wird die Meldung entfernt.</p>
 </div>
 <div id="presenter-speeches" class="imageblock text-center">
 <div class="content">
 <img src="./images/presenter-speech-request.png" alt="presenter speech request" width="42%">
 </div>
-<div class="title">Abbildung 15. Meldungen in lecturePresenter</div>
+<div class="title">Abbildung 20. Meldungen in lecturePresenter</div>
 </div>
 <div class="paragraph">
 <p>Haben Sie eine Meldung angenommen und der/die Meldende hat den Redebeitrag gestartet, dann sehen Sie in lecturePresenter rechts oben über der Folienvorschau den Namen und das Kamerabild, falls aktiviert, des/der Meldenden sowie Steuerelemente für den Redebeitrag. Zu diesem Zeitpunkt ist auch der/die Meldende für Sie und alle Teilnehmer/innen zu hören.</p>
@@ -726,7 +876,7 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 <div class="content">
 <img src="./images/presenter-speech.png" alt="presenter speech" width="42%">
 </div>
-<div class="title">Abbildung 16. Laufender Redebeitrag in lecturePresenter</div>
+<div class="title">Abbildung 21. Laufender Redebeitrag in lecturePresenter</div>
 </div>
 <div class="paragraph">
 <p>Audio und Video des Redebeitrags können Sie steuern.</p>
