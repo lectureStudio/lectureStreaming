@@ -66,7 +66,7 @@ public class WebSocketConfig implements WebSocketConfigurer, WebSocketMessageBro
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/messenger").withSockJS();
+        registry.addEndpoint("/messenger").setAllowedOriginPatterns("*").withSockJS();
     }
 
 	@Bean
