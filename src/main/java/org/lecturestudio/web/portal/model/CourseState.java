@@ -69,6 +69,7 @@ public class CourseState {
 		if (user.isPresent()) {
 			participantMessage.setFirstName(user.get().getFirstName());
 			participantMessage.setFamilyName(user.get().getFamilyName());
+			participantMessage.setUsername(user.get().getUserId());
 		}
 
 		postParticipantMessage(courseId, participantMessage);
@@ -95,6 +96,7 @@ public class CourseState {
 				if (user.isPresent()) {
 					participantMessage.setFirstName(user.get().getFirstName());
 					participantMessage.setFamilyName(user.get().getFamilyName());
+					participantMessage.setUsername(user.get().getUserId());
 				}
 
 				postParticipantMessage(courseId, participantMessage);
