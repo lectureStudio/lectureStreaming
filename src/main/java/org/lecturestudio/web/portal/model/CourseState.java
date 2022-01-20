@@ -1,6 +1,7 @@
 package org.lecturestudio.web.portal.model;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -58,18 +59,25 @@ public class CourseState {
 			return;
 		}
 
+		if (nonNull(participantMap.get(participantId))) {
+			// Already joined.
+			return;
+		}
+
 		participantMap.put(participantId, sessionId);
 
 		Optional<User> user = userService.findById(participantId);
 
+		if (!user.isPresent()) {
+			// TODO: kick participant from course?
+			return;
+		}
+
 		// Send notification of arrival.
 		CourseParticipantMessage participantMessage = new CourseParticipantMessage();
 		participantMessage.setConnected(true);
-
-		if (user.isPresent()) {
-			participantMessage.setFirstName(user.get().getFirstName());
-			participantMessage.setFamilyName(user.get().getFamilyName());
-		}
+		participantMessage.setFirstName(user.get().getFirstName());
+		participantMessage.setFamilyName(user.get().getFamilyName());
 
 		postParticipantMessage(courseId, participantMessage);
 	}
