@@ -17,4 +17,6 @@ public class UserDto {
 
 	String familyName;
 
+	String username;
+
 }

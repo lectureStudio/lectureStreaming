@@ -388,7 +388,6 @@ class Course {
 
 			const data = new FormData(event.target);
 			const value = Object.fromEntries(data.entries());
-			console.log(this.stompClient);
 			if (this.stompClient.connected) {
 				this.sendOverSTOMP(value);
 				this.showToast("toast-success", "course.feature.message.sent");

@@ -21,7 +21,7 @@
 					</div>
 				</div>
 			</div>
-			<form id="course-message-form" th:action="@{/course/message/post/{id}(id=${course.id})}" method="post" class="d-flex flex-column justify-content-end">
+			<form id="course-message-form" class="d-flex flex-column justify-content-end">
 				<input type="hidden" name="serviceId" th:value="${course.messageFeature.featureId}" />
 				<div class="input-group mb-3">
 					<textarea name="text" class="form-control" rows="1" id="messageTextarea" th:placeholder="#{course.feature.message.description}" oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' style="resize: none; overflow:hidden"></textarea>

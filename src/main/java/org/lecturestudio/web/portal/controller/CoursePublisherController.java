@@ -5,10 +5,17 @@ import static java.util.Objects.nonNull;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.lecturestudio.web.api.message.MessengerMessage;
+import org.lecturestudio.web.api.model.ClassroomServiceResponse;
+import org.lecturestudio.web.api.model.Message;
 import org.lecturestudio.web.api.model.quiz.Quiz;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
@@ -16,23 +23,32 @@ import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeature;
 import org.lecturestudio.web.portal.model.CourseFeatureEvent;
+import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseSpeechEvent;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
+import org.lecturestudio.web.portal.model.dto.UserDto;
+import org.lecturestudio.web.portal.saml.LectUserDetails;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.SubscriberEmitterService;
+import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.util.StringUtils;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
+import org.lecturestudio.web.portal.model.User;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,7 +66,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public class CoursePublisherController {
 
 	@Autowired
+	private UserService userService;
+
+	@Autowired
 	private CourseService courseService;
+
+	@Autowired
+	private CourseFeatureState courseFeatureState;
 
 	@Autowired
 	private CourseFeatureService courseFeatureService;
@@ -66,6 +88,19 @@ public class CoursePublisherController {
 
 	@Autowired	
 	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
+
+
+	@GetMapping("/user")
+	public UserDto getUser(Authentication authentication) {
+		Optional<User> userOpt = userService.findById(authentication.getName());
+		User user = userOpt.get();
+		UserDto userDto = UserDto.builder()
+			.username(authentication.getName())
+			.familyName(user.getFamilyName())
+			.firstName(user.getFirstName()).build();
+
+		return userDto;
+	}
 
 
 	@GetMapping("/courses")
@@ -245,4 +280,28 @@ public class CoursePublisherController {
 
 		subscriberEmmiter.send(new GenericMessage<>(sEvent));
 	}
+
+	@MessageMapping("/publisher/message/{courseId}")
+    @SendTo("/topic/chat/{courseId}")
+    public MessengerMessage sendMessage(@Payload String message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
+		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
+				.orElseThrow(() -> new FeatureNotFoundException());
+
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		JsonNode jsonNode = objectMapper.readTree(message);
+		
+		MessengerMessage mMessage = new MessengerMessage();
+
+		if (jsonNode.get("type").asText().equals("MessengerMessage")) {
+			mMessage.setMessage(new Message(jsonNode.get("message").asText()));
+			mMessage.setFirstName(jsonNode.get("firstName").asText());
+			mMessage.setFamilyName(jsonNode.get("familyName").asText());
+			mMessage.setDate(ZonedDateTime.parse(jsonNode.get("date").asText()));
+		}
+
+
+		courseFeatureState.postCourseFeatureMessage(courseId, mMessage);
+		return mMessage;
+    }
 }
