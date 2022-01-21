@@ -3,6 +3,7 @@ package org.lecturestudio.web.portal.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.lecturestudio.web.portal.model.CourseFeatureState;
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.websocket.CourseFeatureWebSocketHandler;
@@ -11,14 +12,21 @@ import org.lecturestudio.web.portal.websocket.CourseStateWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 
 @Configuration
 @EnableWebSocket
-public class WebSocketConfig implements WebSocketConfigurer {
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketConfigurer, WebSocketMessageBrokerConfigurer {
 
 	@Autowired
 	private CourseStates courseStates;
@@ -27,7 +35,11 @@ public class WebSocketConfig implements WebSocketConfigurer {
 	private CourseFeatureState courseFeatureState;
 
 	@Autowired
+	private CourseMessengerFeatureSaveFeature messengerSaveFeature;
+
+  @Autowired
 	private UserService userService;
+
 
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -38,7 +50,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 		registry
 			.addHandler(new CourseStateWebSocketHandler(courseStates, objectMapper, userService), "/api/publisher/course-state")
 				.setAllowedOrigins("*")
-			.addHandler(new CourseFeatureWebSocketHandler(courseFeatureState, objectMapper), "/api/publisher/messages")
+			.addHandler(new CourseFeatureWebSocketHandler(courseFeatureState, objectMapper, messengerSaveFeature), "/api/publisher/messages")
 				.setAllowedOrigins("*");
 	}
 
@@ -50,4 +62,20 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
 		return container;
 	}
+
+	@Override
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/topic").setTaskScheduler(heartBeatScheduler());
+        registry.setApplicationDestinationPrefixes("/app");
+    }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/messenger").setAllowedOriginPatterns("*").withSockJS();
+    }
+
+	@Bean
+    public TaskScheduler heartBeatScheduler() {
+        return new ThreadPoolTaskScheduler();
+    }
 }

@@ -18,7 +18,7 @@ import org.lecturestudio.web.api.stream.action.StreamActionFactory;
 import org.lecturestudio.web.api.stream.action.StreamActionType;
 import org.lecturestudio.web.api.stream.action.StreamStartAction;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
-
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -31,16 +31,21 @@ public class CourseFeatureWebSocketHandler extends BinaryWebSocketHandler {
 
 	private final Map<WebSocketSession, List<ByteBuffer>> sessionBufferMap = new ConcurrentHashMap<>();
 
+	private final CourseMessengerFeatureSaveFeature messengerSaveFeature;
+
 	private final CourseFeatureState courseFeatureState;
 
 	private final ObjectMapper objectMapper;
 
 
-	public CourseFeatureWebSocketHandler(CourseFeatureState featureState, ObjectMapper objectMapper) {
+
+	public CourseFeatureWebSocketHandler(CourseFeatureState featureState, ObjectMapper objectMapper, CourseMessengerFeatureSaveFeature messengerSaveFeature) {
 		this.courseFeatureState = featureState;
 		this.objectMapper = objectMapper;
+		this.messengerSaveFeature = messengerSaveFeature;
 
 		courseFeatureState.addCourseFeatureListener(this::sendMessage);
+		courseFeatureState.addCourseFeatureListener(this.messengerSaveFeature);
 	}
 
 	@Override
