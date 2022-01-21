@@ -39,7 +39,11 @@ public class JanusEventController {
 						CourseState state = courseStates.getCourseState(courseId);
 
 						if (nonNull(state)) {
-							state.addSessionId(roomEvent.getSessionId());
+							if (nonNull(roomEvent.getOpaqueId())) {
+								String participantId = roomEvent.getOpaqueId();
+
+								state.setParticipantSession(participantId, roomEvent.getSessionId());
+							}
 						}
 					}
 					else if (roomEvent.getEventType() == JanusVideoRoomEventType.UNSUBSCRIBED) {
@@ -47,7 +51,7 @@ public class JanusEventController {
 						CourseState state = courseStates.getCourseState(courseId);
 
 						if (nonNull(state)) {
-							state.removeSessionId(roomEvent.getSessionId());
+							state.removeParticipantWithSessionId(roomEvent.getSessionId());
 						}
 					}
 				}

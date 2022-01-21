@@ -227,7 +227,7 @@
 		<script src="/js/course.js"></script>
 
 		<script th:inline="javascript">
-			window.course.init(/*[+ [[${course.id}]], [[${course.createdTimestamp}]], [[${dict}]] +]*/);
+			window.course.init(/*[+ [[${course.userId}]], [[${course.id}]], [[${course.createdTimestamp}]], [[${dict}]] +]*/);
 		</script>
 		<script th:inline="javascript" th:if="${course.isLive}">
 			window.course.initPlayer();

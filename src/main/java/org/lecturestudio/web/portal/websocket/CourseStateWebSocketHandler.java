@@ -29,6 +29,7 @@ import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStatePage;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.service.UserService;
 
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
@@ -48,10 +49,13 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 	private final ObjectMapper objectMapper;
 
+	private final UserService userService;
 
-	public CourseStateWebSocketHandler(CourseStates courseStates, ObjectMapper objectMapper) {
+
+	public CourseStateWebSocketHandler(CourseStates courseStates, ObjectMapper objectMapper, UserService userService) {
 		this.courseStates = courseStates;
 		this.objectMapper = objectMapper;
+		this.userService = userService;
 	}
 
 	@Override
@@ -228,7 +232,7 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		sessions.put(session, courseId);
 
 		// Bind course state to the course ID.
-		initStates.put(courseId, new CourseState(courseId, this::onSpeechMessage, this::onParticipantMessage));
+		initStates.put(courseId, new CourseState(userService, courseId, this::onSpeechMessage, this::onParticipantMessage));
 	}
 
 	private void sessionStart(StreamStartAction startAction) {

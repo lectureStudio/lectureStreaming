@@ -22,6 +22,8 @@ public class CourseDto {
 
 	Long id;
 
+	String userId;
+
 	String roomId;
 
 	Long createdTimestamp;
