@@ -2,6 +2,7 @@ class Course {
 
 	constructor() {
 		this.loadingContainer = null;
+		this.connectionInfoContainer = null;
 		this.unavailableContainer = null;
 		this.contentContainer = null;
 		this.messengerContainer = null;
@@ -23,6 +24,7 @@ class Course {
 		this.startTime = startTime;
 		this.dict = dict;
 		this.loadingContainer = document.getElementById("course-loading");
+		this.connectionInfoContainer = document.getElementById("connection-info");
 		this.unavailableContainer = document.getElementById("course-unavailable");
 		this.contentContainer = document.getElementById("course-content");
 		this.messengerContainer = document.getElementById("messenger-content");
@@ -54,6 +56,9 @@ class Course {
 				}
 
 				this.player = null;
+
+				this.connectionInfoVisible(false)
+				this.unavailableVisible(true);
 			}
 		});
 		window.portalApp.addOnSpeechState((event) => {
@@ -120,6 +125,7 @@ class Course {
 	initPlayer() {
 		this.loadingVisible(true);
 		this.unavailableVisible(false);
+		this.connectionInfoVisible(false);
 
 		const deviceConstraints = {
 			audioInput: localStorage.getItem("audioinput"),
@@ -148,9 +154,24 @@ class Course {
 
 		this.player = null;
 
+		this.detachFeaturesFromPlayer();
+
 		this.playerVisible(false);
 		this.loadingVisible(false);
-		this.unavailableVisible(true);
+		this.unavailableVisible(false);
+		this.connectionInfoVisible(true);
+	}
+
+	detachFeaturesFromPlayer() {
+		if (this.messengerElement) {
+			this.messengerContainer.appendChild(this.messengerElement);
+		}
+		if (this.quizElement) {
+			const submitButton = this.quizElement.querySelector("#quizSubmit");
+			submitButton.classList.remove("d-none");
+
+			this.quizContainer.appendChild(this.quizElement);
+		}
 	}
 
 	onPlayerConnectedState(connected) {
@@ -169,19 +190,12 @@ class Course {
 			this.playerVisible(true);
 		}
 		else {
-			if (this.messengerElement) {
-				this.messengerContainer.appendChild(this.messengerElement);
-			}
-			if (this.quizElement) {
-				const submitButton = this.quizElement.querySelector("#quizSubmit");
-				submitButton.classList.remove("d-none");
-
-				this.quizContainer.appendChild(this.quizElement);
-			}
+			this.detachFeaturesFromPlayer();
 
 			this.player = null;
 
 			this.playerVisible(false);
+			this.connectionInfoVisible(false);
 			this.unavailableVisible(true);
 		}
 
@@ -937,10 +951,14 @@ class Course {
 		this.elementVisible(this.loadingContainer, visible);
 	}
 
-	unavailableVisible(visible) {
-		console.log("Course player:", !!(this.player), ", Course messaging:", !!(this.messengerElement), ", Course quiz:", !!(this.quizElement));
+	connectionInfoVisible(visible) {
+		this.elementVisible(this.connectionInfoContainer, visible);
+	}
 
-		this.elementVisible(this.unavailableContainer, visible & !(this.player || this.messengerElement || this.quizElement));
+	unavailableVisible(visible) {
+		console.log("Course player:", !!(this.player), ", Course messaging:", !!(this.messengerElement), ", Course quiz:", !!(this.quizElement), " Connection:", this.connectionInfoContainer.classList.contains("d-none"));
+
+		this.elementVisible(this.unavailableContainer, visible & !(this.player || this.messengerElement || this.quizElement || !this.connectionInfoContainer.classList.contains("d-none")));
 	}
 
 	playerVisible(visible) {
