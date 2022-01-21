@@ -29,6 +29,10 @@ class Course {
 		this.quizContainer = document.getElementById("quiz-content");
 
 		window.portalApp.addOnCourseState((event) => {
+			if (event.courseId !== this.courseId) {
+				return;
+			}
+
 			if (event.started) {
 				this.startTime = event.createdTimestamp;
 
@@ -129,6 +133,7 @@ class Course {
 		this.player.setUserId(this.userId);
 		this.player.setRoomId(this.courseId);
 		this.player.setStartTime(this.startTime);
+		this.player.setOnError(this.onPlayerError.bind(this));
 		this.player.setOnConnectedState(this.onPlayerConnectedState.bind(this));
 		this.player.setOnConnectedSpeechState(this.onSpeechConnectedState.bind(this));
 		this.player.setOnSettings(this.onPlayerSettings.bind(this));
@@ -141,14 +146,16 @@ class Course {
 	onPlayerError(error) {
 		console.log(error);
 
+		this.player = null;
+
 		this.playerVisible(false);
 		this.loadingVisible(false);
 		this.unavailableVisible(true);
-
-		this.player = null;
 	}
 
 	onPlayerConnectedState(connected) {
+		console.log("Connected to course media:", connected);
+
 		if (connected) {
 			if (this.messengerElement) {
 				this.player.setContainerA(this.messengerElement);
@@ -244,12 +251,13 @@ class Course {
 	}
 
 	initSpeech() {
-		if (localStorage.getItem("audioinput") === null) {
-			this.showDeviceInitModal();
-		}
-		else {
-			this.sendSpeechRequest();
-		}
+		// if (localStorage.getItem("audioinput") === null) {
+			// this.showDeviceInitModal();
+			this.getUserDevices();
+		// }
+		// else {
+			// this.sendSpeechRequest();
+		// }
 	}
 
 	cancelSpeech() {
@@ -739,37 +747,188 @@ class Course {
 		toast.show();
 	}
 
-	getUserDevices(options) {
-		navigator.mediaDevices.getUserMedia({ audio: true, video: (options.video ? true : false) })
-			.then(stream => {
-				const settings = {
-					audioInput: null,
-					videoInput: null
-				};
+	showSpeechDeviceChooserModal(devices, stream, constraints, camBlocked) {
+		const audioInputs = devices.filter(device => device.kind === "audioinput");
+		const videoInputs = devices.filter(device => device.kind === "videoinput");
 
-				const audioTrack = stream.getAudioTracks()[0];
-				const videoTrack = stream.getVideoTracks()[0];
+		const cameraBlockedAlert = document.getElementById("cameraBlockedModalAlert");
+		const cameraSelect = document.getElementById("cameraSelect");
+		const microphoneSelect = document.getElementById("microphoneSelect");
+		const saveButton = document.getElementById("saveDeviceSelection");
+		const cancelButton = document.getElementById("deviceSaveCancel");
+		const meterCanvas = document.getElementById("meter");
+		
+		const video = document.getElementById("cameraPreview");
+		video.srcObject = stream;
 
-				if (audioTrack) {
-					settings.audioInput = audioTrack.getSettings().deviceId;
+		const onAudioDeviceChange = () => {
+			window.stopAudioTracks(video.srcObject);
+	
+			const audioSource = microphoneSelect.value;
+			const audioConstraints = {
+				audio: {
+					deviceId: audioSource ? { exact: audioSource } : undefined
 				}
-				if (videoTrack) {
-					settings.videoInput = videoTrack.getSettings().deviceId;
-				}
+			};
+	
+			navigator.mediaDevices.getUserMedia(audioConstraints)
+				.then(audioStream => {
+					audioStream.getAudioTracks().forEach(track => video.srcObject.addTrack(track));
+	
+					window.getAudioLevel(audioStream.getAudioTracks()[0], meterCanvas);
+				})
+				.catch(error => {
+					console.error(error);
+	
+					if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
+						this.showDevicePermissionDeniedModal();
+					}
+				});
+		};
+		const onVideoDeviceChange = () => {
+			window.stopVideoTracks(video.srcObject);
+	
+			const videoSource = cameraSelect.value;
+			const videoConstraints = {};
+	
+			if (videoSource === "none") {
+				video.style.display = "none";
+				return;
+			}
+	
+			videoConstraints.video = {
+				deviceId: videoSource ? { exact: videoSource } : undefined,
+				width: 1280,
+				height: 720,
+				facingMode: "user"
+			};
+	
+			navigator.mediaDevices.getUserMedia(videoConstraints)
+				.then(videoStream => {
+					const newStream = new MediaStream();
 
-				window.stopMediaTracks(stream);
-				window.saveDeviceChoice(settings);
+					video.srcObject.getAudioTracks().forEach(track => newStream.addTrack(track));
+					videoStream.getVideoTracks().forEach(track => newStream.addTrack(track));
+	
+					video.srcObject = newStream;
+					video.style.display = "block";
 
-				this.sendSpeechRequest();
+					cameraBlockedAlert.classList.add("d-none");
+				})
+				.catch(error => {
+					console.error(error);
+	
+					if (error.name == "NotReadableError") {
+						cameraBlockedAlert.classList.remove("d-none");
+					}
+					else if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
+						this.showDevicePermissionDeniedModal();
+					}
+				});
+		};
+
+		cameraSelect.onchange = onVideoDeviceChange;
+		cameraSelect.options.length = 1;
+
+		microphoneSelect.onchange = onAudioDeviceChange;
+		microphoneSelect.options.length = 0;
+
+		for (const device of audioInputs) {
+			const index = microphoneSelect.options.length;
+			const selected = constraints.audio.deviceId?.exact == device.deviceId;
+
+			microphoneSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
+		}
+
+		for (const device of videoInputs) {
+			const index = cameraSelect.options.length;
+			const selected = constraints.video?.deviceId?.exact == device.deviceId;
+
+			cameraSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
+		}
+
+		if (cameraSelect.value === "none") {
+			window.stopVideoTracks(stream);
+		}
+
+		video.style.display = (cameraSelect.value === "none") ? "none" : "block";
+
+		const deviceModalElement = document.getElementById("deviceModal");
+		const deviceModal = bootstrap.Modal.getOrCreateInstance(deviceModalElement, {
+			backdrop: "static",
+			keyboard: false
+		});
+
+		const cancelHandler = () => {
+			this.cancelSpeech();
+		};
+		const saveHandler = () => {
+			const form = document.getElementById("deviceSelectForm");
+			const data = new FormData(form);
+			const devices = Object.fromEntries(data.entries());
+
+			window.saveDeviceChoice(devices);
+
+			this.sendSpeechRequest();
+
+			deviceModal.hide();
+		};
+		const hiddenHandler = () => {
+			deviceModalElement.removeEventListener("hidden.bs.modal", hiddenHandler);
+			cancelButton.removeEventListener("click", cancelHandler);
+			saveButton.removeEventListener("click", saveHandler);
+			deviceModal.dispose();
+
+			window.stopMediaTracks(video.srcObject);
+		};
+
+		cancelButton.addEventListener("click", cancelHandler);
+		saveButton.addEventListener("click", saveHandler);
+		deviceModalElement.addEventListener("hidden.bs.modal", hiddenHandler);
+		deviceModalElement.addEventListener("shown.bs.modal", () => {
+			const audioTrack = stream.getAudioTracks()[0];
+
+			window.getAudioLevel(audioTrack, meterCanvas);
+		});
+
+		if (camBlocked) {
+			cameraBlockedAlert.classList.remove("d-none");
+		}
+		else {
+			cameraBlockedAlert.classList.add("d-none");
+		}
+
+		deviceModal.show();
+	}
+
+	getUserDevices() {
+		window.enumerateDevices(true, true)
+			.then(result => {
+				this.showSpeechDeviceChooserModal(result.devices, result.stream, result.constraints, false);
 			})
 			.catch(error => {
-				console.error(error.name);
+				console.error(error);
 
 				if (error.name == "NotReadableError") {
-					this.showDevicePermissionDeniedModal();
+					window.enumerateDevices(false, true)
+						.then(result => {
+							this.showSpeechDeviceChooserModal(result.devices, result.stream, result.constraints, true);
+						})
+						.catch(error => {
+							console.error(error);
+						});
 				}
 				else if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
 					this.showDevicePermissionDeniedModal();
+				}
+				else {
+					window.enumerateDevices(false, false)
+						.then(result => {
+							this.showSpeechDeviceChooserModal(result.devices, result.stream, result.constraints, false);
+						})
+						.catch(error => {
+							console.error(error);
+						});
 				}
 			});
 	}
@@ -779,6 +938,8 @@ class Course {
 	}
 
 	unavailableVisible(visible) {
+		console.log("Course player:", !!(this.player), ", Course messaging:", !!(this.messengerElement), ", Course quiz:", !!(this.quizElement));
+
 		this.elementVisible(this.unavailableContainer, visible & !(this.player || this.messengerElement || this.quizElement));
 	}
 
