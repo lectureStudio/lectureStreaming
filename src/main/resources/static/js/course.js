@@ -16,6 +16,7 @@ class Course {
 		this.speechRequestId = null;
 		this.startTime = null;
 		this.dict = null;
+		this.devicesSelected = false;
 	}
 
 	init(userId, courseId, startTime, dict) {
@@ -267,13 +268,12 @@ class Course {
 	}
 
 	initSpeech() {
-		// if (localStorage.getItem("audioinput") === null) {
-			// this.showDeviceInitModal();
+		if (!this.devicesSelected) {
 			this.getUserDevices();
-		// }
-		// else {
-			// this.sendSpeechRequest();
-		// }
+		}
+		else {
+			this.sendSpeechRequest();
+		}
 	}
 
 	cancelSpeech() {
@@ -757,6 +757,8 @@ class Course {
 
 			window.saveDeviceChoice(devices);
 
+			this.devicesSelected = true;
+
 			deviceModal.hide();
 		};
 		const hiddenHandler = () => {
@@ -955,6 +957,7 @@ class Course {
 
 			window.saveDeviceChoice(devices);
 
+			this.devicesSelected = true;
 			this.sendSpeechRequest();
 
 			deviceModal.hide();
