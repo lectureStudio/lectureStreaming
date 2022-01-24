@@ -13,6 +13,8 @@ class Course {
 		this.speechRequestId = null;
 		this.startTime = null;
 		this.dict = null;
+		this.messengerIsVisible = false;
+		this.messengerModal = null;
 	}
 
 	init(courseId, startTime, dict) {
@@ -82,6 +84,9 @@ class Course {
 				this.unavailableVisible(true);
 			}
 		});
+		window.addEventListener('resize', () => {
+			this.messengerResize();
+		});
 	}
 
 	initPlayer() {
@@ -114,7 +119,8 @@ class Course {
 	onPlayerConnectedState(connected) {
 		if (connected) {
 			if (this.messengerElement) {
-				this.player.setContainerA(this.messengerElement);
+				//this.messengerContainer.appendChild(this.messengerElement);
+				//this.player.setContainerA(this.messengerElement);
 			}
 			if (this.quizElement) {
 				removeAllChildNodes(this.quizContainer);
@@ -128,7 +134,7 @@ class Course {
 		}
 		else {
 			if (this.messengerElement) {
-				this.messengerContainer.appendChild(this.messengerElement);
+				//this.messengerContainer.appendChild(this.messengerElement);
 			}
 			if (this.quizElement) {
 				this.quizContainer.appendChild(this.quizElement);
@@ -236,6 +242,23 @@ class Course {
 		
 	}
 
+	createMessengerButtonForPlayer(callback){
+		const messengerButton = document.createElement("button");
+		messengerButton.setAttribute('title', 'Messenger öffnen/schließen');
+		messengerButton.innerHTML = '<i class="bi bi-messenger"></i>';
+		messengerButton.addEventListener("click", callback);
+		return messengerButton;
+	}
+
+	displayIsWideEnoughForSidePanel () {
+		const width = Math.max(
+			document.documentElement.clientWidth,
+			window.innerWidth || 0
+		)
+		return width >= 992
+	}
+	  
+
 	loadMessenger() {
 		fetch("/course/messenger/" + this.courseId, {
 			method: "GET",
@@ -254,16 +277,92 @@ class Course {
 				}
 
 				if (this.player) {
-					this.player.setContainerA(this.messengerElement);
+					const messengerButton = this.createMessengerButtonForPlayer(() => {
+						this.togglMessenger();
+					});
+					this.player.addToolbarElement(messengerButton);
 				}
-				else {
-					this.messengerContainer.appendChild(this.messengerElement);
-				}
+				this.messengerContainer.appendChild(this.messengerElement);
+				if(this.player){
+					this.hideMessenger();
+				}				
 
 				this.initMessenger();
 			}
 		})
 		.catch(error => console.error(error));
+	}
+
+	attachMessengerToModal(){
+		this.messengerModal = mountInModal(this.messengerContainer, this.messengerElement, 'Nachricht an Dozent/in versenden', () => {
+			this.hideMessenger();
+		});
+	}
+
+	attachMessengerToSidePanel(){
+		this.player.setContainerA(this.messengerElement);
+	}
+
+	messengerResize(){
+		if(! this.messengerIsVisible){
+			return;
+		}
+		if(! this.player){
+			return;
+		}
+		if(this.messengerModal != null){
+			return;
+		}
+		if(! this.displayIsWideEnoughForSidePanel()){
+			this.hideMessenger();
+		}
+	}
+
+	showMessenger(){
+		if(this.player){
+			if(this.displayIsWideEnoughForSidePanel()){
+				this.attachMessengerToSidePanel();
+			}else{
+				this.attachMessengerToModal();
+				this.messengerModal.show();
+			}
+		}
+		
+		this.elementVisible(this.messengerElement, true);
+		this.messengerIsVisible = true;
+	}
+
+	messengerIsMountedInMessengerContainer(){
+		return this.messengerContainer.children.length > 0;
+	}
+
+	hideMessenger(){
+		if(this.messengerModal != null){
+			this.messengerModal.hide();
+		}
+		this.elementVisible(this.messengerElement, false);
+		if(! this.messengerIsMountedInMessengerContainer()){
+			this.messengerContainer.appendChild(this.messengerElement);
+		}
+		this.messengerModal = null;
+		if(this.player != null){
+			this.player.setContainerA(null);
+		}
+		this.messengerIsVisible = false;
+	}
+
+	togglMessenger(){
+		if(this.messengerIsVisible){
+			this.hideMessenger();
+		}else{
+			this.showMessenger();
+		}
+	}
+
+	messageWasSent(){
+		if(this.messengerModal != null){
+			this.hideMessenger();
+		}
 	}
 
 	initMessenger() {
@@ -300,6 +399,7 @@ class Course {
 
 				messageForm.reset();
 				submitButton.disabled = false;
+				this.messageWasSent();
 			})
 			.catch(error => console.error(error));
 		});
@@ -751,3 +851,34 @@ class Course {
 }
 
 window.course = new Course();
+
+var modalId = 0;
+function mountInModal(root, element, title = null, hiddenCallback = null){
+	let html = `<div class="modal" tabindex="-1">
+	<div class="modal-dialog">
+		<div class="modal-content">`;
+	if(title != null){
+		html += `<div class="modal-header">
+		<h5 class="modal-title">${title}</h5>
+		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+		</div>`
+	}
+	const id = modalId++;
+	
+	html += `<div class="modal-body" id="modal-content-${id}"></div>
+		</div>
+	</div>
+	</div>`;
+	root.innerHTML = html;
+	const modalContent = document.getElementById('modal-content-' + id);
+	modalContent.appendChild(element);
+	console.log(modalContent);
+	console.log(element);
+	const modal =  new bootstrap.Modal(root.firstChild);
+
+	if(hiddenCallback != null){
+		root.firstChild.addEventListener('hidden.bs.modal', hiddenCallback);
+	}
+
+	return modal;
+}
