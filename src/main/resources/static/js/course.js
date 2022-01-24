@@ -203,9 +203,11 @@ class Course {
 	}
 
 	onPlayerSettings() {
+		const modalElement = document.getElementById("deviceModal");
+
 		window.enumerateDevices(true, true)
 			.then(result => {
-				this.showDeviceChooserModal(result.devices, result.stream, result.constraints, false);
+				this.showDeviceChooserModal(modalElement, result.devices, result.stream, result.constraints, false);
 			})
 			.catch(error => {
 				console.error(error);
@@ -213,7 +215,7 @@ class Course {
 				if (error.name == "NotReadableError") {
 					window.enumerateDevices(false, true)
 						.then(result => {
-							this.showDeviceChooserModal(result.devices, result.stream, result.constraints, true);
+							this.showDeviceChooserModal(modalElement, result.devices, result.stream, result.constraints, true);
 						})
 						.catch(error => {
 							console.error(error);
@@ -225,7 +227,7 @@ class Course {
 				else {
 					window.enumerateDevices(false, false)
 						.then(result => {
-							this.showDeviceChooserModal(result.devices, result.stream, result.constraints, false);
+							this.showDeviceChooserModal(modalElement, result.devices, result.stream, result.constraints, false);
 						})
 						.catch(error => {
 							console.error(error);
@@ -600,21 +602,28 @@ class Course {
 		deviceModal.show();
 	}
 
-	showDeviceChooserModal(devices, stream, constraints, camBlocked) {
+	showDeviceChooserModal(deviceModalElement, devices, stream, constraints, camBlocked) {
 		const audioInputs = devices.filter(device => device.kind === "audioinput");
+		const audioOutputs = devices.filter(device => device.kind === "audiooutput");
 		const videoInputs = devices.filter(device => device.kind === "videoinput");
 
-		const cameraBlockedAlert = document.getElementById("cameraBlockedModalAlert");
-		const cameraSelect = document.getElementById("cameraSelect");
-		const microphoneSelect = document.getElementById("microphoneSelect");
-		const saveButton = document.getElementById("saveDeviceSelection");
-		const cancelButton = document.getElementById("deviceSaveCancel");
-		const meterCanvas = document.getElementById("meter");
-		
-		const video = document.getElementById("cameraPreview");
-		video.srcObject = stream;
+		const settingsElement = document.importNode(document.querySelector("#deviceSettings").content, true);
 
-		const onAudioDeviceChange = () => {
+		const cameraBlockedAlert = settingsElement.querySelector("#cameraBlockedModalAlert");
+		const cameraSelect = settingsElement.querySelector("#cameraSelect");
+		const microphoneSelect = settingsElement.querySelector("#microphoneSelect");
+		const speakerSelect = settingsElement.querySelector("#speakerSelect");
+		const audioInputContainer = settingsElement.querySelector("#settingsAudioInputContainer");
+		const meterCanvas = settingsElement.querySelector("#meter");
+		const deviceForm = settingsElement.querySelector("#deviceSelectForm");
+		const saveButton = deviceModalElement.querySelector("#saveDeviceSelection");
+		const cancelButton = deviceModalElement.querySelector("#deviceSaveCancel");
+		
+		const video = settingsElement.querySelector("#cameraPreview");
+		video.srcObject = stream;
+		video.muted = true;
+
+		const onAudioInputDeviceChange = () => {
 			window.stopAudioTracks(video.srcObject);
 	
 			const audioSource = microphoneSelect.value;
@@ -638,6 +647,18 @@ class Course {
 					}
 				});
 		};
+		const onAudioOutputDeviceChange = () => {
+			if (!('sinkId' in HTMLMediaElement.prototype)) {
+				return;
+			}
+	
+			const audioSink = speakerSelect.value;
+	
+			video.setSinkId(audioSink)
+				.catch(error => {
+					console.error(error);
+				});
+		};
 		const onVideoDeviceChange = () => {
 			window.stopVideoTracks(video.srcObject);
 	
@@ -646,6 +667,7 @@ class Course {
 	
 			if (videoSource === "none") {
 				video.style.display = "none";
+				cameraBlockedAlert.classList.add("d-none");
 				return;
 			}
 	
@@ -683,14 +705,26 @@ class Course {
 		cameraSelect.onchange = onVideoDeviceChange;
 		cameraSelect.options.length = 1;
 
-		microphoneSelect.onchange = onAudioDeviceChange;
+		microphoneSelect.onchange = onAudioInputDeviceChange;
 		microphoneSelect.options.length = 0;
+
+		speakerSelect.onchange = onAudioOutputDeviceChange;
+		speakerSelect.options.length = 0;
+
+		const audioSink = localStorage.getItem("audiooutput");
 
 		for (const device of audioInputs) {
 			const index = microphoneSelect.options.length;
 			const selected = constraints.audio.deviceId?.exact == device.deviceId;
 
 			microphoneSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
+		}
+
+		for (const device of audioOutputs) {
+			const index = speakerSelect.options.length;
+			const selected = audioSink == device.deviceId;
+	
+			speakerSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
 		}
 
 		for (const device of videoInputs) {
@@ -706,18 +740,19 @@ class Course {
 
 		video.style.display = (cameraSelect.value === "none") ? "none" : "block";
 
-		const deviceModalElement = document.getElementById("deviceModal");
+		const deviceModalBody = deviceModalElement.querySelector(".modal-body");
+		deviceModalBody.appendChild(settingsElement);
+
 		const deviceModal = bootstrap.Modal.getOrCreateInstance(deviceModalElement, {
 			backdrop: "static",
 			keyboard: false
 		});
 
 		const cancelHandler = () => {
-			
+			this.cancelSpeech();
 		};
 		const saveHandler = () => {
-			const form = document.getElementById("deviceSelectForm");
-			const data = new FormData(form);
+			const data = new FormData(deviceForm);
 			const devices = Object.fromEntries(data.entries());
 
 			window.saveDeviceChoice(devices);
@@ -725,6 +760,7 @@ class Course {
 			deviceModal.hide();
 		};
 		const hiddenHandler = () => {
+			deviceModalBody.innerHTML = "";
 			deviceModalElement.removeEventListener("hidden.bs.modal", hiddenHandler);
 			cancelButton.removeEventListener("click", cancelHandler);
 			saveButton.removeEventListener("click", saveHandler);
@@ -742,7 +778,9 @@ class Course {
 			window.getAudioLevel(audioTrack, meterCanvas);
 		});
 
-		if (camBlocked) {
+		audioInputContainer.style.display = audioOutputs.length ? "block" : "none";
+
+		if (camBlocked && constraints.video) {
 			cameraBlockedAlert.classList.remove("d-none");
 		}
 		else {
@@ -763,19 +801,26 @@ class Course {
 
 	showSpeechDeviceChooserModal(devices, stream, constraints, camBlocked) {
 		const audioInputs = devices.filter(device => device.kind === "audioinput");
+		const audioOutputs = devices.filter(device => device.kind === "audiooutput");
 		const videoInputs = devices.filter(device => device.kind === "videoinput");
 
-		const cameraBlockedAlert = document.getElementById("cameraBlockedModalAlert");
-		const cameraSelect = document.getElementById("cameraSelect");
-		const microphoneSelect = document.getElementById("microphoneSelect");
+		const settingsElement = document.importNode(document.querySelector("#deviceSettings").content, true);
+
+		const cameraBlockedAlert = settingsElement.querySelector("#cameraBlockedModalAlert");
+		const cameraSelect = settingsElement.querySelector("#cameraSelect");
+		const microphoneSelect = settingsElement.querySelector("#microphoneSelect");
+		const speakerSelect = settingsElement.querySelector("#speakerSelect");
+		const audioInputContainer = settingsElement.querySelector("#settingsAudioInputContainer");
+		const meterCanvas = settingsElement.querySelector("#meter");
+		const deviceForm = settingsElement.querySelector("#deviceSelectForm");
 		const saveButton = document.getElementById("saveDeviceSelection");
 		const cancelButton = document.getElementById("deviceSaveCancel");
-		const meterCanvas = document.getElementById("meter");
 		
-		const video = document.getElementById("cameraPreview");
+		const video = settingsElement.querySelector("#cameraPreview");
 		video.srcObject = stream;
+		video.muted = true;
 
-		const onAudioDeviceChange = () => {
+		const onAudioInputDeviceChange = () => {
 			window.stopAudioTracks(video.srcObject);
 	
 			const audioSource = microphoneSelect.value;
@@ -799,6 +844,18 @@ class Course {
 					}
 				});
 		};
+		const onAudioOutputDeviceChange = () => {
+			if (!('sinkId' in HTMLMediaElement.prototype)) {
+				return;
+			}
+	
+			const audioSink = speakerSelect.value;
+	
+			video.setSinkId(audioSink)
+				.catch(error => {
+					console.error(error);
+				});
+		};
 		const onVideoDeviceChange = () => {
 			window.stopVideoTracks(video.srcObject);
 	
@@ -807,6 +864,7 @@ class Course {
 	
 			if (videoSource === "none") {
 				video.style.display = "none";
+				cameraBlockedAlert.classList.add("d-none");
 				return;
 			}
 	
@@ -844,14 +902,26 @@ class Course {
 		cameraSelect.onchange = onVideoDeviceChange;
 		cameraSelect.options.length = 1;
 
-		microphoneSelect.onchange = onAudioDeviceChange;
+		microphoneSelect.onchange = onAudioInputDeviceChange;
 		microphoneSelect.options.length = 0;
+
+		speakerSelect.onchange = onAudioOutputDeviceChange;
+		speakerSelect.options.length = 0;
+
+		const audioSink = localStorage.getItem("audiooutput");
 
 		for (const device of audioInputs) {
 			const index = microphoneSelect.options.length;
 			const selected = constraints.audio.deviceId?.exact == device.deviceId;
 
 			microphoneSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
+		}
+
+		for (const device of audioOutputs) {
+			const index = speakerSelect.options.length;
+			const selected = audioSink == device.deviceId;
+	
+			speakerSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
 		}
 
 		for (const device of videoInputs) {
@@ -867,7 +937,10 @@ class Course {
 
 		video.style.display = (cameraSelect.value === "none") ? "none" : "block";
 
-		const deviceModalElement = document.getElementById("deviceModal");
+		const deviceModalElement = document.getElementById("speechDeviceModal");
+		const deviceModalBody = deviceModalElement.querySelector(".modal-body");
+		deviceModalBody.appendChild(settingsElement);
+
 		const deviceModal = bootstrap.Modal.getOrCreateInstance(deviceModalElement, {
 			backdrop: "static",
 			keyboard: false
@@ -877,8 +950,7 @@ class Course {
 			this.cancelSpeech();
 		};
 		const saveHandler = () => {
-			const form = document.getElementById("deviceSelectForm");
-			const data = new FormData(form);
+			const data = new FormData(deviceForm);
 			const devices = Object.fromEntries(data.entries());
 
 			window.saveDeviceChoice(devices);
@@ -888,6 +960,7 @@ class Course {
 			deviceModal.hide();
 		};
 		const hiddenHandler = () => {
+			deviceModalBody.innerHTML = "";
 			deviceModalElement.removeEventListener("hidden.bs.modal", hiddenHandler);
 			cancelButton.removeEventListener("click", cancelHandler);
 			saveButton.removeEventListener("click", saveHandler);
@@ -905,7 +978,9 @@ class Course {
 			window.getAudioLevel(audioTrack, meterCanvas);
 		});
 
-		if (camBlocked) {
+		audioInputContainer.style.display = audioOutputs.length ? "block" : "none";
+
+		if (camBlocked && constraints.video) {
 			cameraBlockedAlert.classList.remove("d-none");
 		}
 		else {

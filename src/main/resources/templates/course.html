@@ -43,22 +43,27 @@
 
 				<div class="alert alert-info mt-4 d-none" id="connection-info" role="alert">
 					<div>
-						<p>Um gestreamte Kurse ansehen zu können, müssen Sie Netzzugang zum Datennetz der TU Darmstadt haben. Alle
-							TU-Angehörigen haben folgende Optionen zum Netzzugang:</p>
+						<p th:text="#{course.connection.unavailable.text}"></p>
 					</div>
 					<div>
 						<ul>
 							<li>
 								<p>
-									<a href="https://www.hrz.tu-darmstadt.de/services/it_services/wlan/index.de.jsp" target="_blank">WLAN (eduroam)</a>:
-									Nahezu flächendeckender Internetzugang am Campus und im Kongresszentrum „darmstadtium“.</p>
+									<a href="https://www.hrz.tu-darmstadt.de/services/it_services/wlan/index.de.jsp" target="_blank" th:text="#{course.connection.unavailable.eduroam}"></a>:
+									<span th:text="#{course.connection.unavailable.eduroam.text}"></span>
+								</p>
 							</li>
 							<li>
 								<p>
-									<a href="https://www.hrz.tu-darmstadt.de/support_und_anleitungen/hrz_anleitungen/tu_vpn/windows__macos_x_und_linux/index.de.jsp" target="_blank">TU VPN</a>: Sichere Verbindung ins TU-Netz und Zugang zu Services außerhalb des TU Datennetzes.
+									<a href="https://www.hrz.tu-darmstadt.de/support_und_anleitungen/hrz_anleitungen/tu_vpn/windows__macos_x_und_linux/index.de.jsp" target="_blank" th:text="#{course.connection.unavailable.vpn}"></a>:
+									<span th:text="#{course.connection.unavailable.vpn.text}"></span>
 								</p>
 							</li>
 						</ul>
+					</div>
+					<div>
+						<span th:text="#{course.connection.unavailable.reload.text}"></span>
+						<a href="javascript:location.reload();" th:text="#{course.connection.unavailable.reload.link}"></a>
 					</div>
 				</div>
 
@@ -131,6 +136,21 @@
 				</div>
 			</div>
 		</div>
+		<div class="modal fade" id="speechDeviceModal" aria-hidden="true" aria-labelledby="deviceModalInitLabel" tabindex="-1">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 th:text="#{devices.settings}" class="modal-title" id="deviceModalLabel"></h5>
+					</div>
+					<div class="modal-body">
+					</div>
+					<div class="modal-footer">
+						<button th:text="#{devices.cancel}" type="button" id="deviceSaveCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
+						<button th:text="#{course.speech.request.start}" type="button" id="saveDeviceSelection" class="btn btn-primary btn-sm"></button>
+					</div>
+				</div>
+			</div>
+		</div>
 		<div class="modal fade" id="deviceModal" aria-hidden="true" aria-labelledby="deviceModalInitLabel" tabindex="-1">
 			<div class="modal-dialog">
 				<div class="modal-content">
@@ -138,32 +158,6 @@
 						<h5 th:text="#{devices.settings}" class="modal-title" id="deviceModalLabel"></h5>
 					</div>
 					<div class="modal-body">
-						<div class="row alert alert-warning m-2 d-none" id="cameraBlockedModalAlert" role="alert">
-							<span th:text="#{devices.camera.blocked}"></span>
-						</div>
-						<form id="deviceSelectForm">
-							<div class="row">
-								<div class="col-md-4">
-									<video id="cameraPreview" class="pt-2 ratio ratio-16x9" playsinline autoplay muted></video>
-								</div>
-								<div class="col-md-8">
-									<div class="mb-3" id="cameraSelectContainer">
-										<label th:text="#{devices.camera}" for="cameraSelect" class="form-label"></label>
-										<select name="videoInput" id="cameraSelect" class="form-select form-select-sm" aria-label=".form-select-sm camera">
-											<option value="none" th:text="#{devices.none}"></option>
-										</select>
-									</div>
-									<div class="mb-3">
-										<label th:text="#{devices.audio.input}" for="microphoneSelect" class="form-label"></label>
-										<select name="audioInput" id="microphoneSelect" class="form-select form-select-sm" aria-label=".form-select-sm microphone">
-										</select>
-									</div>
-								</div>
-							</div>
-							<div class="row">
-								<canvas id="meter" width="300" height="7"></canvas>
-							</div>
-						</form>
 					</div>
 					<div class="modal-footer">
 						<button th:text="#{devices.cancel}" type="button" id="deviceSaveCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
@@ -241,6 +235,40 @@
 				</div>
 			</div>
 		</div>
+
+		<template id="deviceSettings">
+			<div class="row alert alert-warning m-2 d-none" id="cameraBlockedModalAlert" role="alert">
+				<span th:text="#{devices.camera.blocked}"></span>
+			</div>
+			<form id="deviceSelectForm">
+				<div class="row">
+					<div class="col-md-4">
+						<video id="cameraPreview" class="pt-2 ratio ratio-16x9" playsinline autoplay muted></video>
+					</div>
+					<div class="col-md-8">
+						<div class="mb-3" id="cameraSelectContainer">
+							<label th:text="#{devices.camera}" for="cameraSelect" class="form-label"></label>
+							<select name="videoInput" id="cameraSelect" class="form-select form-select-sm" aria-label=".form-select-sm camera">
+								<option value="none" th:text="#{devices.none}"></option>
+							</select>
+						</div>
+						<div class="mb-3">
+							<label th:text="#{devices.audio.input}" for="microphoneSelect" class="form-label"></label>
+							<select name="audioInput" id="microphoneSelect" class="form-select form-select-sm" aria-label=".form-select-sm microphone">
+							</select>
+						</div>
+						<div class="mb-3" id="settingsAudioInputContainer">
+							<label th:text="#{devices.audio.output}" for="microphoneSelect" class="form-label"></label>
+							<select name="audioOutput" id="speakerSelect" class="form-select form-select-sm" aria-label=".form-select-sm speaker">
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<canvas id="meter" width="300" height="7"></canvas>
+				</div>
+			</form>
+		</template>
 	</th:block>
 
 	<th:block layout:fragment="optional">
