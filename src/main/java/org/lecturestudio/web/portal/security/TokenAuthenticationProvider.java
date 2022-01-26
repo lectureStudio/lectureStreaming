@@ -26,7 +26,6 @@ public class TokenAuthenticationProvider extends AbstractUserDetailsAuthenticati
 	@Override
 	protected void additionalAuthenticationChecks(UserDetails userDetails,
 			UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
-		// Nothing to do here.
 	}
 
 	@Override
@@ -40,7 +39,6 @@ public class TokenAuthenticationProvider extends AbstractUserDetailsAuthenticati
 		tokenService.saveToken(personalToken);
 
 		User user = personalToken.getUser();
-
 		return new LectUserDetails(user.getUserId(), user.getFirstName(), user.getFirstName(), Set.of());
 	}
 

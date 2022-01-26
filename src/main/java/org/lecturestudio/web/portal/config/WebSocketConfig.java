@@ -65,8 +65,9 @@ public class WebSocketConfig implements WebSocketConfigurer, WebSocketMessageBro
 
 	@Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic").setTaskScheduler(heartBeatScheduler());
+        registry.enableSimpleBroker("/queue", "/topic").setTaskScheduler(heartBeatScheduler());
         registry.setApplicationDestinationPrefixes("/app");
+		registry.setUserDestinationPrefix("/user");
     }
 
     @Override

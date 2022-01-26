@@ -49,13 +49,16 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -187,7 +190,7 @@ public class CoursePublisherController {
 	}
 
 	@PostMapping("/messenger/start/{courseId}")
-	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId) {
+	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId, @RequestParam(name = "mode") String mode) {
 		return startFeature(courseId, new CourseMessageFeature());
 	}
 
@@ -281,7 +284,7 @@ public class CoursePublisherController {
 		subscriberEmmiter.send(new GenericMessage<>(sEvent));
 	}
 
-	@MessageMapping("/publisher/message/{courseId}")
+	@MessageMapping("/message/publisher/{courseId}")
     @SendTo("/topic/chat/{courseId}")
     public MessengerMessage sendMessage(@Payload String message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)

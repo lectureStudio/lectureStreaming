@@ -61,7 +61,11 @@ import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.rsocket.annotation.ConnectMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -359,6 +363,8 @@ public class CourseSubscriberController {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
+				System.out.println("Hello");
+
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		// Validate input.
@@ -375,6 +381,26 @@ public class CourseSubscriberController {
 		courseFeatureState.postCourseFeatureMessage(courseId, mMessage);
 
 		return mMessage;
+    }
+
+	@Autowired
+	private SimpMessagingTemplate messaging;
+
+	@ConnectMapping("/messenger")
+	public void connected(Authentication authentication) {
+		System.out.println("connected");
+	}
+
+	@MessageMapping("/message/direct/{courseId}")
+    @SendToUser("/queue/chat/{courseId}")
+    public void sendMessageDirect(@Payload Message message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
+		System.out.println("hello");
+		userRegistry.getUsers().stream()
+		.map(u -> u.getName())
+		.forEach(System.out::println);
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+		messaging.convertAndSendToUser(authentication.getName(), "/queue/chat/" + courseId, new MessengerMessage(new Message("hello"), "", ZonedDateTime.now()));
+
     }
 
 	@MessageExceptionHandler

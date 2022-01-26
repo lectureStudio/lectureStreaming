@@ -101,6 +101,9 @@ class Course {
 			this.stompClient.subscribe('/topic/chat/' + this.courseId, (message) => {
 				this.onChatMessageReceive(this.stompMessageToMessageObject(message));
 			});
+			this.stompClient.subscribe('/user/queue/chat/' + this.courseId, (message) => {
+				console.log("hello");
+			});
 			await this.reloadMessengerHistory();
 			this.setMessengerForm(false);
 		},
@@ -392,7 +395,7 @@ class Course {
 			const data = new FormData(event.target);
 			const value = Object.fromEntries(data.entries());
 			if (this.stompClient.connected) {
-				this.sendOverSTOMP(value);
+				this.sendOverSTOMPdirect(value);
 				this.showToast("toast-success", "course.feature.message.sent");
 			}
 			else {
@@ -411,6 +414,12 @@ class Course {
 	sendOverSTOMP(value) {
 		this.stompClient.send("/app/message/" + this.courseId, {}, JSON.stringify(value));
 	}
+
+	sendOverSTOMPdirect(value) {
+		this.stompClient.send("/app/message/direct/" + this.courseId, {}, JSON.stringify(value));
+	}
+
+
 
 	setMessengerForm(disabled) {
 		if (this.messengerElement) {
