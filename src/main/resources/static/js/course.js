@@ -26,6 +26,7 @@ class Course {
 		this.contentContainer = document.getElementById("course-content");
 		this.messengerContainer = document.getElementById("messenger-content");
 		this.quizContainer = document.getElementById("quiz-content");
+		this.isPlayerUsedContainer = document.getElementById("player-is-used");
 
 		window.portalApp.addOnCourseState((event) => {
 			if (event.started) {
@@ -87,9 +88,21 @@ class Course {
 		window.addEventListener('resize', () => {
 			this.messengerResize();
 		});
+		this.isPlayerUsedContainer.addEventListener('change', () => {
+			if(this.isPlayerUsed()){
+				this.initPlayer();
+			}else{
+				location.reload(); 
+			}
+		})
 	}
 
 	initPlayer() {
+		if(! this.isPlayerUsed()){
+			this.loadingVisible(false);
+			this.unavailableVisible(false);
+			return;
+		}
 		this.loadingVisible(true);
 		this.unavailableVisible(false);
 
@@ -847,6 +860,13 @@ class Course {
 		else {
 			element.classList.add("d-none");
 		}
+	}
+
+	isPlayerUsed(){
+		if(this.isPlayerUsedContainer != null){
+			return this.isPlayerUsedContainer.checked;
+		}
+		return true;
 	}
 }
 
