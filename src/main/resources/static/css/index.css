@@ -152,6 +152,66 @@ html, body {
     left: inherit;
 }
 
+.chat-container .chat-right .speech-text-request {
+    padding: .4rem 1rem;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    background: #FFC107;
+    color: #ffffff;
+    font-weight: 300;
+    line-height: 150%;
+    position: relative;
+    max-width: 50%;
+    overflow-wrap: break-word;
+}
+
+.chat-container li.chat-right > .speech-text-request:before {
+    right: -20px;
+    border-color: transparent transparent transparent #FFC107;
+    left: inherit;
+}
+
+.chat-container .chat-right .speech-text-cancel-reject {
+    padding: .4rem 1rem;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    background: #DC3545;
+    color: #ffffff;
+    font-weight: 300;
+    line-height: 150%;
+    position: relative;
+    max-width: 50%;
+    overflow-wrap: break-word;
+}
+
+.chat-container li.chat-right > .speech-text-cancel-reject:before {
+    right: -20px;
+    border-color: transparent transparent transparent #DC3545;
+    left: inherit;
+}
+
+.chat-container .chat-right .speech-text-accept {
+    padding: .4rem 1rem;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    background: #28A745;
+    color: #ffffff;
+    font-weight: 300;
+    line-height: 150%;
+    position: relative;
+    max-width: 50%;
+    overflow-wrap: break-word;
+}
+
+.chat-container li.chat-right > .speech-text-accept:before {
+    right: -20px;
+    border-color: transparent transparent transparent #28A745;
+    left: inherit;
+}
+
 .chat-container li .chat-hour {
     padding: 0;
     margin-bottom: 10px;

@@ -109,6 +109,7 @@ public class CourseController {
 			if (feature instanceof CourseMessageFeature) {
 				messageFeature = new CourseMessageFeature();
 				messageFeature.setFeatureId(feature.getFeatureId());
+				messageFeature.setMessengerMode(((CourseMessageFeature) feature).getMessengerMode());
 			}
 			else if (feature instanceof CourseQuizFeature) {
 				quizFeature = new CourseQuizFeature();
@@ -278,6 +279,7 @@ public class CourseController {
 			if (feature instanceof CourseMessageFeature) {
 				messageFeature = new CourseMessageFeature();
 				messageFeature.setFeatureId(feature.getFeatureId());
+				messageFeature.setMessengerMode(((CourseMessageFeature) feature).getMessengerMode());
 			}
 		}
 

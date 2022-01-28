@@ -5,36 +5,71 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.lecturestudio.web.api.message.MessengerMessage;
+import org.lecturestudio.web.api.message.SpeechBaseMessage;
+import org.lecturestudio.web.api.message.SpeechCancelMessage;
+import org.lecturestudio.web.api.message.SpeechRequestMessage;
 import org.lecturestudio.web.api.message.WebMessage;
 
 public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener {
 
-    private final ConcurrentHashMap<Long, List<MessengerMessage>> messengerMessageHistories = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, List<WebMessage>> messengerMessageHistories = new ConcurrentHashMap<>();
 
 
     @Override
     public void onFeatureMessage(long courseId, WebMessage message) {
         if (message instanceof MessengerMessage) {
             MessengerMessage mMessage = (MessengerMessage) message;
+            this.onFeatureMessengerMessage(courseId, mMessage);
+        }
+        else if (message instanceof SpeechBaseMessage) {
+            SpeechBaseMessage sbMessage = (SpeechBaseMessage) message;
+            this.onFeatureSpeechMessage(courseId, sbMessage);
+        }
+    }
 
-            List<MessengerMessage> messengerHistory = messengerMessageHistories.get(courseId);
+    private void onFeatureMessengerMessage(long courseId, MessengerMessage mMessage) {
+        List<WebMessage> messengerHistory = messengerMessageHistories.get(courseId);
 
-            if (Objects.isNull(messengerHistory)) {
-                List<MessengerMessage> futureHistory = Collections.synchronizedList(new LinkedList<MessengerMessage>());
-                futureHistory.add(mMessage);
-                messengerMessageHistories.put(courseId, futureHistory);
+        if (Objects.isNull(messengerHistory)) {
+            List<WebMessage> futureHistory = Collections.synchronizedList(new LinkedList<WebMessage>());
+            futureHistory.add(mMessage);
+            messengerMessageHistories.put(courseId, futureHistory);
+        }
+        else {
+            List<WebMessage> synchronizedMessengerHistory = Collections.synchronizedList(messengerHistory);
+            synchronizedMessengerHistory.add(mMessage);
+        }
+    }
+
+    private void onFeatureSpeechMessage(long courseId, SpeechBaseMessage sbMessage) {
+        List<WebMessage> messengerHistory = messengerMessageHistories.get(courseId);
+
+        if (!Objects.isNull(messengerHistory)) {
+            if (sbMessage instanceof SpeechRequestMessage) {
+                List<WebMessage> synchronizedMessengerHistory = Collections.synchronizedList(messengerHistory);
+                synchronizedMessengerHistory.add(sbMessage);
             }
             else {
-                List<MessengerMessage> synchronizedMessengerHistory = Collections.synchronizedList(messengerHistory);
-                synchronizedMessengerHistory.add(mMessage);
+                List<WebMessage> synchronizedMessengerHistory = Collections.synchronizedList(messengerHistory);
+                synchronizedMessengerHistory.replaceAll((message) -> {
+                    if (message instanceof SpeechRequestMessage) {
+                        SpeechRequestMessage speechRequestMessage = (SpeechRequestMessage) message;
+                        if (speechRequestMessage.getRequestId().equals(sbMessage.getRequestId()) && speechRequestMessage.getRemoteAddress().equals(sbMessage.getRemoteAddress())) {
+                            return sbMessage;
+                        }
+                    }
+                    return message;
+                });
             }
+
         }
     }
 
     public void addCourseHistory(long courseId) {
-        List<MessengerMessage> futureHistory = new LinkedList<MessengerMessage>();
+        List<WebMessage> futureHistory = new LinkedList<WebMessage>();
         messengerMessageHistories.put(courseId, futureHistory);
     }
 
@@ -42,17 +77,49 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
         messengerMessageHistories.remove(courseId);
     }
 
-    public List<MessengerMessage> getMessengerHistoryOfCourse(long courseId) {
-        List<MessengerMessage> messengerHistoryOfCourse = messengerMessageHistories.get(courseId);
+    public List<WebMessage> getMessengerHistoryOfCourseBidirectional(long courseId, User user) {
+        List<WebMessage> messengerHistoryOfCourse = messengerMessageHistories.get(courseId);
         
         if (!Objects.isNull(messengerHistoryOfCourse)) {
-            List<MessengerMessage> messengerHistoryOfCourseSynchronized = Collections.synchronizedList(messengerHistoryOfCourse);
+            List<WebMessage> messengerHistoryOfCourseSynchronized = Collections.synchronizedList(messengerHistoryOfCourse);
             synchronized(messengerHistoryOfCourseSynchronized ) {
-                return new LinkedList<MessengerMessage>(messengerHistoryOfCourseSynchronized);
+                List<WebMessage> messengerHistoryOfCourseFiltered = messengerHistoryOfCourseSynchronized.stream().filter((message) -> {
+                    if (message instanceof MessengerMessage) {
+                        return true;
+                    }
+                    else if (message instanceof SpeechBaseMessage) {
+                        return message.getRemoteAddress().equals(user.getUserId());
+                    }
+                    else {
+                        return false;
+                    }
+                }).collect(Collectors.toList());
+                return new LinkedList<WebMessage>(messengerHistoryOfCourseFiltered);
             }
         }
 
-        return new LinkedList<MessengerMessage>();
+        return new LinkedList<WebMessage>();
+    }
+
+    public List<WebMessage> getMessengerHistoryOfCourseUnidirectional(long courseId, User user) {
+        List<WebMessage> messengerHistoryOfCourse = messengerMessageHistories.get(courseId);
+        
+        if (!Objects.isNull(messengerHistoryOfCourse)) {
+            List<WebMessage> messengerHistoryOfCourseSynchronized = Collections.synchronizedList(messengerHistoryOfCourse);
+            synchronized(messengerHistoryOfCourseSynchronized ) {
+                List<WebMessage> messengerHistoryOfCourseFiltered = messengerHistoryOfCourseSynchronized.stream().filter((message) -> {
+                    if (message instanceof MessengerMessage || message instanceof SpeechBaseMessage) {
+                        return message.getRemoteAddress().equals(user.getUserId());
+                    }
+                    else {
+                        return false;
+                    }
+                }).collect(Collectors.toList());
+                return new LinkedList<WebMessage>(messengerHistoryOfCourseFiltered);
+            }
+        }
+
+        return new LinkedList<WebMessage>();
     }
     
 }

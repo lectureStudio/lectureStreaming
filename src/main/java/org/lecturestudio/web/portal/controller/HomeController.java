@@ -97,6 +97,7 @@ public class HomeController {
 			for (var feature : course.getFeatures()) {
 				if (feature instanceof CourseMessageFeature) {
 					messageFeature = new CourseMessageFeature();
+					messageFeature.setMessengerMode(((CourseMessageFeature) feature).getMessengerMode());
 				}
 				else if (feature instanceof CourseQuizFeature) {
 					quizFeature = new CourseQuizFeature();

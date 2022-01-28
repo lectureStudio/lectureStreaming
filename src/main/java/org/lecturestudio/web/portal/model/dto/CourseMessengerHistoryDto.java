@@ -1,7 +1,7 @@
 package org.lecturestudio.web.portal.model.dto;
 
 import java.util.List;
-import org.lecturestudio.web.api.message.MessengerMessage;
+import org.lecturestudio.web.api.message.WebMessage;
 
 import groovy.transform.builder.Builder;
 import lombok.AllArgsConstructor;
@@ -16,6 +16,6 @@ import lombok.Setter;
 @Builder
 public class CourseMessengerHistoryDto {
 
-    private List<MessengerMessage> messengerHistory;
+    private List<WebMessage> messengerHistory;
     
 }

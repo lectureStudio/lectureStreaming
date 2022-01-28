@@ -44,7 +44,7 @@ public class CourseFeatureWebSocketHandler extends BinaryWebSocketHandler {
 		this.objectMapper = objectMapper;
 		this.messengerSaveFeature = messengerSaveFeature;
 
-		courseFeatureState.addCourseFeatureListener(this::sendMessage);
+		//courseFeatureState.addCourseFeatureListener(this::sendMessage);
 		courseFeatureState.addCourseFeatureListener(this.messengerSaveFeature);
 	}
 

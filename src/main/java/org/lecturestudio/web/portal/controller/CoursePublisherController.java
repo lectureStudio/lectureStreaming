@@ -13,9 +13,11 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.model.ClassroomServiceResponse;
 import org.lecturestudio.web.api.model.Message;
+import org.lecturestudio.web.api.model.messenger.MessengerConfig;
 import org.lecturestudio.web.api.model.quiz.Quiz;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
@@ -190,8 +192,10 @@ public class CoursePublisherController {
 	}
 
 	@PostMapping("/messenger/start/{courseId}")
-	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId, @RequestParam(name = "mode") String mode) {
-		return startFeature(courseId, new CourseMessageFeature());
+	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId, @RequestParam(name = "mode") MessengerConfig.MessengerMode mode) {
+		CourseMessageFeature ftr = new CourseMessageFeature();
+		ftr.setMessengerMode(mode);
+		return startFeature(courseId, ftr);
 	}
 
 	@PostMapping("/messenger/stop/{courseId}")
@@ -290,6 +294,8 @@ public class CoursePublisherController {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
+		System.out.println(authentication.getClass());
+
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		JsonNode jsonNode = objectMapper.readTree(message);
@@ -304,8 +310,6 @@ public class CoursePublisherController {
 			mMessage.setDate(ZonedDateTime.parse(jsonNode.get("date").asText()));
 		}
 
-
-		courseFeatureState.postCourseFeatureMessage(courseId, mMessage);
 		return mMessage;
     }
 }

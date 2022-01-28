@@ -90,7 +90,7 @@ class Course {
 	}
 
 	async establishMessengerConnection() {
-		var socket = new SockJS('/messenger');
+		var socket = new SockJS('/api/subscriber/messenger/');
 		this.stompClient = Stomp.over(socket);
 		const messengerConnectionWarning = this.messengerElement.querySelector("#messenger-connection-warning");
 
@@ -102,7 +102,7 @@ class Course {
 				this.onChatMessageReceive(this.stompMessageToMessageObject(message));
 			});
 			this.stompClient.subscribe('/user/queue/chat/' + this.courseId, (message) => {
-				console.log("hello");
+				this.onChatMessageReceive(this.stompMessageToMessageObject(message));
 			});
 			await this.reloadMessengerHistory();
 			this.setMessengerForm(false);
@@ -309,6 +309,7 @@ class Course {
 		})
 		.then(requestId => {
 			this.speechRequestId = requestId;
+			
 		})
 		.catch(error => console.error(error));
 	}
@@ -364,6 +365,7 @@ class Course {
 			return response.text();
 		})
 		.then( async json => {
+			console.log(json);
 			const messengerHistoryDto = JSON.parse(json);
 			const messengerHistory = messengerHistoryDto.messengerHistory;
 
@@ -395,7 +397,7 @@ class Course {
 			const data = new FormData(event.target);
 			const value = Object.fromEntries(data.entries());
 			if (this.stompClient.connected) {
-				this.sendOverSTOMPdirect(value);
+				this.sendOverSTOMP(value);
 				this.showToast("toast-success", "course.feature.message.sent");
 			}
 			else {
@@ -414,12 +416,6 @@ class Course {
 	sendOverSTOMP(value) {
 		this.stompClient.send("/app/message/" + this.courseId, {}, JSON.stringify(value));
 	}
-
-	sendOverSTOMPdirect(value) {
-		this.stompClient.send("/app/message/direct/" + this.courseId, {}, JSON.stringify(value));
-	}
-
-
 
 	setMessengerForm(disabled) {
 		if (this.messengerElement) {

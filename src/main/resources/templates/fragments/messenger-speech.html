@@ -1,0 +1,14 @@
+<div th:fragment="messenger-speech (timestamp, type)">
+    <li class="chat-right">
+        <div class="chat-hour" th:text="${timestamp}"></div>
+        <div th:switch="${type}"> 
+            <div th:case="'request'" class="chat-text-request" ><p style="overflow-wrap: break-word; font-style: italic;" th:text="#{course.speech.messenger.request}"></p></div>
+            <div th:case="'cancel'" class="chat-text-request" ><p style="overflow-wrap: break-word; font-style: italic;" th:text="#{course.speech.messenger.cancelled}"></p></div>
+            <div th:case="'accept'" class="chat-text-request" ><p style="overflow-wrap: break-word; font-style: italic;" th:text="#{course.speech.messenger.accepted}"></p></div>
+            <div th:case="'reject'" class="chat-text-request" ><p style="overflow-wrap: break-word; font-style: italic;" th:text="#{course.speech.messenger.rejected}"></p></div>
+        </div>
+        <div class="chat-avatar">
+            <div class="chat-name">Ich</div>
+        </div>
+    </li>
+</div>
