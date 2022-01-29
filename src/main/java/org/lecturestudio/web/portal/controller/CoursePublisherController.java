@@ -103,7 +103,7 @@ public class CoursePublisherController {
 
 		CourseSpeechRequest speechRequest = speechRequestOpt.get();
 
-		speechRequestService.deleteById(speechRequest.getId());
+		// speechRequestService.deleteById(speechRequest.getId());
 
 		CourseSpeechEvent courseEvent = CourseSpeechEvent.builder()
 			.requestId(BigInteger.valueOf(speechRequest.getRequestId()))

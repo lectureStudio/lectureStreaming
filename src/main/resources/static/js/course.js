@@ -14,6 +14,7 @@ class Course {
 		this.userId = null;
 		this.courseId = null;
 		this.speechRequestId = null;
+		this.speechModal = null;
 		this.startTime = null;
 		this.dict = null;
 		this.devicesSelected = false;
@@ -56,10 +57,12 @@ class Course {
 					this.quizModal.hide();
 				}
 
-				this.player = null;
+				if (!this.player) {
+					this.connectionInfoVisible(false)
+					this.unavailableVisible(true);
+				}
 
-				this.connectionInfoVisible(false)
-				this.unavailableVisible(true);
+				this.player = null;
 			}
 		});
 		window.portalApp.addOnSpeechState((event) => {
@@ -73,6 +76,10 @@ class Course {
 				}
 				else {
 					this.player.stopSpeech();
+
+					if (this.speechModal) {
+						this.speechModal.hide();
+					}
 
 					this.showToast("toast-warn", "course.speech.request.rejected");
 				}
@@ -187,6 +194,7 @@ class Course {
 			}
 
 			this.loadingVisible(false);
+			this.connectionInfoVisible(false);
 			this.unavailableVisible(false);
 			this.playerVisible(true);
 		}
@@ -511,7 +519,7 @@ class Course {
 		const startButton = document.getElementById("speechRequestStart");
 		const cancelButton = document.getElementById("speechRequestCancel");
 
-		const speechModal = bootstrap.Modal.getOrCreateInstance(speechModalElement, {
+		this.speechModal = bootstrap.Modal.getOrCreateInstance(speechModalElement, {
 			backdrop: "static",
 			keyboard: false
 		});
@@ -522,13 +530,13 @@ class Course {
 		const startHandler = () => {
 			this.player.startSpeech(speechConstraints);
 
-			speechModal.hide();
+			this.speechModal.hide();
 		};
 		const hiddenHandler = () => {
 			speechModalElement.removeEventListener("hidden.bs.modal", hiddenHandler);
 			cancelButton.removeEventListener("click", cancelHandler);
 			startButton.removeEventListener("click", startHandler);
-			speechModal.dispose();
+			this.speechModal.dispose();
 
 			window.stopMediaTracks(stream);
 		};
@@ -544,7 +552,7 @@ class Course {
 			cameraBlockedAlert.classList.add("d-none");
 		}
 
-		speechModal.show();
+		this.speechModal.show();
 	}
 
 	showDeviceInitModal() {
