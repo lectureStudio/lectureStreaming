@@ -1,4 +1,22 @@
-function fillForm(devices, stream, constraints) {
+function addGainToStream(inputStream, gain){
+	const audioContext = new AudioContext()
+	const gainNode = audioContext.createGain(); 
+	const audioSource = audioContext.createMediaStreamSource(inputStream);
+	const audioDestination = audioContext.createMediaStreamDestination();
+	audioSource.connect(gainNode);
+	gainNode.connect(audioDestination);
+	gain = (Math.pow(10, gain) - 1) / 10;
+	gainNode.gain.value = gain;
+	return audioDestination.stream;
+}
+
+let orginialStream = null;
+
+function addGainToOriginalStream(gain){
+	return addGainToStream(orginialStream, gain / 100);
+}
+
+function fillForm(devices, inputStream, constraints) {
 	const audioInputs = devices.filter(device => device.kind === "audioinput");
 	const videoInputs = devices.filter(device => device.kind === "videoinput");
 
@@ -6,6 +24,7 @@ function fillForm(devices, stream, constraints) {
 	const cameraSelect = document.getElementById("cameraSelect");
 	const microphoneSelect = document.getElementById("microphoneSelect");
 	const meterCanvas = document.getElementById("meter");
+	const volume = document.getElementById("microphoneVolume");
 
 	const saveButton = document.getElementById("saveDeviceSelection");
 	saveButton.addEventListener("click", () => {
@@ -17,6 +36,8 @@ function fillForm(devices, stream, constraints) {
 	});
 
 	const video = document.getElementById("cameraPreview");
+	orginialStream = inputStream;
+	const stream = addGainToStream(inputStream, volume.value / 100);
 	video.srcObject = stream;
 
 	const onAudioDeviceChange = () => {
@@ -31,9 +52,11 @@ function fillForm(devices, stream, constraints) {
 
 		navigator.mediaDevices.getUserMedia(audioConstraints)
 			.then(audioStream => {
-				audioStream.getAudioTracks().forEach(track => video.srcObject.addTrack(track));
+				orginialStream = audioStream;
+				const gainedStream = addGainToStream(audioStream, volume.value / 100);
+				gainedStream.getAudioTracks().forEach(track => video.srcObject.addTrack(track));
 
-				window.getAudioLevel(audioStream.getAudioTracks()[0], meterCanvas);
+				window.getAudioLevel(gainedStream.getAudioTracks()[0], meterCanvas);
 			})
 			.catch(error => {
 				console.error(error);
@@ -84,6 +107,10 @@ function fillForm(devices, stream, constraints) {
 				}
 			});
 	};
+
+	volume.addEventListener('input', () => {
+		onAudioDeviceChange();
+	});
 
 	cameraSelect.onchange = onVideoDeviceChange;
 	microphoneSelect.onchange = onAudioDeviceChange;

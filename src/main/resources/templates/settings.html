@@ -38,6 +38,24 @@
 								aria-label=".form-select-sm microphone">
 							</select>
 						</div>
+						<div class="mb-3">
+							<label for="microphoneVolume" class="form-label">Lautstärke</label> – <span id="microphoneVolume-display"></span>
+							<div>
+								<input type="range" class="form-range" min="0" max="300" id="microphoneVolume" value="100">
+							</div>
+							<script>
+								const range = document.getElementById("microphoneVolume");
+								range.addEventListener("input", () => {
+									localStorage.setItem('microfoneVolume', range.value);
+									document.getElementById("microphoneVolume-display").innerHTML = range.value + "%";
+								});
+								const volume = localStorage.getItem('microfoneVolume');
+								if(volume !== null){
+									range.value = volume;
+								}
+								range.dispatchEvent(new Event('input'));
+							</script>
+						</div>
 					</form>
 				</div>
 			</div>
