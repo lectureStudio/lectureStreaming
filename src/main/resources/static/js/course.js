@@ -31,7 +31,6 @@ class Course {
 		this.quizContainer = document.getElementById("quiz-content");
 		this.isPlayerUsedContainer = document.getElementById("player-is-used");
 
-
 		window.portalApp.addOnCourseState((event) => {
 			if (event.started) {
 				this.startTime = event.createdTimestamp;
@@ -484,6 +483,78 @@ class Course {
 		}
 	}
 
+	attachMessengerToModal(){
+		this.messengerModal = mountInModal(this.messengerContainer, this.messengerElement, 'Nachricht an Dozent/in versenden', () => {
+			this.hideMessenger();
+		});
+	}
+
+	attachMessengerToSidePanel(){
+		this.player.setContainerA(this.messengerElement);
+	}
+
+	messengerResize(){
+		if(! this.messengerIsVisible){
+			return;
+		}
+		if(! this.player){
+			return;
+		}
+		if(this.messengerModal != null){
+			return;
+		}
+		if(! this.displayIsWideEnoughForSidePanel()){
+			this.hideMessenger();
+		}
+	}
+
+	showMessenger(){
+		if(this.player){
+			if(this.displayIsWideEnoughForSidePanel()){
+				this.attachMessengerToSidePanel();
+			}else{
+				this.attachMessengerToModal();
+				this.messengerModal.show();
+			}
+		}
+		
+		this.elementVisible(this.messengerElement, true);
+		this.messengerIsVisible = true;
+	}
+
+	messengerIsMountedInMessengerContainer(){
+		return this.messengerContainer.children.length > 0;
+	}
+
+	hideMessenger(){
+		if(this.messengerModal != null){
+			this.messengerModal.hide();
+		}
+		this.elementVisible(this.messengerElement, false);
+		if(! this.messengerIsMountedInMessengerContainer()){
+			this.messengerContainer.appendChild(this.messengerElement);
+		}
+		this.messengerModal = null;
+		if(this.player != null){
+			this.player.setContainerA(null);
+		}
+		this.messengerIsVisible = false;
+	}
+
+	togglMessenger(){
+		if(this.messengerIsVisible){
+			this.hideMessenger();
+		}else{
+			this.showMessenger();
+		}
+	}
+
+	messageWasSent(){
+		if(this.messengerModal != null){
+			this.hideMessenger();
+		}
+	}
+
 	initMessenger() {
 		const messageForm = this.messengerElement.querySelector("#course-message-form");
 
@@ -529,7 +600,7 @@ class Course {
 			const messageSubmitButton = this.messengerElement.querySelector("#messageSubmit");
 			messageSubmitButton.disabled = disabled;
 		}
-	}
+	}	
 
 	loadQuiz() {
 		fetch("/course/quiz/" + this.courseId, {
