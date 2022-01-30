@@ -222,7 +222,8 @@ function getAudioLevel(audioTrack, canvas) {
 	const meterContext = canvas.getContext("2d");
 
 	pollAudioLevel(audioTrack, (level) => {
-		meterContext.clearRect(0, 0, canvas.width, canvas.height);
+		meterContext.fillStyle = "lightgrey";
+		meterContext.fillRect(0, 0, canvas.width, canvas.height);
 		meterContext.fillStyle = "#0d6efd";
 		meterContext.fillRect(0, 0, level * canvas.width, canvas.height);
 	});
