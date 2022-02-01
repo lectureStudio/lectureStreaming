@@ -776,7 +776,9 @@ class Course {
 			saveButton.removeEventListener("click", saveHandler);
 			deviceModal.dispose();
 
-			window.stopMediaTracks(video.srcObject);
+			window.stopMediaTracks(stream);
+
+			video.srcObject = null;
 		};
 
 		cancelButton.addEventListener("click", cancelHandler);
@@ -977,7 +979,9 @@ class Course {
 			saveButton.removeEventListener("click", saveHandler);
 			deviceModal.dispose();
 
-			window.stopMediaTracks(video.srcObject);
+			window.stopMediaTracks(stream);
+
+			video.srcObject = null;
 		};
 
 		cancelButton.addEventListener("click", cancelHandler);
