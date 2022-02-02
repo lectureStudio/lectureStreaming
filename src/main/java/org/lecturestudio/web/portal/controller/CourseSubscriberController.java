@@ -331,11 +331,7 @@ public class CourseSubscriberController {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		User user = userService.findById(details.getUsername()).get();
-		if (feature.getMessengerMode() == MessengerMode.BIDIRECTIONAL) {
-			return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourseBidirectional(courseId, user));
-		} else {
-			return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourseUnidirectional(courseId, user));
-		}
+		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourseBidirectional(courseId, user));
 	}
 
 	@PostMapping("/quiz/post/{courseId}")
@@ -410,23 +406,10 @@ public class CourseSubscriberController {
 		mMessage.setFirstName(details.getFirstName());
 		mMessage.setFamilyName(details.getFamilyName());
 
-		MessengerMode messengerMode = feature.getMessengerMode();
 
 		courseFeatureState.postCourseFeatureMessage(courseId, mMessage);
 
-		if (messengerMode == MessengerMode.BIDIRECTIONAL) {
-			simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, mMessage);
-		} 
-		else if (messengerMode == MessengerMode.UNIDIRECTIONAL) {
-			Optional<Course> thisCourse = courseService.findById(courseId);
-			Course course = thisCourse.get();
-			for (CourseRegistration registration : course.getRegistrations()) {
-				User owner = registration.getUser();
-				SimpUser user = userRegistry.getUser(owner.getUserId());
-				simpMessagingTemplate.convertAndSendToUser(user.getName(), "/queue/chat/" + courseId, mMessage);
-			}
-			simpMessagingTemplate.convertAndSendToUser(authentication.getName(), "/queue/chat/" + courseId, mMessage);
-		}
+		simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, mMessage); 
     }
 
 	@MessageExceptionHandler
