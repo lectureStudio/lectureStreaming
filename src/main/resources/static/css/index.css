@@ -72,38 +72,42 @@ html, body {
     padding-right: 5px;
 }
 
-.chat-container li.chat-left,
-.chat-container li.chat-right {
-    display: flex;
-    flex: 1;
-    flex-direction: row;
+.chat-container div.chat-left,
+.chat-container div.chat-right {
     margin-bottom: 40px;
 }
 
-.chat-container li .chat-avatar {
+.chat-container div.chat-content-left,
+.chat-container div.chat-content-right {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+}
+
+.chat-container div .chat-avatar {
     display: flex;
     flex-direction: column;
     justify-content: center;
     margin-right: 20px;
 }
 
-.chat-container li.chat-right {
+.chat-container div.chat-content-right {
     justify-content: flex-end;
 }
 
 
-.chat-container li.chat-right > .chat-avatar {
+.chat-container div.chat-content-right > .chat-avatar {
     margin-left: 20px;
     margin-right: 0;
 }
 
-.chat-container li .chat-name {
+.chat-container div .chat-name {
     font-size: .75rem;
     color: #999999;
     text-align: center;
 }
 
-.chat-container .chat-right .chat-text {
+.chat-container .chat-content-right .chat-message-boxed {
     padding: .4rem 1rem;
     -webkit-border-radius: 4px;
     -moz-border-radius: 4px;
@@ -117,7 +121,7 @@ html, body {
     overflow-wrap: break-word;
 }
 
-.chat-container .chat-left .chat-text {
+.chat-container .chat-content-left .chat-message-boxed {
     padding: .4rem 1rem;
     -webkit-border-radius: 4px;
     -moz-border-radius: 4px;
@@ -130,7 +134,7 @@ html, body {
     overflow-wrap: break-word;
 }
 
-.chat-container li .chat-text:before {
+.chat-container div .chat-message-boxed:before {
     content: '';
     position: absolute;
     width: 0;
@@ -142,77 +146,27 @@ html, body {
     max-width: 100%;
 }
 
-.chat-container li.chat-right > .chat-text {
+.chat-container div.chat-content-right .chat-message-text {
     text-align: right;
 }
 
-.chat-container li.chat-right > .chat-text:before {
+.chat-container .chat-message-text p {
+    margin-bottom: 0px;
+}
+
+.chat-container div.chat-content-right .chat-message-status {
+    display: flex;
+    justify-content: end;
+}
+
+
+.chat-container div.chat-content-right > .chat-message-boxed:before {
     right: -20px;
     border-color: transparent transparent transparent #0d6efd;
     left: inherit;
 }
 
-.chat-container .chat-right .speech-text-request {
-    padding: .4rem 1rem;
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    border-radius: 4px;
-    background: #FFC107;
-    color: #ffffff;
-    font-weight: 300;
-    line-height: 150%;
-    position: relative;
-    max-width: 50%;
-    overflow-wrap: break-word;
-}
-
-.chat-container li.chat-right > .speech-text-request:before {
-    right: -20px;
-    border-color: transparent transparent transparent #FFC107;
-    left: inherit;
-}
-
-.chat-container .chat-right .speech-text-cancel-reject {
-    padding: .4rem 1rem;
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    border-radius: 4px;
-    background: #DC3545;
-    color: #ffffff;
-    font-weight: 300;
-    line-height: 150%;
-    position: relative;
-    max-width: 50%;
-    overflow-wrap: break-word;
-}
-
-.chat-container li.chat-right > .speech-text-cancel-reject:before {
-    right: -20px;
-    border-color: transparent transparent transparent #DC3545;
-    left: inherit;
-}
-
-.chat-container .chat-right .speech-text-accept {
-    padding: .4rem 1rem;
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    border-radius: 4px;
-    background: #28A745;
-    color: #ffffff;
-    font-weight: 300;
-    line-height: 150%;
-    position: relative;
-    max-width: 50%;
-    overflow-wrap: break-word;
-}
-
-.chat-container li.chat-right > .speech-text-accept:before {
-    right: -20px;
-    border-color: transparent transparent transparent #28A745;
-    left: inherit;
-}
-
-.chat-container li .chat-hour {
+.chat-container div .chat-hour {
     padding: 0;
     margin-bottom: 10px;
     font-size: .75rem;
@@ -223,12 +177,12 @@ html, body {
     margin: 0 0 0 15px;
 }
 
-.chat-container li .chat-hour > span {
+.chat-container div .chat-hour > span {
     font-size: 16px;
     color: #9ec94a;
 }
 
-.chat-container li.chat-right > .chat-hour {
+.chat-container div.chat-content-right > .chat-hour {
     margin: 0 15px 0 0;
 }
 

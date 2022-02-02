@@ -99,10 +99,19 @@ class Course {
 				messengerConnectionWarning.classList.add('hidden');
 			}
 			this.stompClient.subscribe('/topic/chat/' + this.courseId, (message) => {
-				this.onChatMessageReceive(this.stompMessageToMessageObject(message));
+				const jsonObject = this.stompMessageToMessageObject(message);
+				const type = jsonObject["_type"];
+				switch (type) {
+					case 'MessengerMessage':
+						this.onMessengerMessageReceive(jsonObject, message.headers);
+						break;
+					case 'MessengerReplyMessage':
+						this.onMessengerReplyMessageReceive(jsonObject, message.headers);
+						break;
+				}
 			});
 			this.stompClient.subscribe('/user/queue/chat/' + this.courseId, (message) => {
-				this.onChatMessageReceive(this.stompMessageToMessageObject(message));
+				this.onMessengerMessageReceive(this.stompMessageToMessageObject(message), message.headers);
 			});
 			await this.reloadMessengerHistory();
 			this.setMessengerForm(false);
@@ -189,9 +198,28 @@ class Course {
 		return JSON.parse(messageBody);
 	}
 
-	async onChatMessageReceive(message) {
+	addRepliedIcon(messageElement) {
+		const messageStatusDoc = messageElement.querySelector('.chat-message-status')
+		console.log(messageStatusDoc);
+		const repliedIcon = document.createElement('i');
+		repliedIcon.classList.add('bi', 'bi-check2');
+		repliedIcon.setAttribute('data-bs-toggle', 'tooltip');
+		repliedIcon.setAttribute('title', this.dict['course.feature.message.reply.tooltip']);
+		var tooltip = new bootstrap.Tooltip(repliedIcon, {placement: 'bottom'});
+
+		messageStatusDoc.appendChild(repliedIcon);
+	}
+
+	onMessengerReplyMessageReceive(message, headers) {
+		const repliedMessage = this.messengerElement.querySelector(`[id='${message.repliedMessageId}']`);
+		if (repliedMessage) {
+			this.addRepliedIcon(repliedMessage);
+		}
+	}
+
+	async onMessengerMessageReceive(message, headers) {
 		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
-		var params = {timestamp: message.time, content: message.text, from: message.username};
+		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId};
 
 		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
@@ -204,16 +232,10 @@ class Course {
 		.then(html => {
 			if (html) {
 				const doc = new DOMParser().parseFromString(html, "text/html");
-
-				const chatHistory = this.messengerElement.querySelector("#chat-history-list");
-
-				if (chatHistory) {
-					for (const child of doc.body.children) {
-						chatHistory.appendChild(child);
-					}
+				if (message.reply) {
+					this.addRepliedIcon(doc);
 				}
-
-				chatHistory.scrollTop = chatHistory.scrollHeight;
+				this.appendToMessengerHistory(doc);
 			}
 		})
 		.catch(error => console.error(error));
@@ -284,6 +306,18 @@ class Course {
 		}
 	}
 
+	appendToMessengerHistory(html) {
+		const chatHistory = this.messengerElement.querySelector("#chat-history-list");
+
+		if (chatHistory) {
+			for (const child of html.body.children) {
+				chatHistory.appendChild(child);
+			}
+		}
+
+		chatHistory.scrollTop = chatHistory.scrollHeight;
+	}
+
 	cancelSpeech() {
 		if (!this.speechRequestId) {
 			this.player.setRaiseHand(false);
@@ -309,7 +343,7 @@ class Course {
 		})
 		.then(requestId => {
 			this.speechRequestId = requestId;
-			
+
 		})
 		.catch(error => console.error(error));
 	}
@@ -365,12 +399,11 @@ class Course {
 			return response.text();
 		})
 		.then( async json => {
-			console.log(json);
 			const messengerHistoryDto = JSON.parse(json);
 			const messengerHistory = messengerHistoryDto.messengerHistory;
 
 			for (let mm of messengerHistory) {
-				await this.onChatMessageReceive(mm);
+				await this.onMessengerMessageReceive(mm, {'message-id': 4});
 			}
 		})
 		chatHistory.classList.remove("hidden");

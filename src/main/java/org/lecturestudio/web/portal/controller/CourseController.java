@@ -77,7 +77,8 @@ public class CourseController {
 		"course.feature.quiz.input.invalid",
 		"course.speech.request.speak",
 		"course.speech.request.ended",
-		"course.speech.request.rejected"
+		"course.speech.request.rejected",
+		"course.feature.message.reply.tooltip"
 	);
 
 
@@ -295,17 +296,17 @@ public class CourseController {
 
 	@RequestMapping("/messenger/messageReceived")
 	public String getMessageReceived(@RequestParam("timestamp") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date, @RequestParam("content") String content,
-		@RequestParam("from") String from, Authentication authentication) {
+		@RequestParam("from") String from, @RequestParam("id") String id, Authentication authentication) {
 
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		String time = String.format("%02d:%02d", date.getHour(), date.getMinute());
 
 		if (details.getUsername().equals(from)) {
-			return String.format("fragments/messenger-message :: messenger-message(timestamp='%s', content='%s')", time, content);
+			return String.format("fragments/messenger-message :: messenger-message(id='%s', timestamp='%s', content='%s')", id, time, content);
 		}
 		else {
-			return String.format("fragments/messenger-other-message :: messenger-other-message(timestamp='%s', content='%s', from='%s')", time, content, from);
+			return String.format("fragments/messenger-other-message :: messenger-other-message(id='%s', timestamp='%s', content='%s', from='%s')", id, time, content, from);
 		}
 	}
 

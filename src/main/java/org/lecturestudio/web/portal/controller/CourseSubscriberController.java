@@ -64,15 +64,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.messaging.MessageHandler;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.rsocket.annotation.ConnectMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.annotation.SendToUser;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.user.SimpUser;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.messaging.support.GenericMessage;
@@ -121,9 +119,6 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
-
-	@Autowired
-	private SimpMessagingTemplate messaging;
 
 	@Autowired
 	private UserService userService;
@@ -395,20 +390,23 @@ public class CourseSubscriberController {
 
 	@MessageMapping("/message/{courseId}")
     @SendTo("/topic/chat/{courseId}")
-    public void sendMessage(@Payload Message message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
+    public void sendMessage(@Payload org.springframework.messaging.Message<Message> message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
+		Message payload = message.getPayload();
+		MessageHeaders headers = message.getHeaders();
+
 		// Validate input.
-		ResponseEntity<ClassroomServiceResponse> response = messageValidator.validate(feature, message);
+		ResponseEntity<ClassroomServiceResponse> response = messageValidator.validate(feature, payload);
 
 		if (! (response.getStatusCode().value() == HttpStatus.OK.value())) {
 			throw new Exception(response.toString());
 		}
 
-		MessengerMessage mMessage = new MessengerMessage(message, details.getUsername(), ZonedDateTime.now());
+		MessengerMessage mMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
 		mMessage.setFirstName(details.getFirstName());
 		mMessage.setFamilyName(details.getFamilyName());
 
@@ -425,19 +423,10 @@ public class CourseSubscriberController {
 			for (CourseRegistration registration : course.getRegistrations()) {
 				User owner = registration.getUser();
 				SimpUser user = userRegistry.getUser(owner.getUserId());
-				System.out.println(user.toString());
 				simpMessagingTemplate.convertAndSendToUser(user.getName(), "/queue/chat/" + courseId, mMessage);
 			}
 			simpMessagingTemplate.convertAndSendToUser(authentication.getName(), "/queue/chat/" + courseId, mMessage);
 		}
-    }
-
-	@MessageMapping("/message/speech/back/{courseId}")
-    @SendToUser("/queue/chat/{courseId}")
-    public void sendSpeechMessageBackToSender(@Payload org.springframework.messaging.Message<SpeechRequestMessage> message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-		SpeechRequestMessage messageContent = message.getPayload();
-		messaging.convertAndSendToUser(authentication.getName(), "/queue/chat/" + courseId, messageContent);
     }
 
 	@MessageExceptionHandler

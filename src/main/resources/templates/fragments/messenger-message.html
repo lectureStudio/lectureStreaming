@@ -1,9 +1,25 @@
-<div th:fragment="messenger-message (timestamp, content)">
-    <li class="chat-right">
-        <div class="chat-hour" th:text="${timestamp}"></div>
-        <div class="chat-text" ><p style="overflow-wrap: break-word;" th:text="${content}"></p></div>
-        <div class="chat-avatar">
-            <div class="chat-name">Ich</div>
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <div th:id="${id}" th:fragment="messenger-message (id, timestamp, content)">
+        <div class="chat-right">
+            <div class="chat-content-right">
+                <div class="chat-hour" th:text="${timestamp}"></div>
+                <div class="chat-message-boxed">
+                    <div class="chat-message-text">
+                        <p style="overflow-wrap: break-word;" th:text="${content}"></p>
+                    </div>
+                    <div class="chat-message-status">
+                    </div>
+                </div>
+                <div class="chat-avatar">
+                    <div class="chat-name">Ich</div>
+                </div>
+            </div>
         </div>
-    </li>
-</div>
+    </div>
+</body>
+</html>
