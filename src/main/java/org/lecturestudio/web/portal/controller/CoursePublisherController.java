@@ -194,10 +194,8 @@ public class CoursePublisherController {
 	}
 
 	@PostMapping("/messenger/start/{courseId}")
-	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId, @RequestParam(name = "mode") MessengerConfig.MessengerMode mode) {
-		CourseMessageFeature ftr = new CourseMessageFeature();
-		ftr.setMessengerMode(mode);
-		return startFeature(courseId, ftr);
+	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId) {
+		return startFeature(courseId, new CourseMessageFeature());
 	}
 
 	@PostMapping("/messenger/stop/{courseId}")
