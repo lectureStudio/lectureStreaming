@@ -197,6 +197,13 @@ class Course {
 		const messageBody = stompMessage.body;
 		return JSON.parse(messageBody);
 	}
+  
+  urlify(text) {
+	const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+	return text.replace(urlRegex, function(url) {
+			return '<a href="' + url + '">' + url + '</a>';
+		});
+	}
 
 	addRepliedIcon(messageElement) {
 		const messageStatusDoc = messageElement.querySelector('.chat-message-status')
@@ -234,7 +241,10 @@ class Course {
 				const doc = new DOMParser().parseFromString(html, "text/html");
 				if (message.reply) {
 					this.addRepliedIcon(doc);
-				}
+        }
+
+				const messageTextElement = doc.querySelector(".chat-text-content");
+				messageTextElement.innerHTML = this.urlify(messageTextElement.innerHTML);
 				this.appendToMessengerHistory(doc);
 			}
 		})
@@ -242,6 +252,18 @@ class Course {
 
 
 		return response;
+	}
+          
+  appendToMessengerHistory(html) {
+	const chatHistory = this.messengerElement.querySelector("#chat-history-list");
+
+  if (chatHistory) {
+    for (const child of html.body.children) {
+      chatHistory.appendChild(child);
+    }
+  }
+
+		chatHistory.scrollTop = chatHistory.scrollHeight;
 	}
 
 	onPlayerSettings() {

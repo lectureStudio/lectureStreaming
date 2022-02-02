@@ -159,6 +159,17 @@ html, body {
     justify-content: end;
 }
 
+.chat-container .chat-message-text .chat-text-content {
+    overflow-wrap: break-word;
+}
+
+.chat-container div.chat-right .chat-text-content a {
+    color: white;
+}
+
+.chat-container div.chat-left .chat-text-content a {
+    color: blue;
+}
 
 .chat-container div.chat-content-right > .chat-message-boxed:before {
     right: -20px;
