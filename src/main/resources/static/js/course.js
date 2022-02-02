@@ -186,6 +186,13 @@ class Course {
 		return JSON.parse(messageBody);
 	}
 
+	urlify(text) {
+		const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+		return text.replace(urlRegex, function(url) {
+			return '<a href="' + url + '">' + url + '</a>';
+		});
+	}
+
 	async onChatMessageReceive(message) {
 		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
 		var params = {timestamp: message.time, content: message.text, from: message.username};
@@ -201,6 +208,9 @@ class Course {
 		.then(html => {
 			if (html) {
 				const doc = new DOMParser().parseFromString(html, "text/html");
+
+				const messageTextElement = doc.querySelector(".chat-text-content");
+				messageTextElement.innerHTML = this.urlify(messageTextElement.innerHTML);
 
 				const chatHistory = this.messengerElement.querySelector("#chat-history-list");
 

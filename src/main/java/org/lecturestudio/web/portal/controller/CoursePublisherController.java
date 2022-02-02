@@ -297,6 +297,7 @@ public class CoursePublisherController {
 			mMessage.setMessage(new Message(jsonNode.get("message").asText()));
 			mMessage.setFirstName(jsonNode.get("firstName").asText());
 			mMessage.setFamilyName(jsonNode.get("familyName").asText());
+			mMessage.setRemoteAddress(jsonNode.get("remoteAddress").asText());
 			mMessage.setDate(ZonedDateTime.parse(jsonNode.get("date").asText()));
 		}
 

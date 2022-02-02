@@ -146,6 +146,18 @@ html, body {
     text-align: right;
 }
 
+.chat-container .chat-text .chat-text-content {
+    overflow-wrap: break-word;
+}
+
+.chat-container li.chat-right > .chat-text .chat-text-content a {
+    color: white;
+}
+
+.chat-container li.chat-left > .chat-text .chat-text-content a {
+    color: blue;
+}
+
 .chat-container li.chat-right > .chat-text:before {
     right: -20px;
     border-color: transparent transparent transparent #0d6efd;
