@@ -48,7 +48,7 @@ public class WebSocketConfig implements WebSocketConfigurer, WebSocketMessageBro
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		registry
-			.addHandler(new CourseStateWebSocketHandler(courseStates, objectMapper, userService), "/api/publisher/course-state")
+			.addHandler(new CourseStateWebSocketHandler(courseStates, objectMapper, userService, messengerSaveFeature), "/api/publisher/course-state")
 				.setAllowedOrigins("*")
 			.addHandler(new CourseFeatureWebSocketHandler(courseFeatureState, objectMapper, messengerSaveFeature), "/api/publisher/messages")
 				.setAllowedOrigins("*");
@@ -65,13 +65,15 @@ public class WebSocketConfig implements WebSocketConfigurer, WebSocketMessageBro
 
 	@Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic").setTaskScheduler(heartBeatScheduler());
+        registry.enableSimpleBroker("/queue", "/topic").setTaskScheduler(heartBeatScheduler());
         registry.setApplicationDestinationPrefixes("/app");
+		registry.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/messenger").setAllowedOriginPatterns("*").withSockJS();
+        registry.addEndpoint("/api/publisher/messenger").setAllowedOriginPatterns("*").withSockJS();
+		registry.addEndpoint("/api/subscriber/messenger").setAllowedOriginPatterns("*").withSockJS();
     }
 
 	@Bean

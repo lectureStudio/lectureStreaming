@@ -3,6 +3,7 @@ package org.lecturestudio.web.portal.model;
 import static java.util.Objects.isNull;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +19,7 @@ public class CourseState {
 
 	private final long courseId;
 
-	private final BiConsumer<Long, SpeechBaseMessage> speechListener;
+	private final List<BiConsumer<Long, SpeechBaseMessage>> speechListeners;
 
 	private final BiConsumer<Long, CourseParticipantMessage> connectedListener;
 
@@ -31,16 +32,18 @@ public class CourseState {
 	private CourseStateDocument avtiveDocument;
 
 
-	public CourseState(UserService userService, long courseId, BiConsumer<Long, SpeechBaseMessage> speechListener, BiConsumer<Long, CourseParticipantMessage> connectedListener) {
+	public CourseState(UserService userService, long courseId, List<BiConsumer<Long, SpeechBaseMessage>> speechListeners, BiConsumer<Long, CourseParticipantMessage> connectedListener) {
 		this.userService = userService;
 		this.courseId = courseId;
-		this.speechListener = speechListener;
+		this.speechListeners = speechListeners;
 		this.connectedListener = connectedListener;
 		timestamp = System.currentTimeMillis();
 	}
 
 	public void postSpeechMessage(Long courseId, SpeechBaseMessage message) {
-		speechListener.accept(courseId, message);
+		for (BiConsumer<Long, SpeechBaseMessage> listener : speechListeners) {
+			listener.accept(courseId, message);
+		}
 	}
 
 	public long getCreatedTimestamp() {

@@ -14,12 +14,15 @@ import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
+import org.hibernate.Hibernate;
 import org.joda.time.LocalDate;
 import org.lecturestudio.core.recording.RecordedPage;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
+import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.SubscriberEmitterService;
+import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.validator.MessageValidator;
 import org.lecturestudio.web.portal.validator.QuizAnswerValidator;
 import org.lecturestudio.web.portal.validator.SpeechValidator;
@@ -27,22 +30,27 @@ import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.QuizAnswerMessage;
 import org.lecturestudio.web.api.message.SpeechCancelMessage;
 import org.lecturestudio.web.api.message.SpeechRequestMessage;
+import org.lecturestudio.web.api.message.WebMessage;
 import org.lecturestudio.web.api.model.ClassroomServiceResponse;
 import org.lecturestudio.web.api.model.Message;
+import org.lecturestudio.web.api.model.messenger.MessengerConfig.MessengerMode;
 import org.lecturestudio.web.api.model.quiz.QuizAnswer;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.DocumentNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
+import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
+import org.lecturestudio.web.portal.model.CourseRegistration;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStateListener;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.CourseStateDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
@@ -56,12 +64,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.messaging.MessageHandler;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.user.SimpUser;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -108,6 +119,18 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
+
+	@Autowired
+	private UserService userService;
+
+	@Autowired
+	private SimpMessagingTemplate simpMessagingTemplate;
+
+	@Autowired
+	private CourseService courseService;
+
+	@Autowired
+	private SimpUserRegistry userRegistry;
 
 
 	@PostConstruct
@@ -224,9 +247,11 @@ public class CourseSubscriberController {
 			message.setDate(ZonedDateTime.now());
 			message.setFirstName(details.getFirstName());
 			message.setFamilyName(details.getFamilyName());
+			message.setRemoteAddress(details.getUsername());
 
 			courseState.postSpeechMessage(courseId, message);
 
+			
 			return ResponseEntity.ok().body(speechRequest.getRequestId());
 		}
 
@@ -267,6 +292,7 @@ public class CourseSubscriberController {
 			message.setDate(ZonedDateTime.now());
 			message.setFirstName(details.getFirstName());
 			message.setFamilyName(details.getFamilyName());
+			message.setRemoteAddress(details.getUsername());
 
 			courseState.postSpeechMessage(courseId, message);
 		}
@@ -299,8 +325,17 @@ public class CourseSubscriberController {
 
 	@GetMapping("/messenger/history/{courseId}")
 	public CourseMessengerHistoryDto getMessengerHistoryOfCourse(@PathVariable("courseId") long courseId, Authentication authentication) {
-		CourseMessengerHistoryDto dto = new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId));
-		return dto;
+		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
+		.orElseThrow(() -> new FeatureNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		User user = userService.findById(details.getUsername()).get();
+		if (feature.getMessengerMode() == MessengerMode.BIDIRECTIONAL) {
+			return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourseBidirectional(courseId, user));
+		} else {
+			return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourseUnidirectional(courseId, user));
+		}
 	}
 
 	@PostMapping("/quiz/post/{courseId}")
@@ -355,26 +390,43 @@ public class CourseSubscriberController {
 
 	@MessageMapping("/message/{courseId}")
     @SendTo("/topic/chat/{courseId}")
-    public MessengerMessage sendMessage(@Payload Message message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
+    public void sendMessage(@Payload org.springframework.messaging.Message<Message> message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
+		Message payload = message.getPayload();
+		MessageHeaders headers = message.getHeaders();
+
 		// Validate input.
-		ResponseEntity<ClassroomServiceResponse> response = messageValidator.validate(feature, message);
+		ResponseEntity<ClassroomServiceResponse> response = messageValidator.validate(feature, payload);
 
 		if (! (response.getStatusCode().value() == HttpStatus.OK.value())) {
 			throw new Exception(response.toString());
 		}
 
-		MessengerMessage mMessage = new MessengerMessage(message, details.getUsername(), ZonedDateTime.now());
+		MessengerMessage mMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
 		mMessage.setFirstName(details.getFirstName());
 		mMessage.setFamilyName(details.getFamilyName());
 
+		MessengerMode messengerMode = feature.getMessengerMode();
+
 		courseFeatureState.postCourseFeatureMessage(courseId, mMessage);
 
-		return mMessage;
+		if (messengerMode == MessengerMode.BIDIRECTIONAL) {
+			simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, mMessage);
+		} 
+		else if (messengerMode == MessengerMode.UNIDIRECTIONAL) {
+			Optional<Course> thisCourse = courseService.findById(courseId);
+			Course course = thisCourse.get();
+			for (CourseRegistration registration : course.getRegistrations()) {
+				User owner = registration.getUser();
+				SimpUser user = userRegistry.getUser(owner.getUserId());
+				simpMessagingTemplate.convertAndSendToUser(user.getName(), "/queue/chat/" + courseId, mMessage);
+			}
+			simpMessagingTemplate.convertAndSendToUser(authentication.getName(), "/queue/chat/" + courseId, mMessage);
+		}
     }
 
 	@MessageExceptionHandler
