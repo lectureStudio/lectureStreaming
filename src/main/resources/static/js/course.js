@@ -6,6 +6,9 @@ class Course {
 		this.contentContainer = null;
 		this.messengerContainer = null;
 		this.messengerElement = null;
+		this.messengerDestinations = null;
+		this.messengerDestination = null;
+		this.messengerDestinationToggle = null;
 		this.quizContainer = null;
 		this.quizElement = null;
 		this.player = null;
@@ -69,6 +72,9 @@ class Course {
 				}
 
 				this.messengerElement = null;
+				this.messengerDestination = null;
+				this.messengerDestinations = null;
+				this.messengerDestinationToggle = null;
 				this.unavailableVisible(true);
 			}
 		});
@@ -94,7 +100,7 @@ class Course {
 		this.stompClient = Stomp.over(socket);
 		const messengerConnectionWarning = this.messengerElement.querySelector("#messenger-connection-warning");
 
-		this.stompClient.connect({}, async (frame) => {
+		this.stompClient.connect({courseId: this.courseId}, async (frame) => {
 			if (! messengerConnectionWarning.classList.contains('hidden')) {
 				messengerConnectionWarning.classList.add('hidden');
 			}
@@ -109,10 +115,10 @@ class Course {
 						this.onMessengerReplyMessageReceive(jsonObject, message.headers);
 						break;
 				}
-			});
+			}, {courseId: this.courseId});
 			this.stompClient.subscribe('/user/queue/chat/' + this.courseId, (message) => {
 				this.onMessengerMessageReceive(this.stompMessageToMessageObject(message), message.headers);
-			});
+			}, {courseId: this.courseId});
 			await this.reloadMessengerHistory();
 			this.setMessengerForm(false);
 		},
@@ -434,11 +440,14 @@ class Course {
 	}
 
 	initMessenger() {
+
 		const messageForm = this.messengerElement.querySelector("#course-message-form");
 
 		if (!messageForm) {
 			return;
 		}
+
+		this.initMessengerDestinationToggle();
 
 		this.unavailableVisible(false);
 
@@ -468,8 +477,87 @@ class Course {
 		});
 	}
 
+	async getConnectedMessengerUsers(destinations) {
+		if (this.messengerElement) {
+			await fetch("/course/messenger/users/" + this.courseId, {
+				method: "GET",
+			})
+			.then((response) => {
+				return response.text();
+			})
+			.then( json => {
+				console.log(json);
+				const courseMessengerConnectedUsersDto = JSON.parse(json);
+				for (let user of courseMessengerConnectedUsersDto.connectedUsers) {
+					destinations.push({
+						type: "user",
+						username: user.username,
+						innerText: user.username,
+					})
+				}
+			})
+		}
+		return destinations;
+	}
+
+	forDestination(destination) {
+		const a = renderDestinationViews(destination, this.messengerDestinations)
+		a.addEventListener("click", () => {
+			this.updateMessengerDestination(destination);
+		})
+
+		function renderDestinationViews(element, messengerDestinations) {
+			var li = document.createElement('li');
+			var a = document.createElement('a');
+			a.classList.add("dropdown-item")
+			a.setAttribute("href", "#");
+			a.innerHTML = element.innerText;
+			li.appendChild(a);
+			messengerDestinations.appendChild(li);
+			return a;
+		}
+	}
+
+	async onMessengerDestinationToggleClicked() {
+		this.messengerDestinations.innerHTML = '';
+		const destinations = [{
+			type: "public",
+			innerText: "Alle"
+		}];
+		await this.getConnectedMessengerUsers(destinations);
+		destinations.forEach((element) => this.forDestination(element))
+	}
+
+	updateMessengerDestination(destination) {
+		this.messengerDestination = destination;
+		const messengerTextArea = this.messengerElement.querySelector("#messageTextarea");
+		messengerTextArea.setAttribute("placeholder", this.messengerDestination.innerText);
+	}
+
+	initMessengerDestinationToggle() {
+		if (this.messengerElement) {
+			this.updateMessengerDestination({
+				type: "public",
+				innerText: "Alle"
+			});
+			this.messengerDestinations = this.messengerElement.querySelector('#messengerDestinations');
+			this.messengerDestinationToggle = this.messengerElement.querySelector('#messengerDestinationToggle');
+
+			this.messengerDestinationToggle.addEventListener("click", () => {
+				this.onMessengerDestinationToggleClicked();
+			})
+		}
+	}
+
 	sendOverSTOMP(value) {
-		this.stompClient.send("/app/message/" + this.courseId, {}, JSON.stringify(value));
+		const headers = {
+			courseId: this.courseId,
+			messageType: this.messengerDestination.type,
+		}
+		if (headers.messageType === "user") {
+			headers.username = this.messengerDestination.username;
+		}
+		this.stompClient.send("/app/message/" + this.courseId, headers, JSON.stringify(value));
 	}
 
 	setMessengerForm(disabled) {

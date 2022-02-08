@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.MessengerReplyMessage;
 import org.lecturestudio.web.api.message.WebMessage;
-import org.lecturestudio.web.api.model.messenger.MessengerConfig;
 import org.lecturestudio.web.api.model.quiz.Quiz;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
@@ -32,6 +31,7 @@ import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.service.FileStorageService;
+import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry;
 import org.lecturestudio.web.portal.service.SubscriberEmitterService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.util.StringUtils;
@@ -56,7 +56,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -95,6 +94,9 @@ public class CoursePublisherController {
 
 	@Autowired
 	private SimpMessagingTemplate simpMessagingTemplate;
+
+	@Autowired
+	private MessengerFeatureUserRegistry messengerFeatureUserRegistry;
 
 
 	@GetMapping("/user")

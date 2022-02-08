@@ -2,6 +2,7 @@ package org.lecturestudio.web.portal.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.lecturestudio.web.portal.interceptor.StompChannelInterceptor;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseStates;
@@ -12,6 +13,7 @@ import org.lecturestudio.web.portal.websocket.CourseStateWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -75,6 +77,16 @@ public class WebSocketConfig implements WebSocketConfigurer, WebSocketMessageBro
         registry.addEndpoint("/api/publisher/messenger").setAllowedOriginPatterns("*").withSockJS();
 		registry.addEndpoint("/api/subscriber/messenger").setAllowedOriginPatterns("*").withSockJS();
     }
+
+	@Bean
+	public StompChannelInterceptor stompChannelInterceptor() {
+		return new StompChannelInterceptor();
+	}
+
+	@Override
+	public void configureClientInboundChannel(ChannelRegistration registration) {
+		registration.interceptors(stompChannelInterceptor());
+	}
 
 	@Bean
     public TaskScheduler heartBeatScheduler() {
