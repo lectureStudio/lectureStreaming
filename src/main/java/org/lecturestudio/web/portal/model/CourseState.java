@@ -3,9 +3,13 @@ package org.lecturestudio.web.portal.model;
 import static java.util.Objects.isNull;
 
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
@@ -25,7 +29,7 @@ public class CourseState {
 
 	private final long timestamp;
 
-	private final Map<String, BigInteger> participantMap = new ConcurrentHashMap<>();
+	private final Map<String, Set<BigInteger>> participantMap = new ConcurrentHashMap<>();
 
 	private final Map<Long, CourseStateDocument> documentMap = new ConcurrentHashMap<>();
 
@@ -56,26 +60,34 @@ public class CourseState {
 	 * @param participantId The unique participant ID.
 	 * @param sessionId     The unique streaming session ID.
 	 */
-	public void setParticipantSession(String participantId, BigInteger sessionId) {
+	public synchronized void setParticipantSession(String participantId, BigInteger sessionId) {
 		if (isNull(participantId)) {
 			return;
 		}
 
-		participantMap.put(participantId, sessionId);
-
-		Optional<User> user = userService.findById(participantId);
-
-		// Send notification of arrival.
-		CourseParticipantMessage participantMessage = new CourseParticipantMessage();
-		participantMessage.setConnected(true);
-
-		if (user.isPresent()) {
-			participantMessage.setFirstName(user.get().getFirstName());
-			participantMessage.setFamilyName(user.get().getFamilyName());
-			participantMessage.setUsername(user.get().getUserId());
+		Set<BigInteger> openSessions = participantMap.get(participantId);
+		if (isNull(openSessions)) {
+			openSessions = new HashSet<>();
+			participantMap.put(participantId, openSessions);
 		}
 
-		postParticipantMessage(courseId, participantMessage);
+		if (openSessions.isEmpty()) {
+			Optional<User> user = userService.findById(participantId);
+
+			// Send notification of arrival.
+			CourseParticipantMessage participantMessage = new CourseParticipantMessage();
+			participantMessage.setConnected(true);
+	
+			if (user.isPresent()) {
+				participantMessage.setFirstName(user.get().getFirstName());
+				participantMessage.setFamilyName(user.get().getFamilyName());
+				participantMessage.setUsername(user.get().getUserId());
+			}
+	
+			postParticipantMessage(courseId, participantMessage);
+		}
+
+		openSessions.add(sessionId);
 	}
 
 	/**
@@ -83,26 +95,29 @@ public class CourseState {
 	 * 
 	 * @param sessionId The unique streaming session ID.
 	 */
-	public void removeParticipantWithSessionId(BigInteger sessionId) {
+	public synchronized void removeParticipantWithSessionId(BigInteger sessionId) {
 		for (var entry : participantMap.entrySet()) {
-			if (entry.getValue().equals(sessionId)) {
+			if (entry.getValue().contains(sessionId)) {
 				String participantId = entry.getKey();
 
-				participantMap.remove(participantId);
+				entry.getValue().remove(sessionId);
 
-				Optional<User> user = userService.findById(participantId);
+				if (entry.getValue().isEmpty()) {
+					Optional<User> user = userService.findById(participantId);
 
-				// Send notification of departure.
-				CourseParticipantMessage participantMessage = new CourseParticipantMessage();
-				participantMessage.setConnected(false);
-
-				if (user.isPresent()) {
-					participantMessage.setFirstName(user.get().getFirstName());
-					participantMessage.setFamilyName(user.get().getFamilyName());
-					participantMessage.setUsername(user.get().getUserId());
+					// Send notification of departure.
+					CourseParticipantMessage participantMessage = new CourseParticipantMessage();
+					participantMessage.setConnected(false);
+	
+					if (user.isPresent()) {
+						participantMessage.setFirstName(user.get().getFirstName());
+						participantMessage.setFamilyName(user.get().getFamilyName());
+						participantMessage.setUsername(user.get().getUserId());
+					}
+	
+					postParticipantMessage(courseId, participantMessage);
 				}
 
-				postParticipantMessage(courseId, participantMessage);
 				break;
 			}
 		}
