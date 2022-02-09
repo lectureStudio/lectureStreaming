@@ -4,11 +4,23 @@
     <meta charset="UTF-8">
 </head>
 <body>
-    <div th:id="${id}" th:fragment="messenger-message (id, timestamp, content)">
+    <div th:id="${id}" th:fragment="messenger-message (id, timestamp, content, messageType)">
         <div class="chat-right">
             <div class="chat-content-right">
                 <div class="chat-hour" th:text="${timestamp}"></div>
                 <div class="chat-message-boxed">
+                    <div class="chat-message-type" th:switch="${messageType}">
+                        <div th:case="'public'">
+                            <i class="bi bi-person"></i>
+                            <i class="bi bi-arrow-right-short"></i>
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div th:case="'user'">
+                            <i class="bi bi-person"></i>
+                            <i class="bi bi-arrow-right-short"></i>
+                            <i class="bi bi-person"></i>
+                        </div>
+                    </div>
                     <div class="chat-message-text">
                         <p class="chat-text-content" style="overflow-wrap: break-word;" th:text="${content}"></p>
                     </div>

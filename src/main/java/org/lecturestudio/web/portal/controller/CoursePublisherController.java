@@ -6,15 +6,23 @@ import static java.util.Objects.nonNull;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.lecturestudio.web.api.message.MessengerDirectMessage;
 import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.MessengerReplyMessage;
 import org.lecturestudio.web.api.message.WebMessage;
+import org.lecturestudio.web.api.model.ClassroomServiceResponse;
+import org.lecturestudio.web.api.model.Message;
 import org.lecturestudio.web.api.model.quiz.Quiz;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
@@ -30,11 +38,14 @@ import org.lecturestudio.web.portal.model.CourseSpeechEvent;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
+import org.lecturestudio.web.portal.saml.LectUserDetails;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry;
 import org.lecturestudio.web.portal.service.SubscriberEmitterService;
 import org.lecturestudio.web.portal.service.UserService;
+import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry.MessengerFeatureUser;
 import org.lecturestudio.web.portal.util.StringUtils;
+import org.lecturestudio.web.portal.validator.MessageValidator;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
@@ -97,6 +108,9 @@ public class CoursePublisherController {
 
 	@Autowired
 	private MessengerFeatureUserRegistry messengerFeatureUserRegistry;
+
+	@Autowired
+	private MessageValidator messageValidator;
 
 
 	@GetMapping("/user")
@@ -205,6 +219,35 @@ public class CoursePublisherController {
 		return stopFeature(courseId, CourseMessageFeature.class);
 	}
 
+	@GetMapping("/messenger/users/{courseId}")
+	public Set<UserDto> getConnectedMessengerUsers(@PathVariable("courseId") long courseId, Authentication authentication) {
+		courseFeatureService.findMessageByCourseId(courseId).orElseThrow(() -> new FeatureNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		Set<MessengerFeatureUser> connectedUsers = messengerFeatureUserRegistry.getUsers(courseId);
+
+
+		Comparator<UserDto> userComparator = new Comparator<UserDto>() {
+			@Override
+			public int compare(UserDto arg0, UserDto arg1) {
+				return arg0.getUsername().compareTo(arg1.getUsername());
+			};
+		};
+
+		TreeSet<UserDto> sortedConnectedUsers = new TreeSet<>(userComparator);
+
+		connectedUsers.forEach((user) -> {
+			if (!user.getUsername().equals(details.getUsername())) {
+				User u = userService.findById(user.getUsername()).get();
+				UserDto userDto = new UserDto(u.getFirstName(), u.getFamilyName(), u.getUserId());
+				sortedConnectedUsers.add(userDto);
+			}
+		});
+
+		return sortedConnectedUsers;
+	}
+
 	@PostMapping("/quiz/start/{courseId}")
 	public ResponseEntity<String> startQuiz(@PathVariable("courseId") long courseId, @RequestBody Quiz quiz) {
 		CourseQuizFeature feature = new CourseQuizFeature();
@@ -296,22 +339,37 @@ public class CoursePublisherController {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
 		JsonNode jsonNode = this.objectMapper.readTree(messageString);
 		String type = jsonNode.get("type").asText();
 		WebMessage message;
 		switch(type) {
 			case "MessengerMessage":
 				message = this.objectMapper.readValue(messageString, MessengerMessage.class);
+				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
+				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, message, Map.of("payloadType", "MessengerMessage")); 
 				break;
 			case "MessengerReplyMessage":
 				message = this.objectMapper.readValue(messageString, MessengerReplyMessage.class);
+				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
+				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, message, Map.of("payloadType", "MessengerReplyMessage")); 
+				break;
+			case "MessengerDirectMessage":
+				message = this.objectMapper.readValue(messageString, MessengerDirectMessage.class);
+				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
+				MessengerDirectMessage mdm = (MessengerDirectMessage) message;
+				Set<String> stompDestinationUsernamesInUse = messengerFeatureUserRegistry.getUser(mdm.getMessageDestinationUsername()).getAddressesInUse();
+				Set<String> stompUsernamesInUse = messengerFeatureUserRegistry.getUser(details.getUsername()).getAddressesInUse();
+				ArrayList<Set<String>> sets = new ArrayList<>(Arrays.asList(stompDestinationUsernamesInUse, stompUsernamesInUse));
+				for (Set<String> set : sets) {
+					for (String userDestination : set) {
+						simpMessagingTemplate.convertAndSendToUser(userDestination,"/queue/chat/" + courseId, message, Map.of("payloadType", "MessengerDirectMessage"));
+					}
+				}
 				break;
 			default:
 				return; //To-DO give useful output
 		}
-
-		messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
-
-		simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, message);
     }
 }

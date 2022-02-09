@@ -109,7 +109,7 @@ class Course {
 				const type = jsonObject["_type"];
 				switch (type) {
 					case 'MessengerMessage':
-						this.onMessengerMessageReceive(jsonObject, message.headers);
+						this.onMessengerMessageReceive(jsonObject);
 						break;
 					case 'MessengerReplyMessage':
 						this.onMessengerReplyMessageReceive(jsonObject, message.headers);
@@ -117,7 +117,7 @@ class Course {
 				}
 			}, {courseId: this.courseId});
 			this.stompClient.subscribe('/user/queue/chat/' + this.courseId, (message) => {
-				this.onMessengerMessageReceive(this.stompMessageToMessageObject(message), message.headers);
+				this.onMessengerDirectMessageReceive(this.stompMessageToMessageObject(message));
 			}, {courseId: this.courseId});
 			await this.reloadMessengerHistory();
 			this.setMessengerForm(false);
@@ -230,9 +230,39 @@ class Course {
 		}
 	}
 
-	async onMessengerMessageReceive(message, headers) {
+	async onMessengerMessageReceive(message) {
 		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
-		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId};
+		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "public"};
+
+		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+		const response = await fetch(url, {
+			method: "GET",
+		})
+		.then((response) => {
+			return response.text();
+		})
+		.then(html => {
+			if (html) {
+				const doc = new DOMParser().parseFromString(html, "text/html");
+				if (message.reply) {
+					this.addRepliedIcon(doc);
+        }
+
+				const messageTextElement = doc.querySelector(".chat-text-content");
+				messageTextElement.innerHTML = this.urlify(messageTextElement.innerHTML);
+				this.appendToMessengerHistory(doc);
+			}
+		})
+		.catch(error => console.error(error));
+
+
+		return response;
+	}
+
+	async onMessengerDirectMessageReceive(message) {
+		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
+		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "user"};
 
 		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
@@ -430,8 +460,16 @@ class Course {
 			const messengerHistoryDto = JSON.parse(json);
 			const messengerHistory = messengerHistoryDto.messengerHistory;
 
-			for (let mm of messengerHistory) {
-				await this.onMessengerMessageReceive(mm, {'message-id': 4});
+			for (let m of messengerHistory) {
+				const type = m["_type"];
+				switch(type) {
+					case "MessengerMessage":
+						await this.onMessengerMessageReceive(m);
+						break;
+					case "MessengerDirectMessage":
+						await this.onMessengerDirectMessageReceive(m);
+						break;
+				}
 			}
 		})
 		chatHistory.classList.remove("hidden");
@@ -502,28 +540,47 @@ class Course {
 
 	forDestination(destination) {
 		const a = renderDestinationViews(destination, this.messengerDestinations)
-		a.addEventListener("click", () => {
-			this.updateMessengerDestination(destination);
-		})
+		if (a) {
+			a.addEventListener("click", () => {
+				this.updateMessengerDestination(destination);
+			})
+		}
 
 		function renderDestinationViews(element, messengerDestinations) {
 			var li = document.createElement('li');
-			var a = document.createElement('a');
-			a.classList.add("dropdown-item")
-			a.setAttribute("href", "#");
-			a.innerHTML = element.innerText;
-			li.appendChild(a);
-			messengerDestinations.appendChild(li);
-			return a;
+			if (element.type === "header") {
+				var h6 = document.createElement('h6');
+				h6.classList.add("dropdown-header")
+				h6.innerHTML = element.innerText;
+				li.appendChild(h6);
+				messengerDestinations.appendChild(li);
+			} else {
+				var a = document.createElement('a');
+				a.classList.add("dropdown-item")
+				a.setAttribute("href", "#");
+				a.innerHTML = element.innerText;
+				li.appendChild(a);
+				messengerDestinations.appendChild(li);
+				return a;
+			}
 		}
 	}
 
 	async onMessengerDestinationToggleClicked() {
 		this.messengerDestinations.innerHTML = '';
-		const destinations = [{
-			type: "public",
-			innerText: "Alle"
-		}];
+		const destinations = [
+			{
+				type: "header",
+				innerText: this.dict["course.feature.message.public"]
+			},
+			{
+				type: "public",
+				innerText: this.dict["course.feature.message.destination.all"]
+			},
+			{
+				type: "header",
+				innerText: this.dict["course.feature.message.private"]
+			}];
 		await this.getConnectedMessengerUsers(destinations);
 		destinations.forEach((element) => this.forDestination(element))
 	}
@@ -531,7 +588,7 @@ class Course {
 	updateMessengerDestination(destination) {
 		this.messengerDestination = destination;
 		const messengerTextArea = this.messengerElement.querySelector("#messageTextarea");
-		messengerTextArea.setAttribute("placeholder", this.messengerDestination.innerText);
+		messengerTextArea.setAttribute("placeholder", this.dict["course.feature.message.form.placeholder"] + " " + this.messengerDestination.innerText);
 	}
 
 	initMessengerDestinationToggle() {

@@ -101,7 +101,6 @@ public class MessengerFeatureUserRegistry {
                 messengerUser.removeSession(sessionId);
 
                 if (!messengerUser.hasSessions()) {
-                    System.out.println("User has no more sessions");
                     this.users.remove(messengerUser.getUsername());
                     Set<MessengerFeatureUser> soc = this.usersOfCourse.get(courseId);
                     if (!Objects.isNull(soc)) {
@@ -111,7 +110,6 @@ public class MessengerFeatureUserRegistry {
                     }
                 }
                 else if (!messengerUser.hasSessions(courseId)) {
-                    System.out.println("USer has no more sessions for course");
                     Set<MessengerFeatureUser> soc = this.usersOfCourse.get(courseId);
                     if (!Objects.isNull(soc)) {
                         Set<MessengerFeatureUser> synSoc = Collections.synchronizedSet(soc);
@@ -128,6 +126,10 @@ public class MessengerFeatureUserRegistry {
 
     public Set<MessengerFeatureUser> getUsers(long courseId) {
         return this.usersOfCourse.get(courseId);
+    }
+
+    public MessengerFeatureUser getUser(String username) {
+        return this.users.get(username);
     }
 
     @Override
