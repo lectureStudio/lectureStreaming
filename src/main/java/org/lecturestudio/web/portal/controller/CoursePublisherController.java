@@ -14,9 +14,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.annotation.PostConstruct;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.lecturestudio.web.api.data.bind.CourseFeatureMessengerParticipantMessageAdapter;
+import org.lecturestudio.web.api.message.CourseFeatureMessengerParticipantMessage;
 import org.lecturestudio.web.api.message.MessengerDirectMessage;
 import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.MessengerReplyMessage;
@@ -36,6 +40,7 @@ import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseSpeechEvent;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
+import org.lecturestudio.web.portal.model.MessengerFeatureUserConnectionListener;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
@@ -109,8 +114,45 @@ public class CoursePublisherController {
 	@Autowired
 	private MessengerFeatureUserRegistry messengerFeatureUserRegistry;
 
-	@Autowired
-	private MessageValidator messageValidator;
+	@PostConstruct
+	private void postConstruct() {
+		messengerFeatureUserRegistry.addUserConnectionListener(new MessengerFeatureUserConnectionListener() {
+
+			@Override
+			public void onMessengerFeatureUserConnected(long courseId, String username) {
+				System.out.println("User " + username  + " connected to the messenger of course " + courseId);
+				
+				Optional<User> optUser = userService.findById(username);
+				User user = optUser.get();
+				if (nonNull(user)) {
+					CourseFeatureMessengerParticipantMessage connectedMessage = new CourseFeatureMessengerParticipantMessage();
+					connectedMessage.setConnected(true);
+					connectedMessage.setFamilyName(user.getFamilyName());
+					connectedMessage.setRemoteAddress(user.getUserId());
+					connectedMessage.setFirstName(user.getFirstName());
+					courseFeatureState.postCourseFeatureMessage(courseId, connectedMessage);
+				}
+			}
+
+			@Override
+			public void onMessengerFeatureUserDisconnected(long courseId, String username) {
+				System.out.println("User " + username  + " disconnected from the messenger of course " + courseId);
+
+				Optional<User> optUser = userService.findById(username);
+				User user = optUser.get();
+				if (nonNull(user)) {
+					CourseFeatureMessengerParticipantMessage connectedMessage = new CourseFeatureMessengerParticipantMessage();
+					connectedMessage.setConnected(false);
+					connectedMessage.setFamilyName(user.getFamilyName());
+					connectedMessage.setRemoteAddress(user.getUserId());
+					connectedMessage.setFirstName(user.getFirstName());
+					courseFeatureState.postCourseFeatureMessage(courseId, connectedMessage);
+				}
+				
+			}
+			
+		});
+	}
 
 
 	@GetMapping("/user")
@@ -281,6 +323,8 @@ public class CoursePublisherController {
 			courseService.saveCourse(course);
 			if (feature instanceof CourseMessageFeature) {
 				messengerFeatureSaveFeature.addCourseHistory(courseId);
+				messengerFeatureUserRegistry.registerCourse(courseId);
+
 			}
 
 			// Send feature state event.
@@ -310,6 +354,7 @@ public class CoursePublisherController {
 
 		if (courseFeature instanceof CourseMessageFeature) {
 			messengerFeatureSaveFeature.removeCourseHistory(courseId);
+			messengerFeatureUserRegistry.unregisterCourse(courseId);
 		}
 
 		// Send feature state event.

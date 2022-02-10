@@ -40,7 +40,12 @@ public class StompChannelInterceptor implements ChannelInterceptor {
             return null;
         }
 
-        messengerFeatureUserRegistry.onStompMessage(message);
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+
+        Principal user = accessor.getUser();
+        if (! (user instanceof UsernamePasswordAuthenticationToken)) {
+            messengerFeatureUserRegistry.onMessage(message);
+        }
 
         return message;
     }

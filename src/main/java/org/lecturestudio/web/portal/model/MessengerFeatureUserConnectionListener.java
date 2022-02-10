@@ -1,4 +1,4 @@
-package org.lecturestudio.web.portal.model.event;
+package org.lecturestudio.web.portal.model;
 
 public interface MessengerFeatureUserConnectionListener {
 

@@ -7,14 +7,19 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedList;
 
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
+import org.lecturestudio.web.portal.model.MessengerFeatureUserConnectionListener;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
+
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 @Service
 public class MessengerFeatureUserRegistry {
@@ -23,15 +28,25 @@ public class MessengerFeatureUserRegistry {
 
     private final ConcurrentHashMap<Long, Set<MessengerFeatureUser>> usersOfCourse = new ConcurrentHashMap<>();
 
+    private final LinkedList<MessengerFeatureUserConnectionListener> connectionListeners = new LinkedList<>();
 
 
-    public void onStompMessage(Message<?> message) {
+    public void addUserConnectionListener(MessengerFeatureUserConnectionListener listener) {
+        connectionListeners.add(listener);
+    }
+
+    public void removeUserConnectionListener(MessengerFeatureUserConnectionListener listener) {
+        connectionListeners.remove(listener);
+    }
+
+
+    public void onMessage(Message<?> message) {
         StompHeaderAccessor accessor = StompHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-        if (!Objects.isNull(accessor)) {
+        if (!isNull(accessor)) {
             StompCommand command = accessor.getCommand();
-
-            if (!Objects.isNull(command)) {
+            
+            if (!isNull(command)) {
                 switch(command) {
                     case CONNECT:
                         onConnectFrame(accessor);
@@ -44,6 +59,14 @@ public class MessengerFeatureUserRegistry {
                 }
             }
         }
+    }
+
+    public void registerCourse(Long courseId) {
+        usersOfCourse.putIfAbsent(courseId, new HashSet<>());
+    }
+
+    public void unregisterCourse(Long courseId) {
+        usersOfCourse.remove(courseId);
     }
 
     private void onConnectFrame(StompHeaderAccessor accessor) {
@@ -61,19 +84,20 @@ public class MessengerFeatureUserRegistry {
         String username = details.getUsername();
 
         MessengerFeatureUser messengerUser = this.users.get(username);
-        if (Objects.isNull(messengerUser)) {
+        if (isNull(messengerUser)) {
             messengerUser = new MessengerFeatureUser(username, user);
             this.users.put(username, messengerUser);
         }
 
         if (!messengerUser.hasSessions(courseId)) {
             Set<MessengerFeatureUser> uoc = this.usersOfCourse.get(courseId);
-            if (Objects.isNull(uoc)) {
-                uoc = new HashSet<>();
-                this.usersOfCourse.put(courseId, uoc);
+            if (Objects.nonNull(uoc)) {
+                Set<MessengerFeatureUser> synSet = Collections.synchronizedSet(uoc);
+                synSet.add(messengerUser);
+                this.onUserConnected(courseId, username);
+            } else {
+                return;
             }
-            Set<MessengerFeatureUser> synSet = Collections.synchronizedSet(uoc);
-            synSet.add(messengerUser);
         }
 
         MessengerFeatureSession session = new MessengerFeatureSession(courseId, sessionId, user.getName(), messengerUser);
@@ -94,26 +118,29 @@ public class MessengerFeatureUserRegistry {
         String username = details.getUsername();
 
         MessengerFeatureUser messengerUser = this.users.get(username);
-        if (!Objects.isNull(messengerUser)) {
+        if (nonNull(messengerUser)) {
             MessengerFeatureSession s = messengerUser.getSession(sessionId);
-            if (!Objects.isNull(s)) {
+            if (nonNull(s)) {
                 Long courseId = s.getCourseId();
                 messengerUser.removeSession(sessionId);
 
                 if (!messengerUser.hasSessions()) {
                     this.users.remove(messengerUser.getUsername());
                     Set<MessengerFeatureUser> soc = this.usersOfCourse.get(courseId);
-                    if (!Objects.isNull(soc)) {
+                    if (nonNull(soc)) {
                         Set<MessengerFeatureUser> synSoc = Collections.synchronizedSet(soc);
-                        synSoc.remove(messengerUser);
-                        
+                        if (synSoc.remove(messengerUser)) {
+                            this.onUserDisconnected(courseId, username);
+                        }
                     }
                 }
                 else if (!messengerUser.hasSessions(courseId)) {
                     Set<MessengerFeatureUser> soc = this.usersOfCourse.get(courseId);
-                    if (!Objects.isNull(soc)) {
+                    if (nonNull(soc)) {
                         Set<MessengerFeatureUser> synSoc = Collections.synchronizedSet(soc);
-                        synSoc.remove(messengerUser);
+                        if (synSoc.remove(messengerUser)) {
+                            this.onUserDisconnected(courseId, username);
+                        }
                     }
                 }
             }
@@ -146,6 +173,18 @@ public class MessengerFeatureUserRegistry {
             sbout.append("\n");
         }
         return sbout.toString();
+    }
+
+    private void onUserConnected(long courseId, String username) {
+        for (var listener : this.connectionListeners) {
+            listener.onMessengerFeatureUserConnected(courseId, username);
+        }
+    }
+
+    private void onUserDisconnected(long courseId, String username) {
+        for (var listener : this.connectionListeners) {
+            listener.onMessengerFeatureUserDisconnected(courseId, username);
+        }
     }
 
     public class MessengerFeatureUser {
@@ -202,22 +241,21 @@ public class MessengerFeatureUserRegistry {
             return false;
         }
 
-        public void addSession(MessengerFeatureSession session) {
+        public synchronized void addSession(MessengerFeatureSession session) {
             addressesInUse.add(session.getAddress());
             sessions.put(session.getSessionId(), session);
             Set<MessengerFeatureSession> sfc = sessionsForCourse.get(session.getCourseId());
-            if (Objects.isNull(sfc)) {
+            if (isNull(sfc)) {
                 sfc = new HashSet<>();
                 sessionsForCourse.put(session.getCourseId(), sfc);
             }
-            synchronized(sfc) {
-                sfc.add(session);
-            }
+            Set<MessengerFeatureSession> syncedSfc = Collections.synchronizedSet(sfc);
+            syncedSfc.add(session);
         }
 
-        public void removeSession(String sessionId) {
+        public synchronized void removeSession(String sessionId) {
             MessengerFeatureSession session = sessions.get(sessionId);
-            if (! Objects.isNull(session)) {
+            if (nonNull(session)) {
                 String address = session.getAddress();
                 Long courseId = session.getCourseId();
 
@@ -234,12 +272,10 @@ public class MessengerFeatureUserRegistry {
                 }
 
                 Set<MessengerFeatureSession> soc = this.sessionsForCourse.get(courseId);
-                if (! Objects.isNull(soc)) {
-                    synchronized(soc) {
-                        soc.remove(session);
-                    }
+                if (nonNull(soc)) {
+                    Set<MessengerFeatureSession> syncedSoc = Collections.synchronizedSet(soc);
+                    syncedSoc.remove(session);
                 }
-
             }
         }
 
