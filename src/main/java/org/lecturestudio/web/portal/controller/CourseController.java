@@ -78,7 +78,11 @@ public class CourseController {
 		"course.speech.request.speak",
 		"course.speech.request.ended",
 		"course.speech.request.rejected",
-		"course.feature.message.reply.tooltip"
+		"course.feature.message.reply.tooltip",
+		"course.feature.message.form.placeholder",
+		"course.feature.message.public",
+		"course.feature.message.private",
+		"course.feature.message.destination.all"
 	);
 
 
@@ -294,17 +298,17 @@ public class CourseController {
 
 	@RequestMapping("/messenger/messageReceived")
 	public String getMessageReceived(@RequestParam("timestamp") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date, @RequestParam("content") String content,
-		@RequestParam("from") String from, @RequestParam("id") String id, Authentication authentication) {
+		@RequestParam("from") String from, @RequestParam("id") String id, @RequestParam("messageType") String messageType, Authentication authentication) {
 
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		String time = String.format("%02d:%02d", date.getHour(), date.getMinute());
-
+		System.out.println(messageType);
 		if (details.getUsername().equals(from)) {
-			return String.format("fragments/messenger-message :: messenger-message(id='%s', timestamp='%s', content='%s')", id, time, content);
+			return String.format("fragments/messenger-message :: messenger-message(id='%s', timestamp='%s', content='%s', messageType='%s')", id, time, content, messageType);
 		}
 		else {
-			return String.format("fragments/messenger-other-message :: messenger-other-message(id='%s', timestamp='%s', content='%s', from='%s')", id, time, content, from);
+			return String.format("fragments/messenger-other-message :: messenger-other-message(id='%s', timestamp='%s', content='%s', from='%s', messageType='%s')", id, time, content, from, messageType);
 		}
 	}
 

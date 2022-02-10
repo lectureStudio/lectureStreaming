@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.lecturestudio.web.api.message.MessengerDirectMessage;
 import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.MessengerReplyMessage;
 import org.lecturestudio.web.api.message.SpeechBaseMessage;
@@ -21,9 +22,8 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
 
     @Override
     public void onFeatureMessage(long courseId, WebMessage message) {
-        if (message instanceof MessengerMessage) {
-            MessengerMessage mMessage = (MessengerMessage) message;
-            this.onFeatureMessengerMessage(courseId, mMessage);
+        if (message instanceof MessengerMessage || message instanceof MessengerDirectMessage) {
+            this.onFeatureMessengerMessage(courseId, message);
         }
         else if (message instanceof MessengerReplyMessage) {
             MessengerReplyMessage mReplyMessage = (MessengerReplyMessage) message;
@@ -31,26 +31,26 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
         }
     }
 
-    private void onFeatureMessengerMessage(long courseId, MessengerMessage mMessage) {
+    private void onFeatureMessengerMessage(long courseId, WebMessage message) {
         StompCourseWebMessageIdProvider courseMessengerIdProvider = courseMessengerIdProviders.get(courseId);
 
         if (Objects.isNull(courseMessengerIdProvider)) {
             courseMessengerIdProvider = new StompCourseWebMessageIdProvider(courseId);
             courseMessengerIdProviders.put(courseId, courseMessengerIdProvider);
         }
-        courseMessengerIdProvider.setMessageId(mMessage);
+        courseMessengerIdProvider.setMessageId(message);
     
 
         List<WebMessage> messengerHistory = messengerMessageHistories.get(courseId);
 
         if (Objects.isNull(messengerHistory)) {
             List<WebMessage> futureHistory = Collections.synchronizedList(new LinkedList<WebMessage>());
-            futureHistory.add(mMessage);
+            futureHistory.add(message);
             messengerMessageHistories.put(courseId, futureHistory);
         }
         else {
             List<WebMessage> synchronizedMessengerHistory = Collections.synchronizedList(messengerHistory);
-            synchronizedMessengerHistory.add(mMessage);
+            synchronizedMessengerHistory.add(message);
         }
     }
 
@@ -60,14 +60,19 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
         if (! Objects.isNull(messengerHistory)) {
             List<WebMessage> synchronizedMessengerHistory = Collections.synchronizedList(messengerHistory);
             List<WebMessage> repliedMessages = synchronizedMessengerHistory.stream().filter((message) -> {
-                if (message instanceof MessengerMessage) {
+                if (message instanceof MessengerMessage || message instanceof MessengerDirectMessage) {
                     return message.getMessageId().equals(mReplyMessage.getRepliedMessageId());
                 }
                 return false;
             }).toList();
 
             repliedMessages.forEach((message) -> {
-                ((MessengerMessage) message).setReply(true);
+                if (message instanceof MessengerMessage) {
+                    ((MessengerMessage) message).setReply(true);
+                }
+                else if (message instanceof MessengerDirectMessage) {
+                    ((MessengerDirectMessage) message).setReply(true);
+                }
             });
         }
     }
@@ -83,7 +88,7 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
         courseMessengerIdProviders.remove(courseId);
     }
 
-    public List<WebMessage> getMessengerHistoryOfCourseBidirectional(long courseId, User user) {
+    public List<WebMessage> getMessengerHistoryOfCourse(long courseId, User user) {
         List<WebMessage> messengerHistoryOfCourse = messengerMessageHistories.get(courseId);
         
         if (!Objects.isNull(messengerHistoryOfCourse)) {
@@ -93,8 +98,9 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
                     if (message instanceof MessengerMessage) {
                         return true;
                     }
-                    else if (message instanceof SpeechBaseMessage) {
-                        return message.getRemoteAddress().equals(user.getUserId());
+                    else if (message instanceof MessengerDirectMessage) {
+                        MessengerDirectMessage directMessage = (MessengerDirectMessage) message;
+                        return user.getUserId().equals(directMessage.getRemoteAddress()) || user.getUserId().equals(directMessage.getMessageDestinationUsername());
                     }
                     else {
                         return false;
@@ -105,27 +111,5 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
         }
 
         return new LinkedList<WebMessage>();
-    }
-
-    public List<WebMessage> getMessengerHistoryOfCourseUnidirectional(long courseId, User user) {
-        List<WebMessage> messengerHistoryOfCourse = messengerMessageHistories.get(courseId);
-        
-        if (!Objects.isNull(messengerHistoryOfCourse)) {
-            List<WebMessage> messengerHistoryOfCourseSynchronized = Collections.synchronizedList(messengerHistoryOfCourse);
-            synchronized(messengerHistoryOfCourseSynchronized ) {
-                List<WebMessage> messengerHistoryOfCourseFiltered = messengerHistoryOfCourseSynchronized.stream().filter((message) -> {
-                    if (message instanceof MessengerMessage || message instanceof SpeechBaseMessage) {
-                        return message.getRemoteAddress().equals(user.getUserId());
-                    }
-                    else {
-                        return false;
-                    }
-                }).collect(Collectors.toList());
-                return new LinkedList<WebMessage>(messengerHistoryOfCourseFiltered);
-            }
-        }
-
-        return new LinkedList<WebMessage>();
-    }
-    
+    }    
 }

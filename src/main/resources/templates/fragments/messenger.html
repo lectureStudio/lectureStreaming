@@ -24,8 +24,11 @@
 			<form id="course-message-form" class="d-flex flex-column justify-content-end">
 				<input type="hidden" name="serviceId" th:value="${course.messageFeature.featureId}" />
 				<div class="input-group mb-3">
-					<textarea name="text" class="form-control" rows="1" id="messageTextarea" th:placeholder="#{course.feature.message.description}" oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' style="resize: none; overflow:hidden"></textarea>
+					<textarea name="text" class="form-control" rows="1" id="messageTextarea" oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' style="resize: none; overflow:hidden"></textarea>
 					<button th:text="#{course.feature.message.send}" type="submit" class="btn btn-outline-primary btn-sm" id="messageSubmit"></button>
+					<button id="messengerDestinationToggle" type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"></button>
+					<ul id="messengerDestinations" class="dropdown-menu dropdown-menu-end">
+					</ul>
 				</div>
 			</form>
 		</div>

@@ -7,25 +7,31 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
-import org.hibernate.Hibernate;
-import org.joda.time.LocalDate;
 import org.lecturestudio.core.recording.RecordedPage;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
+import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry;
 import org.lecturestudio.web.portal.service.SubscriberEmitterService;
 import org.lecturestudio.web.portal.service.UserService;
+import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry.MessengerFeatureUser;
 import org.lecturestudio.web.portal.validator.MessageValidator;
 import org.lecturestudio.web.portal.validator.QuizAnswerValidator;
 import org.lecturestudio.web.portal.validator.SpeechValidator;
+import org.lecturestudio.web.api.message.MessengerDirectMessage;
 import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.QuizAnswerMessage;
 import org.lecturestudio.web.api.message.SpeechCancelMessage;
@@ -33,26 +39,25 @@ import org.lecturestudio.web.api.message.SpeechRequestMessage;
 import org.lecturestudio.web.api.message.WebMessage;
 import org.lecturestudio.web.api.model.ClassroomServiceResponse;
 import org.lecturestudio.web.api.model.Message;
-import org.lecturestudio.web.api.model.messenger.MessengerConfig.MessengerMode;
 import org.lecturestudio.web.api.model.quiz.QuizAnswer;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.DocumentNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
-import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
-import org.lecturestudio.web.portal.model.CourseRegistration;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStateListener;
 import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.model.User;
+import org.lecturestudio.web.portal.model.dto.CourseMessengerConnectedUsersDto;
 import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.CourseStateDto;
+import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,9 +76,9 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.user.SimpUser;
-import org.springframework.messaging.simp.user.SimpUserRegistry;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.GenericMessage;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -130,7 +135,7 @@ public class CourseSubscriberController {
 	private CourseService courseService;
 
 	@Autowired
-	private SimpUserRegistry userRegistry;
+	private MessengerFeatureUserRegistry messengerFeatureUserRegistry;
 
 
 	@PostConstruct
@@ -331,7 +336,40 @@ public class CourseSubscriberController {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		User user = userService.findById(details.getUsername()).get();
-		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourseBidirectional(courseId, user));
+		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId, user));
+	}
+
+	@GetMapping("/messenger/users/{courseId}")
+	public CourseMessengerConnectedUsersDto getConnectedMessengerUsers(@PathVariable("courseId") long courseId, Authentication authentication) {
+		courseFeatureService.findMessageByCourseId(courseId).orElseThrow(() -> new FeatureNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CourseMessengerConnectedUsersDto connectedUsersDto = new CourseMessengerConnectedUsersDto();
+
+		Set<MessengerFeatureUser> connectedUsers = messengerFeatureUserRegistry.getUsers(courseId);
+
+		System.out.println(connectedUsers);
+
+		Comparator<UserDto> userComparator = new Comparator<UserDto>() {
+			@Override
+			public int compare(UserDto arg0, UserDto arg1) {
+				return arg0.getUsername().compareTo(arg1.getUsername());
+			};
+		};
+
+		TreeSet<UserDto> sortedConnectedUsers = new TreeSet<>(userComparator);
+
+		connectedUsers.forEach((user) -> {
+			if (!user.getUsername().equals(details.getUsername())) {
+				User u = userService.findById(user.getUsername()).get();
+				UserDto userDto = new UserDto(u.getFirstName(), u.getFamilyName(), u.getUserId());
+				sortedConnectedUsers.add(userDto);
+			}
+		});
+
+		connectedUsersDto.setConnectedUsers(sortedConnectedUsers);
+		return connectedUsersDto;
 	}
 
 	@PostMapping("/quiz/post/{courseId}")
@@ -393,7 +431,6 @@ public class CourseSubscriberController {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		Message payload = message.getPayload();
-		MessageHeaders headers = message.getHeaders();
 
 		// Validate input.
 		ResponseEntity<ClassroomServiceResponse> response = messageValidator.validate(feature, payload);
@@ -402,14 +439,38 @@ public class CourseSubscriberController {
 			throw new Exception(response.toString());
 		}
 
-		MessengerMessage mMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
-		mMessage.setFirstName(details.getFirstName());
-		mMessage.setFamilyName(details.getFamilyName());
+		StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+		String messageType = accessor.getNativeHeader("messageType").get(0);
 
+		WebMessage forwardMessage = null;
 
-		courseFeatureState.postCourseFeatureMessage(courseId, mMessage);
+		if (messageType.equals("user")) {
+			String messageDestinationUsername = accessor.getNativeHeader("username").get(0);
 
-		simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, mMessage); 
+			forwardMessage = new MessengerDirectMessage(messageDestinationUsername, payload, details.getUsername(), ZonedDateTime.now());
+			forwardMessage.setFirstName(details.getFirstName());
+			forwardMessage.setFamilyName(details.getFamilyName());
+
+			courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
+
+			Set<String> stompDestinationUsernamesInUse = messengerFeatureUserRegistry.getUser(messageDestinationUsername).getAddressesInUse();
+			Set<String> stompUsernamesInUse = messengerFeatureUserRegistry.getUser(details.getUsername()).getAddressesInUse();
+			ArrayList<Set<String>> sets = new ArrayList<>(Arrays.asList(stompDestinationUsernamesInUse, stompUsernamesInUse));
+			for (Set<String> set : sets) {
+				for (String userDestination : set) {
+					simpMessagingTemplate.convertAndSendToUser(userDestination,"/queue/chat/" + courseId, forwardMessage, Map.of("payloadType", "MessengerDirectMessage"));
+				}
+			}
+		}
+		else if (messageType.equals("public")) { 
+			forwardMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
+			forwardMessage.setFirstName(details.getFirstName());
+			forwardMessage.setFamilyName(details.getFamilyName());
+
+			courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
+
+			simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, forwardMessage, Map.of("payloadType", "MessengerMessage")); 
+		}
     }
 
 	@MessageExceptionHandler
