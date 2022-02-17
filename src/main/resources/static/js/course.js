@@ -75,6 +75,8 @@ class Course {
 					this.speechAccepted();
 				}
 				else {
+					this.speechRequestId = null;
+
 					this.player.stopSpeech();
 
 					if (this.speechModal) {
@@ -552,7 +554,15 @@ class Course {
 			cameraBlockedAlert.classList.add("d-none");
 		}
 
-		this.speechModal.show();
+		if (this.speechRequestId) {
+			this.speechModal.show();
+		}
+		else {
+			// Speech has been aborted by the remote peer.
+			window.stopMediaTracks(stream);
+
+			this.speechModal = null;
+		}
 	}
 
 	showDeviceInitModal() {
