@@ -11,6 +11,7 @@ function addGainToStream(inputStream, gain){
 }
 
 let orginialStream = null;
+let gainedStream = 0;
 
 function addGainToOriginalStream(gain){
 	return addGainToStream(orginialStream, gain / 100);
@@ -37,8 +38,8 @@ function fillForm(devices, inputStream, constraints) {
 
 	const video = document.getElementById("cameraPreview");
 	orginialStream = inputStream;
-	const stream = addGainToStream(inputStream, volume.value / 100);
-	video.srcObject = stream;
+	gainedStream = addGainToStream(inputStream, volume.value / 100);
+	video.srcObject = gainedStream;
 
 	const onAudioDeviceChange = () => {
 		window.stopAudioTracks(video.srcObject);
@@ -53,7 +54,7 @@ function fillForm(devices, inputStream, constraints) {
 		navigator.mediaDevices.getUserMedia(audioConstraints)
 			.then(audioStream => {
 				orginialStream = audioStream;
-				const gainedStream = addGainToStream(audioStream, volume.value / 100);
+				gainedStream = addGainToStream(audioStream, volume.value / 100);
 				gainedStream.getAudioTracks().forEach(track => video.srcObject.addTrack(track));
 
 				window.getAudioLevel(gainedStream.getAudioTracks()[0], meterCanvas);
@@ -141,12 +142,12 @@ function fillForm(devices, inputStream, constraints) {
 	}
 
 	if (cameraSelect.value === "none") {
-		window.stopVideoTracks(stream);
+		window.stopVideoTracks(gainedStream);
 	}
 
 	video.style.display = (cameraSelect.value === "none") ? "none" : "block";
 
-	window.getAudioLevel(stream.getAudioTracks()[0], meterCanvas);
+	window.getAudioLevel(gainedStream.getAudioTracks()[0], meterCanvas);
 }
 
 window.enumerateDevices(true)
@@ -169,3 +170,84 @@ window.enumerateDevices(true)
 				});
 		}
 	});
+
+function testRecorder(){
+	const recordStart = document.querySelector('#record-start');
+	const recordStop = document.querySelector('#record-stop');
+	const soundClips = document.querySelector('#sound-clips');
+
+	if (navigator.mediaDevices.getUserMedia) {
+
+		const constraints = { audio: true };
+		let chunks = [];
+
+		let onSuccess = function(stream) {
+			let mediaRecorder = new MediaRecorder(stream);
+			initMediaRedorder();
+
+			recordStart.onclick = function() {
+				mediaRecorder = new MediaRecorder(gainedStream);
+				initMediaRedorder();
+				mediaRecorder.start();
+
+				recordStart.style.display = 'none';
+				recordStop.style.display = '';
+			}
+
+			recordStop.onclick = function() {
+				mediaRecorder.stop();
+
+				recordStart.style.display = '';
+				recordStop.style.display = 'none';
+			}
+
+			function initMediaRedorder(){
+				mediaRecorder.onstop = function(e) {
+					const clipContainer = document.createElement('article');
+					const audio = document.createElement('audio');
+					const deleteButton = document.createElement('button');
+		
+					clipContainer.classList.add('clip');
+					audio.setAttribute('controls', '');
+					deleteButton.innerHTML = '<i class="bi bi-trash"></i>'
+					deleteButton.className = 'btn btn-danger';
+		
+					clipContainer.classList.add('d-flex',  'bd-highlight');
+					audio.classList.add('flex-grow-1');
+					audio.style.borderRadius = '5px';
+					deleteButton.style.marginLeft = '10px';
+					clipContainer.style.marginTop = '10px';
+		
+		
+					clipContainer.appendChild(audio);
+					clipContainer.appendChild(deleteButton);
+					soundClips.appendChild(clipContainer);
+		
+					audio.controls = true;
+					const blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
+					chunks = [];
+					const audioURL = window.URL.createObjectURL(blob);
+					audio.src = audioURL;
+		
+					deleteButton.onclick = function(e) {
+						soundClips.removeChild(clipContainer);
+					}
+		
+				}
+				mediaRecorder.ondataavailable = function(e) {
+					chunks.push(e.data);
+				}
+			}
+		}
+
+		let onError = function(err) {
+			console.log('The following error occured: ' + err);
+		}
+
+		navigator.mediaDevices.getUserMedia(constraints).then(onSuccess, onError);
+
+	} else {
+		console.log('getUserMedia not supported on your browser!');
+	}
+}
+testRecorder();

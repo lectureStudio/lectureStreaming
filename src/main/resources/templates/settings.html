@@ -43,6 +43,9 @@
 							<div>
 								<input type="range" class="form-range" min="0" max="300" id="microphoneVolume" value="100">
 							</div>
+							<div class="row pb-3">
+								<canvas id="meter" height="3"></canvas>
+							</div>
 							<script>
 								const range = document.getElementById("microphoneVolume");
 								range.addEventListener("input", () => {
@@ -55,12 +58,22 @@
 								}
 								range.dispatchEvent(new Event('input'));
 							</script>
+							<div class="card">
+								<div class="card-header">Mikrofon durch Aufnahme testen</div>
+								<div class="card-body">
+									<button type="button" class="btn btn-outline-primary" id="record-start"><i class="bi bi-record-fill"></i> Aufnahme starten</button>
+									<button type="button" class="btn btn-danger" id="record-stop" style="display:none;"><i class="bi bi-stop-fill"></i> Aufnahme stoppen</button>
+									<section id="sound-clips"></section>
+								</div>
+								<style>
+									#sound-clips:empty:before {
+										content: 'Die Aufnahme wird nur lokal im Browser zwischengespeichert ';
+									}
+								</style>
+							</div>
 						</div>
 					</form>
 				</div>
-			</div>
-			<div class="row pb-3">
-				<canvas id="meter" width="300" height="3"></canvas>
 			</div>
 			<div class="">
 				<button th:text="#{devices.reset}" type="button" id="resetDeviceSelection"
