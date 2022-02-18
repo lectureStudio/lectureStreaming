@@ -28,11 +28,31 @@
 				</button>
 				<div class="navbar-collapse collapse" id="collapseNavbar">
 					<div class="navbar-nav align-items-end">
-						<i class="h5 bi bi-person-square text-muted"></i>
-						<span th:text="|${user.firstName} ${user.familyName}|" class="px-2 py-2"></span>
+						<div>
+							<i class="h5 bi bi-person-square text-muted"></i>
+							<span th:text="|${user.firstName} ${user.familyName}|" class="px-2 py-2"></span>
+						</div>
 					</div>
 					<div class="navbar-nav ms-auto">
-						
+						<div class="d-md-none">
+							<div class="bg-light border rounded-3 p-2">
+								<div class="list-group pb-3">
+									<a th:href="@{/}" th:text="#{home.courses}" class="list-group-item list-group-item-action" role="tab"></a>
+								</div>
+								<h5 th:text="#{home.account}" class="text-muted"></h5>
+								<div class="list-group">
+									<a th:href="@{/course/new}" th:text="#{home.add.course}" class="list-group-item list-group-item-action" role="tab"></a>
+									<a th:href="@{/token}" th:text="#{home.personal.access.token}" class="list-group-item list-group-item-action" role="tab"></a>
+								</div>
+								<div class="list-group list-group-flush pt-2">
+									<a th:href="@{/settings}" th:text="#{home.settings}" class="list-group-item bg-transparent"></a>
+									<a th:href="@{/saml/logout}" class="list-group-item bg-transparent">
+										<i class="bi bi-box-arrow-left"></i>
+										[[#{home.logout}]]
+									</a>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -40,14 +60,14 @@
 
 		<div class="d-flex flex-column flex-grow-1 py-3" style="top: 0; bottom: 0; width: 100%;">
 			<div class="row g-5 d-flex flex-grow-1">
-				<div class="col-md-3">
+				<div class="col-md-3 d-none d-md-block">
 					<div class="position-sticky">
 						<div class="bg-light border rounded-3 p-2">
 							<div class="list-group pb-3">
 								<a th:href="@{/}" th:text="#{home.courses}" class="list-group-item list-group-item-action" role="tab"></a>
 							</div>
 							<h5 th:text="#{home.account}" class="text-muted"></h5>
-							<div sec:authorize="hasAnyRole('EMPLOYEE', 'FACULTY', 'MEMBER', 'AFFILIATE')" class="list-group">
+							<div class="list-group">
 								<a th:href="@{/course/new}" th:text="#{home.add.course}" class="list-group-item list-group-item-action" role="tab"></a>
 								<a th:href="@{/token}" th:text="#{home.personal.access.token}" class="list-group-item list-group-item-action" role="tab"></a>
 							</div>
