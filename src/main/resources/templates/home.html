@@ -9,9 +9,6 @@
 <body>
 
 	<th:block layout:fragment="content">
-		<div class="d-flex justify-content-between theme-content-head">
-			<div th:text="#{home.courses}"></div>
-		</div>
 		<div class="list-group bg-light border rounded-3 p-4">
 			<div th:each="course: ${courses}" class="list-group-item" aria-current="true">
 				<a th:href="@{/course/{id}(id=${course.id})}" class="overlay-link"></a>
