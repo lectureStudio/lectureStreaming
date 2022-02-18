@@ -1,4 +1,48 @@
+let mediaRecorder = null;
+let chunks = [];
+
+function fillMediaProfile() {
+	const storedMediaProfile = localStorage.getItem("media.profile");
+	const mediaProfiles = document.querySelectorAll('input[name = "mediaProfile"]');
+	let selected = false;
+
+	for (const input of mediaProfiles) {
+		if (input.value === storedMediaProfile) {
+			input.checked = true;
+			selected = true;
+		}
+
+		input.addEventListener("change", function (e) {
+			if (this.checked) {
+				localStorage.setItem("media.profile", this.value);
+			}
+		});
+	}
+
+	if (!selected) {
+		mediaProfiles.item(0).checked = true;
+		localStorage.setItem("media.profile", mediaProfiles.item(0).value);
+	}
+}
+
 function fillForm(devices, stream, constraints) {
+	const recordStart = document.getElementById("record-start");
+	const recordStop = document.getElementById("record-stop");
+
+	recordStart.onclick = function () {
+		mediaRecorder.start();
+
+		recordStart.style.display = "none";
+		recordStop.style.display = "";
+	}
+
+	recordStop.onclick = function () {
+		mediaRecorder.stop();
+
+		recordStart.style.display = "";
+		recordStop.style.display = "none";
+	}
+
 	const audioInputs = devices.filter(device => device.kind === "audioinput");
 	const audioOutputs = devices.filter(device => device.kind === "audiooutput");
 	const videoInputs = devices.filter(device => device.kind === "videoinput");
@@ -23,6 +67,8 @@ function fillForm(devices, stream, constraints) {
 	const video = document.getElementById("cameraPreview");
 	video.srcObject = stream;
 
+	initMediaRecorder(stream);
+
 	const onAudioInputDeviceChange = () => {
 		window.stopAudioTracks(video.srcObject);
 
@@ -35,7 +81,7 @@ function fillForm(devices, stream, constraints) {
 
 		navigator.mediaDevices.getUserMedia(audioConstraints)
 			.then(audioStream => {
-				audioStream.getAudioTracks().forEach(track => video.srcObject.addTrack(track));
+				initMediaRecorder(audioStream);
 
 				window.getAudioLevel(audioStream.getAudioTracks()[0], meterCanvas);
 			})
@@ -48,16 +94,7 @@ function fillForm(devices, stream, constraints) {
 			});
 	};
 	const onAudioOutputDeviceChange = () => {
-		if (!('sinkId' in HTMLMediaElement.prototype)) {
-			return;
-		}
-
-		const audioSink = speakerSelect.value;
-
-		video.setSinkId(audioSink)
-			.catch(error => {
-				console.error(error);
-			});
+		window.setAudioSink(video, speakerSelect.value);
 	};
 	const onVideoDeviceChange = () => {
 		window.stopVideoTracks(video.srcObject);
@@ -151,6 +188,8 @@ function fillForm(devices, stream, constraints) {
 	window.getAudioLevel(stream.getAudioTracks()[0], meterCanvas);
 }
 
+fillMediaProfile();
+
 window.enumerateDevices(true, true)
 	.then(result => {
 		fillForm(result.devices, result.stream, result.constraints);
@@ -180,3 +219,46 @@ window.enumerateDevices(true, true)
 				});
 		}
 	});
+
+function initMediaRecorder(stream) {
+	mediaRecorder = new MediaRecorder(stream);
+	mediaRecorder.onstop = function (e) {
+		const soundClips = document.querySelector('#sound-clips');
+		const clipContainer = document.createElement('article');
+		const audio = document.createElement('audio');
+		const deleteButton = document.createElement('button');
+
+		audio.setAttribute('controls', '');
+		audio.classList.add('flex-grow-1');
+		audio.style.borderRadius = '5px';
+
+		deleteButton.innerHTML = '<i class="bi bi-trash"></i>'
+		deleteButton.className = 'btn btn-danger btn-block';
+		deleteButton.style.marginLeft = '10px';
+
+		clipContainer.classList.add('clip');
+		clipContainer.classList.add('d-flex', 'bd-highlight');
+		clipContainer.style.marginTop = '10px';
+
+		clipContainer.appendChild(audio);
+		clipContainer.appendChild(deleteButton);
+		soundClips.appendChild(clipContainer);
+
+		const blob = new Blob(chunks, { 'type': 'audio/ogg; codecs=opus' });
+		chunks = [];
+
+		audio.addEventListener("play", function () {
+			window.setAudioSink(audio, speakerSelect.value);
+		});
+		audio.controls = true;
+		audio.src = window.URL.createObjectURL(blob);
+
+		deleteButton.onclick = function (e) {
+			soundClips.removeChild(clipContainer);
+		}
+
+	}
+	mediaRecorder.ondataavailable = function (e) {
+		chunks.push(e.data);
+	}
+}

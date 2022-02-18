@@ -7,13 +7,33 @@
 </head>
 
 <body>
-
 	<th:block layout:fragment="content">
 		<div class="d-flex justify-content-between theme-content-head">
 			<div th:text="#{settings.title}"></div>
 		</div>
 		<div class="bg-light border rounded-3 p-4">
 			<div class="row">
+				<h6 th:text="#{settings.media.profile}"></h6>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					<div class="form-check">
+						<input class="form-check-input" type="radio" name="mediaProfile" id="mediaProfile1" value="classroom" aria-describedby="classroomHelp">
+						<label class="form-check-label" for="mediaProfile1" th:text="#{settings.media.profile.classroom}"></label>
+						<div>
+							<small id="classroomHelp" class="form-text text-muted" th:text="#{settings.media.profile.classroom.description}"></small>
+						</div>
+					</div>
+					<div class="form-check">
+						<input class="form-check-input" type="radio" name="mediaProfile" id="mediaProfile2" value="home" aria-describedby="homeHelp">
+						<label class="form-check-label" for="mediaProfile2" th:text="#{settings.media.profile.home}"></label>
+						<div>
+							<small id="homeHelp" class="form-text text-muted" th:text="#{settings.media.profile.home.description}"></small>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row mt-4">
 				<h6 th:text="#{devices.settings}"></h6>
 			</div>
 			<div class="row alert alert-warning m-2 d-none" id="cameraBlockedAlert" role="alert">
@@ -44,6 +64,23 @@
 								aria-label=".form-select-sm speaker">
 							</select>
 						</div>
+						<div class="mb-3">
+							<div class="card">
+								<div class="card-header" th:text="#{devices.audio.rec.test}">Mikrofon durch Aufnahme testen</div>
+								<div class="card-body">
+									<small class="form-text text-muted" th:text="#{devices.audio.rec.test.description}"></small>
+									<button type="button" class="btn btn-outline-primary btn-sm mt-2" id="record-start">
+										<i class="bi bi-record-fill"></i>
+										<span th:text="#{devices.audio.rec.test.start}"></span>
+									</button>
+									<button type="button" class="btn btn-danger btn-sm mt-2" id="record-stop" style="display:none;">
+										<i class="bi bi-stop-fill"></i>
+										<span th:text="#{devices.audio.rec.test.stop}"></span>
+									</button>
+									<section id="sound-clips"></section>
+								</div>
+							</div>
+						</div>
 					</form>
 				</div>
 			</div>
@@ -62,7 +99,6 @@
 	<th:block layout:fragment="optional">
 		<script src="/js/settings.js"></script>
 	</th:block>
-
 </body>
 
 </html>
