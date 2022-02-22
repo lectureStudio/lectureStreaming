@@ -19,7 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.messaging.support.MessageBuilder;
 
 
-public class StompChannelInterceptor implements ChannelInterceptor {
+public class StompInboundChannelInterceptor implements ChannelInterceptor {
 
     @Autowired
     private MessengerFeatureUserRegistry messengerFeatureUserRegistry;

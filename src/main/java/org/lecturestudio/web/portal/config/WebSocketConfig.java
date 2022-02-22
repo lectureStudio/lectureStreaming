@@ -2,7 +2,8 @@ package org.lecturestudio.web.portal.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.lecturestudio.web.portal.interceptor.StompChannelInterceptor;
+import org.lecturestudio.web.portal.interceptor.StompInboundChannelInterceptor;
+import org.lecturestudio.web.portal.interceptor.StompOutboundChannelInterceptor;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseStates;
@@ -79,13 +80,23 @@ public class WebSocketConfig implements WebSocketConfigurer, WebSocketMessageBro
     }
 
 	@Bean
-	public StompChannelInterceptor stompChannelInterceptor() {
-		return new StompChannelInterceptor();
+	public StompInboundChannelInterceptor stompChannelInterceptor() {
+		return new StompInboundChannelInterceptor();
+	}
+
+	@Bean
+	public StompOutboundChannelInterceptor stompOutboundChannelInterceptor() {
+		return new StompOutboundChannelInterceptor();
 	}
 
 	@Override
 	public void configureClientInboundChannel(ChannelRegistration registration) {
 		registration.interceptors(stompChannelInterceptor());
+	}
+
+	@Override
+	public void configureClientOutboundChannel(ChannelRegistration registration) {
+		registration.interceptors(stompOutboundChannelInterceptor());
 	}
 
 	@Bean
