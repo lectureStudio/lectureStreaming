@@ -588,7 +588,7 @@ class Course {
 			this.setMessengerForm(false);
 			submitButton.disabled = false;
 			this.messageWasSent();
-		}).catch(error => console.error(error));
+		});
 	}
 
 	sendOverSTOMP(value) {
