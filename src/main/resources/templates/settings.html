@@ -39,7 +39,7 @@
 							</select>
 						</div>
 						<div class="mb-3">
-							<label for="microphoneVolume" class="form-label">Lautstärke</label> – <span id="microphoneVolume-display"></span>
+							<label for="microphoneVolume" class="form-label">Lautstärke</label>
 							<div>
 								<input type="range" class="form-range" min="0" max="300" id="microphoneVolume" value="100">
 							</div>
@@ -50,7 +50,6 @@
 								const range = document.getElementById("microphoneVolume");
 								range.addEventListener("input", () => {
 									localStorage.setItem('microfoneVolume', range.value);
-									document.getElementById("microphoneVolume-display").innerHTML = range.value + "%";
 								});
 								const volume = localStorage.getItem('microfoneVolume');
 								if(volume !== null){
