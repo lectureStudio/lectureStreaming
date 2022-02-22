@@ -31,9 +31,7 @@ public class TokenAuthenticationFilter extends AbstractAuthenticationProcessingF
 		String token = StringUtils.isNotEmpty(request.getHeader(API_KEY_HEADER))
 				? request.getHeader(API_KEY_HEADER)
 				: "";
-
 		Authentication requestAuthentication = new UsernamePasswordAuthenticationToken(token, token);
-
 		return getAuthenticationManager().authenticate(requestAuthentication);
 	}
 
@@ -41,7 +39,7 @@ public class TokenAuthenticationFilter extends AbstractAuthenticationProcessingF
 	protected void successfulAuthentication(final HttpServletRequest request, final HttpServletResponse response,
 			final FilterChain chain, final Authentication authResult) throws IOException, ServletException {
 		SecurityContextHolder.getContext().setAuthentication(authResult);
-
+		
 		chain.doFilter(request, response);
 	}
 }

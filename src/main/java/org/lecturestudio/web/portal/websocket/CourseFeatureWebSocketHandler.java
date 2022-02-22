@@ -12,6 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.lecturestudio.web.api.message.CourseFeatureMessengerParticipantMessage;
 import org.lecturestudio.web.api.message.WebMessage;
 import org.lecturestudio.web.api.stream.action.StreamAction;
 import org.lecturestudio.web.api.stream.action.StreamActionFactory;
@@ -44,7 +45,7 @@ public class CourseFeatureWebSocketHandler extends BinaryWebSocketHandler {
 		this.objectMapper = objectMapper;
 		this.messengerSaveFeature = messengerSaveFeature;
 
-		courseFeatureState.addCourseFeatureListener(this::sendMessage);
+		courseFeatureState.addCourseFeatureListener(this::sendCourseFeatureMessengerParticipantMessage);
 		courseFeatureState.addCourseFeatureListener(this.messengerSaveFeature);
 	}
 
@@ -103,19 +104,21 @@ public class CourseFeatureWebSocketHandler extends BinaryWebSocketHandler {
 		}
 	}
 
-	private void sendMessage(long courseId, WebMessage message) {
-		WebSocketSession session = sessions.entrySet().stream()
+	private void sendCourseFeatureMessengerParticipantMessage(long courseId, WebMessage message) {
+		if (message instanceof CourseFeatureMessengerParticipantMessage) {
+			WebSocketSession session = sessions.entrySet().stream()
 			.filter(entry -> entry.getValue() == courseId)
 			.findFirst()
 			.map(Map.Entry::getKey)
 			.orElse(null);
 
-		if (nonNull(session)) {
-			try {
-				session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
-			}
-			catch (Exception e) {
-				e.printStackTrace();
+			if (nonNull(session)) {
+				try {
+					session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}

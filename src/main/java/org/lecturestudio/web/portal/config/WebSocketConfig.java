@@ -2,6 +2,7 @@ package org.lecturestudio.web.portal.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.lecturestudio.web.portal.interceptor.StompChannelInterceptor;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseStates;
@@ -12,6 +13,7 @@ import org.lecturestudio.web.portal.websocket.CourseStateWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -48,7 +50,7 @@ public class WebSocketConfig implements WebSocketConfigurer, WebSocketMessageBro
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		registry
-			.addHandler(new CourseStateWebSocketHandler(courseStates, objectMapper, userService), "/api/publisher/course-state")
+			.addHandler(new CourseStateWebSocketHandler(courseStates, objectMapper, userService, messengerSaveFeature), "/api/publisher/course-state")
 				.setAllowedOrigins("*")
 			.addHandler(new CourseFeatureWebSocketHandler(courseFeatureState, objectMapper, messengerSaveFeature), "/api/publisher/messages")
 				.setAllowedOrigins("*");
@@ -65,14 +67,26 @@ public class WebSocketConfig implements WebSocketConfigurer, WebSocketMessageBro
 
 	@Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic").setTaskScheduler(heartBeatScheduler());
+        registry.enableSimpleBroker("/queue", "/topic").setTaskScheduler(heartBeatScheduler());
         registry.setApplicationDestinationPrefixes("/app");
+		registry.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/messenger").setAllowedOriginPatterns("*").withSockJS();
+        registry.addEndpoint("/api/publisher/messenger").setAllowedOriginPatterns("*").withSockJS();
+		registry.addEndpoint("/api/subscriber/messenger").setAllowedOriginPatterns("*").withSockJS();
     }
+
+	@Bean
+	public StompChannelInterceptor stompChannelInterceptor() {
+		return new StompChannelInterceptor();
+	}
+
+	@Override
+	public void configureClientInboundChannel(ChannelRegistration registration) {
+		registration.interceptors(stompChannelInterceptor());
+	}
 
 	@Bean
     public TaskScheduler heartBeatScheduler() {

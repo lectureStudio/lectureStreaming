@@ -82,6 +82,8 @@ public class WebSecurityConfig {
 					.antMatchers("/manual/**").permitAll()
 					.antMatchers("/api/publisher/**").permitAll()	// Will be handled by the personal token authentication.
 					.antMatchers("/messenger/**").permitAll()
+					.antMatchers("/app/**").permitAll()
+					.antMatchers("/message/**").permitAll()
 					.anyRequest().authenticated();
 		}
 

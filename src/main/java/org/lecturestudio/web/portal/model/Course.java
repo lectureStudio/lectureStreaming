@@ -47,7 +47,7 @@ public class Course {
 	@Column
 	String passcode;
 
-	@OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+	@OneToMany(mappedBy = "course", fetch = FetchType.EAGER, cascade = { CascadeType.ALL })
 	Set<CourseRegistration> registrations = new HashSet<>();
 
 	@OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })

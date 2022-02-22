@@ -9,5 +9,4 @@ public class CourseMessageFeature extends CourseFeature {
 	public String getName() {
 		return "messenger";
 	}
-
 }

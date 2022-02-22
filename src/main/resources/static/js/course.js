@@ -6,6 +6,9 @@ class Course {
 		this.contentContainer = null;
 		this.messengerContainer = null;
 		this.messengerElement = null;
+		this.messengerDestinations = null;
+		this.messengerDestination = null;
+		this.messengerDestinationToggle = null;
 		this.quizContainer = null;
 		this.quizElement = null;
 		this.player = null;
@@ -72,6 +75,9 @@ class Course {
 				}
 
 				this.messengerElement = null;
+				this.messengerDestination = null;
+				this.messengerDestinations = null;
+				this.messengerDestinationToggle = null;
 				this.unavailableVisible(true);
 			}
 		});
@@ -103,17 +109,29 @@ class Course {
 	}
 
 	async establishMessengerConnection() {
-		var socket = new SockJS('/messenger');
+		var socket = new SockJS('/api/subscriber/messenger/');
 		this.stompClient = Stomp.over(socket);
 		const messengerConnectionWarning = this.messengerElement.querySelector("#messenger-connection-warning");
 
-		this.stompClient.connect({}, async (frame) => {
+		this.stompClient.connect({courseId: this.courseId}, async (frame) => {
 			if (! messengerConnectionWarning.classList.contains('hidden')) {
 				messengerConnectionWarning.classList.add('hidden');
 			}
 			this.stompClient.subscribe('/topic/chat/' + this.courseId, (message) => {
-				this.onChatMessageReceive(this.stompMessageToMessageObject(message));
-			});
+				const jsonObject = this.stompMessageToMessageObject(message);
+				const type = jsonObject["_type"];
+				switch (type) {
+					case 'MessengerMessage':
+						this.onMessengerMessageReceive(jsonObject);
+						break;
+					case 'MessengerReplyMessage':
+						this.onMessengerReplyMessageReceive(jsonObject, message.headers);
+						break;
+				}
+			}, {courseId: this.courseId});
+			this.stompClient.subscribe('/user/queue/chat/' + this.courseId, (message) => {
+				this.onMessengerDirectMessageReceive(this.stompMessageToMessageObject(message));
+			}, {courseId: this.courseId});
 			await this.reloadMessengerHistory();
 			this.setMessengerForm(false);
 		},
@@ -204,10 +222,36 @@ class Course {
 		const messageBody = stompMessage.body;
 		return JSON.parse(messageBody);
 	}
+  
+  urlify(text) {
+	const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+	return text.replace(urlRegex, function(url) {
+			return '<a href="' + url + '">' + url + '</a>';
+		});
+	}
 
-	async onChatMessageReceive(message) {
+	addRepliedIcon(messageElement) {
+		const messageStatusDoc = messageElement.querySelector('.chat-message-status')
+		console.log(messageStatusDoc);
+		const repliedIcon = document.createElement('i');
+		repliedIcon.classList.add('bi', 'bi-check2');
+		repliedIcon.setAttribute('data-bs-toggle', 'tooltip');
+		repliedIcon.setAttribute('title', this.dict['course.feature.message.reply.tooltip']);
+		var tooltip = new bootstrap.Tooltip(repliedIcon, {placement: 'bottom'});
+
+		messageStatusDoc.appendChild(repliedIcon);
+	}
+
+	onMessengerReplyMessageReceive(message, headers) {
+		const repliedMessage = this.messengerElement.querySelector(`[id='${message.repliedMessageId}']`);
+		if (repliedMessage) {
+			this.addRepliedIcon(repliedMessage);
+		}
+	}
+
+	async onMessengerMessageReceive(message) {
 		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
-		var params = {timestamp: message.time, content: message.text, from: message.username};
+		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "public"};
 
 		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
@@ -220,22 +264,61 @@ class Course {
 		.then(html => {
 			if (html) {
 				const doc = new DOMParser().parseFromString(html, "text/html");
+				if (message.reply) {
+					this.addRepliedIcon(doc);
+        }
 
-				const chatHistory = this.messengerElement.querySelector("#chat-history-list");
-
-				if (chatHistory) {
-					for (const child of doc.body.children) {
-						chatHistory.appendChild(child);
-					}
-				}
-
-				chatHistory.scrollTop = chatHistory.scrollHeight;
+				const messageTextElement = doc.querySelector(".chat-text-content");
+				messageTextElement.innerHTML = this.urlify(messageTextElement.innerHTML);
+				this.appendToMessengerHistory(doc);
 			}
 		})
 		.catch(error => console.error(error));
 
 
 		return response;
+	}
+
+	async onMessengerDirectMessageReceive(message) {
+		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
+		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "user"};
+
+		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+		const response = await fetch(url, {
+			method: "GET",
+		})
+		.then((response) => {
+			return response.text();
+		})
+		.then(html => {
+			if (html) {
+				const doc = new DOMParser().parseFromString(html, "text/html");
+				if (message.reply) {
+					this.addRepliedIcon(doc);
+        }
+
+				const messageTextElement = doc.querySelector(".chat-text-content");
+				messageTextElement.innerHTML = this.urlify(messageTextElement.innerHTML);
+				this.appendToMessengerHistory(doc);
+			}
+		})
+		.catch(error => console.error(error));
+
+
+		return response;
+	}
+          
+  appendToMessengerHistory(html) {
+	const chatHistory = this.messengerElement.querySelector("#chat-history-list");
+
+  if (chatHistory) {
+    for (const child of html.body.children) {
+      chatHistory.appendChild(child);
+    }
+  }
+
+		chatHistory.scrollTop = chatHistory.scrollHeight;
 	}
 
 	onPlayerSettings() {
@@ -300,6 +383,18 @@ class Course {
 		}
 	}
 
+	appendToMessengerHistory(html) {
+		const chatHistory = this.messengerElement.querySelector("#chat-history-list");
+
+		if (chatHistory) {
+			for (const child of html.body.children) {
+				chatHistory.appendChild(child);
+			}
+		}
+
+		chatHistory.scrollTop = chatHistory.scrollHeight;
+	}
+
 	cancelSpeech() {
 		if (!this.speechRequestId) {
 			this.player.setRaiseHand(false);
@@ -325,6 +420,7 @@ class Course {
 		})
 		.then(requestId => {
 			this.speechRequestId = requestId;
+
 		})
 		.catch(error => console.error(error));
 	}
@@ -403,8 +499,16 @@ class Course {
 			const messengerHistoryDto = JSON.parse(json);
 			const messengerHistory = messengerHistoryDto.messengerHistory;
 
-			for (let mm of messengerHistory) {
-				await this.onChatMessageReceive(mm);
+			for (let m of messengerHistory) {
+				const type = m["_type"];
+				switch(type) {
+					case "MessengerMessage":
+						await this.onMessengerMessageReceive(m);
+						break;
+					case "MessengerDirectMessage":
+						await this.onMessengerDirectMessageReceive(m);
+						break;
+				}
 			}
 		})
 		chatHistory.classList.remove("hidden");
@@ -557,11 +661,14 @@ class Course {
 	}
 
 	initMessenger() {
+
 		const messageForm = this.messengerElement.querySelector("#course-message-form");
 
 		if (!messageForm) {
 			return;
 		}
+
+		this.initMessengerDestinationToggle();
 
 		this.unavailableVisible(false);
 
@@ -592,8 +699,106 @@ class Course {
 		});
 	}
 
+	async getConnectedMessengerUsers(destinations) {
+		if (this.messengerElement) {
+			await fetch("/course/messenger/users/" + this.courseId, {
+				method: "GET",
+			})
+			.then((response) => {
+				return response.text();
+			})
+			.then( json => {
+				console.log(json);
+				const courseMessengerConnectedUsersDto = JSON.parse(json);
+				for (let user of courseMessengerConnectedUsersDto.connectedUsers) {
+					destinations.push({
+						type: "user",
+						username: user.username,
+						innerText: user.username,
+					})
+				}
+			})
+		}
+		return destinations;
+	}
+
+	forDestination(destination) {
+		const a = renderDestinationViews(destination, this.messengerDestinations)
+		if (a) {
+			a.addEventListener("click", () => {
+				this.updateMessengerDestination(destination);
+			})
+		}
+
+		function renderDestinationViews(element, messengerDestinations) {
+			var li = document.createElement('li');
+			if (element.type === "header") {
+				var h6 = document.createElement('h6');
+				h6.classList.add("dropdown-header")
+				h6.innerHTML = element.innerText;
+				li.appendChild(h6);
+				messengerDestinations.appendChild(li);
+			} else {
+				var a = document.createElement('a');
+				a.classList.add("dropdown-item")
+				a.setAttribute("href", "#");
+				a.innerHTML = element.innerText;
+				li.appendChild(a);
+				messengerDestinations.appendChild(li);
+				return a;
+			}
+		}
+	}
+
+	async onMessengerDestinationToggleClicked() {
+		this.messengerDestinations.innerHTML = '';
+		const destinations = [
+			{
+				type: "header",
+				innerText: this.dict["course.feature.message.public"]
+			},
+			{
+				type: "public",
+				innerText: this.dict["course.feature.message.destination.all"]
+			},
+			{
+				type: "header",
+				innerText: this.dict["course.feature.message.private"]
+			}];
+		await this.getConnectedMessengerUsers(destinations);
+		destinations.forEach((element) => this.forDestination(element))
+	}
+
+	updateMessengerDestination(destination) {
+		this.messengerDestination = destination;
+		const messengerTextArea = this.messengerElement.querySelector("#messageTextarea");
+		messengerTextArea.setAttribute("placeholder", this.dict["course.feature.message.form.placeholder"] + " " + this.messengerDestination.innerText);
+	}
+
+	initMessengerDestinationToggle() {
+		if (this.messengerElement) {
+			this.updateMessengerDestination({
+				type: "public",
+				innerText: "Alle"
+			});
+			this.messengerDestinations = this.messengerElement.querySelector('#messengerDestinations');
+			this.messengerDestinationToggle = this.messengerElement.querySelector('#messengerDestinationToggle');
+
+			this.messengerDestinationToggle.addEventListener("click", () => {
+				this.onMessengerDestinationToggleClicked();
+			})
+		}
+	}
+
 	sendOverSTOMP(value) {
-		this.stompClient.send("/app/message/" + this.courseId, {}, JSON.stringify(value));
+		const headers = {
+			courseId: this.courseId,
+			messageType: this.messengerDestination.type,
+		}
+		if (headers.messageType === "user") {
+			headers.username = this.messengerDestination.username;
+		}
+		this.stompClient.send("/app/message/" + this.courseId, headers, JSON.stringify(value));
 	}
 
 	setMessengerForm(disabled) {
