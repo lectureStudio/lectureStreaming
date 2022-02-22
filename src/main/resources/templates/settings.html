@@ -11,87 +11,163 @@
 		<div class="d-flex justify-content-between theme-content-head">
 			<div th:text="#{settings.title}"></div>
 		</div>
-		<div class="bg-light border rounded-3 p-4">
-			<div class="row">
-				<h6 th:text="#{settings.media.profile}"></h6>
-			</div>
-			<div class="row">
-				<div class="col-md-12">
-					<div class="form-check">
-						<input class="form-check-input" type="radio" name="mediaProfile" id="mediaProfile1" value="classroom" aria-describedby="classroomHelp">
-						<label class="form-check-label" for="mediaProfile1" th:text="#{settings.media.profile.classroom}"></label>
-						<div>
-							<small id="classroomHelp" class="form-text text-muted" th:text="#{settings.media.profile.classroom.description}"></small>
-						</div>
-					</div>
-					<div class="form-check">
-						<input class="form-check-input" type="radio" name="mediaProfile" id="mediaProfile2" value="home" aria-describedby="homeHelp">
-						<label class="form-check-label" for="mediaProfile2" th:text="#{settings.media.profile.home}"></label>
-						<div>
-							<small id="homeHelp" class="form-text text-muted" th:text="#{settings.media.profile.home.description}"></small>
-						</div>
-					</div>
+		<div class="d-flex flex-row">
+			<div class="d-flex flex-fill" role="tabpanel">
+				<!-- List group -->
+				<div class="flex-shrink-0 list-group pe-3" id="myList" role="tablist">
+					<a class="list-group-item list-group-item-action active" data-bs-toggle="list" href="#token" role="tab" th:text="#{personal.access.token.title}"></a>
+					<a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#profile" role="tab" th:text="#{settings.media.profile}"></a>
+					<a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#devices" role="tab" th:text="#{devices.settings}" id="devicesTab"></a>
 				</div>
-			</div>
-			<div class="row mt-4">
-				<h6 th:text="#{devices.settings}"></h6>
-			</div>
-			<div class="row alert alert-warning m-2 d-none" id="cameraBlockedAlert" role="alert">
-				<span th:text="#{devices.camera.blocked}"></span>
-			</div>
-			<div class="row">
-				<div class="col-md-4">
-					<video id="cameraPreview" class="py-2 ratio ratio-16x9" playsinline autoplay muted></video>
-				</div>
-				<div class="col-md-8">
-					<form id="deviceSelectForm">
-						<div class="mb-3" id="cameraSelectContainer">
-							<label th:text="#{devices.camera}" for="cameraSelect" class="form-label"></label>
-							<select name="videoInput" id="cameraSelect" class="form-select form-select-sm"
-								aria-label=".form-select-sm camera">
-								<option value="none" th:text="#{devices.none}"></option>
-							</select>
+		
+				<!-- Tab panes -->
+				<div class="flex-grow-1 bg-light border rounded-3 p-4 tab-content">
+					<div class="tab-pane active" id="token" role="tabpanel">
+						<div>
+							<span th:text="#{personal.access.token.description}"></span>
+							<p class="pt-1"><strong th:text="#{please.note}"></strong> <span th:text="#{personal.access.token.note}"></span></p>
 						</div>
-						<div class="mb-3">
-							<label th:text="#{devices.audio.input}" for="microphoneSelect" class="form-label"></label>
-							<select name="audioInput" id="microphoneSelect" class="form-select form-select-sm"
-								aria-label=".form-select-sm microphone">
-							</select>
-						</div>
-						<div class="mb-3" id="settingsAudioInputContainer">
-							<label th:text="#{devices.audio.output}" for="microphoneSelect" class="form-label"></label>
-							<select name="audioOutput" id="speakerSelect" class="form-select form-select-sm"
-								aria-label=".form-select-sm speaker">
-							</select>
-						</div>
-						<div class="mb-3">
-							<div class="card">
-								<div class="card-header" th:text="#{devices.audio.rec.test}">Mikrofon durch Aufnahme testen</div>
-								<div class="card-body">
-									<small class="form-text text-muted" th:text="#{devices.audio.rec.test.description}"></small>
-									<button type="button" class="btn btn-outline-primary btn-sm mt-2" id="record-start">
-										<i class="bi bi-record-fill"></i>
-										<span th:text="#{devices.audio.rec.test.start}"></span>
+						<div th:if="${token}" class="list-group pb-3">
+							<div class="list-group-item">
+								<div class="d-flex justify-content-between align-items-center">
+									<div th:text="#{personal.access.token}"></div>
+									<div class="ml-auto">
+										<form action="#" th:action="@{/token/delete}" method="post">
+											<button th:text="#{personal.access.token.delete}" type="submit"
+												class="btn btn-outline-danger btn-sm"></button>
+										</form>
+									</div>
+								</div>
+								<div class="row justify-content-start">
+									<div class="col-md-2 text-end">
+										<small th:text="#{personal.access.token.created}"></small>
+									</div>
+									<div class="col-md-10">
+										<small class="badge bg-light text-dark"
+											th:text="${#temporals.format(@zonedDateTime.convert(token.dateCreated), 'dd. MMMM yyyy - HH:mm z')}"></small>
+									</div>
+								</div>
+								<div class="row justify-content-start">
+									<div class="col-md-2 text-end">
+										<small th:text="#{personal.access.token.last.used}"></small>
+									</div>
+									<div class="col-md-10">
+										<small class="badge bg-light text-dark"
+											th:text="${token.dateLastUsed} ? ${#temporals.format(@zonedDateTime.convert(token.dateLastUsed), 'dd. MMMM yyyy - HH:mm z')} : #{personal.access.token.never.used}"></small>
+									</div>
+								</div>
+								<div class="input-group pt-3">
+									<input type="password" class="form-control" id="token" name="token" th:value="*{token.token}" aria-describedby="passVisibility">
+									<button is="clipboard-copy" for="token" class="btn btn-outline-success btn-sm"><i
+										class="bi bi-clipboard"></i> [[#{personal.access.token.copy}]]</button>
 									</button>
-									<button type="button" class="btn btn-danger btn-sm mt-2" id="record-stop" style="display:none;">
-										<i class="bi bi-stop-fill"></i>
-										<span th:text="#{devices.audio.rec.test.stop}"></span>
-									</button>
-									<section id="sound-clips"></section>
 								</div>
 							</div>
 						</div>
-					</form>
+						<div th:if="${generated}" class="alert alert-success" role="alert">
+							<p th:text="#{personal.access.token.copy.note}" class="fw-bold"></p>
+							<div class="row justify-content-between">
+								<div class="col-md-9 text-break" id="new-token" th:text="${token.token}"></div>
+								<div class="col-md-3 ml-auto text-end">
+									<button is="clipboard-copy" for="new-token" class="btn btn-outline-success btn-sm"><i
+											class="bi bi-clipboard"></i> [[#{personal.access.token.copy}]]</button>
+								</div>
+							</div>
+						</div>
+						<div>
+							<form action="#" th:action="@{/token/new}" method="post">
+								<button th:text="#{personal.access.token.generate}" type="submit" class="btn btn-outline-primary btn-sm"></button>
+							</form>
+						</div>
+					</div>
+					<div class="tab-pane" id="profile" role="tabpanel">
+						<div class="col-md-12">
+							<div class="form-check">
+								<input class="form-check-input" type="radio" name="mediaProfile" id="mediaProfile1"
+									value="classroom" aria-describedby="classroomHelp">
+								<label class="form-check-label" for="mediaProfile1"
+									th:text="#{settings.media.profile.classroom}"></label>
+								<div>
+									<small id="classroomHelp" class="form-text text-muted"
+										th:text="#{settings.media.profile.classroom.description}"></small>
+								</div>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input" type="radio" name="mediaProfile" id="mediaProfile2" value="home"
+									aria-describedby="homeHelp">
+								<label class="form-check-label" for="mediaProfile2"
+									th:text="#{settings.media.profile.home}"></label>
+								<div>
+									<small id="homeHelp" class="form-text text-muted"
+										th:text="#{settings.media.profile.home.description}"></small>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane" id="devices" role="tabpanel">
+						<div class="col-md-12">
+							<div class="row alert alert-warning m-2 d-none" id="cameraBlockedAlert" role="alert">
+								<span th:text="#{devices.camera.blocked}"></span>
+							</div>
+							<div class="row">
+								<div class="col-md-4">
+									<video id="cameraPreview" class="py-2 ratio ratio-16x9" playsinline autoplay muted></video>
+								</div>
+								<div class="col-md-8">
+									<form id="deviceSelectForm">
+										<div class="mb-3" id="cameraSelectContainer">
+											<label th:text="#{devices.camera}" for="cameraSelect" class="form-label"></label>
+											<select name="videoInput" id="cameraSelect" class="form-select form-select-sm"
+												aria-label=".form-select-sm camera">
+												<option value="none" th:text="#{devices.none}"></option>
+											</select>
+										</div>
+										<div class="mb-3">
+											<label th:text="#{devices.audio.input}" for="microphoneSelect"
+												class="form-label"></label>
+											<select name="audioInput" id="microphoneSelect" class="form-select form-select-sm"
+												aria-label=".form-select-sm microphone">
+											</select>
+										</div>
+										<div class="mb-3" id="settingsAudioInputContainer">
+											<label th:text="#{devices.audio.output}" for="microphoneSelect"
+												class="form-label"></label>
+											<select name="audioOutput" id="speakerSelect" class="form-select form-select-sm"
+												aria-label=".form-select-sm speaker">
+											</select>
+										</div>
+										<div class="mb-3">
+											<div class="card">
+												<div class="card-header" th:text="#{devices.audio.rec.test}"></div>
+												<div class="card-body pt-0 px-3">
+													<small class="d-block form-text text-muted" th:text="#{devices.audio.rec.test.description}"></small>
+													<button type="button" class="btn btn-outline-primary btn-sm mt-2" id="record-start">
+														<i class="bi bi-record-fill"></i>
+														<span th:text="#{devices.audio.rec.test.start}"></span>
+													</button>
+													<button type="button" class="btn btn-danger btn-sm mt-2" id="record-stop" style="display:none;">
+														<i class="bi bi-stop-fill"></i>
+														<span th:text="#{devices.audio.rec.test.stop}"></span>
+													</button>
+													<section id="sound-clips"></section>
+												</div>
+											</div>
+										</div>
+									</form>
+								</div>
+							</div>
+							<div class="row pb-3">
+								<canvas id="meter" width="300" height="3"></canvas>
+							</div>
+							<div class="">
+								<button th:text="#{devices.reset}" type="button" id="resetDeviceSelection"
+									class="btn btn-outline-secondary btn-sm me-2"></button>
+								<button th:text="#{devices.save.changes}" type="button" id="saveDeviceSelection"
+									class="btn btn-outline-primary btn-sm"></button>
+							</div>
+						</div>
+					</div>
 				</div>
-			</div>
-			<div class="row pb-3">
-				<canvas id="meter" width="300" height="3"></canvas>
-			</div>
-			<div class="">
-				<button th:text="#{devices.reset}" type="button" id="resetDeviceSelection"
-					class="btn btn-outline-secondary btn-sm me-2"></button>
-				<button th:text="#{devices.save.changes}" type="button" id="saveDeviceSelection"
-					class="btn btn-outline-primary btn-sm"></button>
 			</div>
 		</div>
 	</th:block>

@@ -32,6 +32,8 @@ class Course {
 		this.messengerContainer = document.getElementById("messenger-content");
 		this.quizContainer = document.getElementById("quiz-content");
 
+		window.dict = dict;
+
 		window.portalApp.addOnCourseState((event) => {
 			if (event.courseId !== this.courseId) {
 				return;
@@ -60,6 +62,9 @@ class Course {
 				if (!this.player) {
 					this.connectionInfoVisible(false)
 					this.unavailableVisible(true);
+				}
+				else {
+					this.onPlayerConnectedState(false);
 				}
 
 				this.player = null;
@@ -133,6 +138,13 @@ class Course {
 	}
 
 	initPlayer() {
+		const mediaProfile = localStorage.getItem("media.profile");
+
+		if (mediaProfile === "home") {
+			this.loadingVisible(false);
+			return;
+		}
+
 		this.loadingVisible(true);
 		this.unavailableVisible(false);
 		this.connectionInfoVisible(false);
@@ -209,8 +221,6 @@ class Course {
 			this.connectionInfoVisible(false);
 			this.unavailableVisible(true);
 		}
-
-		window.dispatchEvent(new Event('resize'));
 	}
 
 	onPlayerSettings() {

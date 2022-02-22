@@ -29,6 +29,9 @@
 			</button>
 			<div class="collapse navbar-collapse" id="navbarSupportedContent">
 				<ul class="navbar-nav ms-auto mb-2 mb-sm-0">
+					<li class="nav-item"><span class="nav-link" th:text="${course.title}"></span></li>
+				</ul>
+				<ul class="navbar-nav ms-auto mb-2 mb-sm-0">
 					<li class="nav-item">
 						<a class="nav-link active" aria-current="page" th:text="#{home.courses}" th:href="@{/}"></a>
 					</li>
@@ -47,7 +50,7 @@
 								<hr class="dropdown-divider" />
 							</li>
 							<li>
-								<a class="dropdown-item" th:href="@{/saml/logout}">
+								<a class="dropdown-item" th:href="@{/logout}">
 									<i class="bi bi-box-arrow-left"></i>
 									[[#{home.logout}]]
 								</a>
@@ -59,21 +62,11 @@
 		</div>
 	</nav>
 
-	<div class="container h-100 g-0 p-3">
+	<div class="container-fluid h-100 g-0">
 		<section layout:fragment="content">
 			<p>This is filled by the content template.</p>
 		</section>
 	</div>
-	<footer th:fragment="footer" class="theme-footer mt-auto">
-		<div class="pb-2">
-			<a th:href="@{/contact}" th:text="#{index.contact}" class="link-primary px-2"></a>
-			<a th:href="@{/imprint}" th:text="#{index.imprint}" class="link-primary px-2"></a>
-			<a th:href="@{/privacy}" th:text="#{index.privacy.policy}" class="link-primary px-2"></a>
-			<a th:href="@{/manual/de/index.html}" target="_blank" th:text="#{index.manual}" class="link-primary px-2"></a>
-		</div>
-		<p th:text="|&copy; 2022 ${appName}|"></p>
-		<p th:text="|Version ${appVersion}|"></p>
-	</footer>
 
 	<th:block layout:fragment="optional" />
 </body>

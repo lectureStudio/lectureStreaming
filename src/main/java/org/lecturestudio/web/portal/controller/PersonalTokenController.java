@@ -17,7 +17,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -29,17 +28,6 @@ public class PersonalTokenController {
 	@Autowired
 	private PersonalTokenService tokenService;
 
-
-	@RequestMapping("/token")
-	public String token(Authentication authentication, Model model) {
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-		User user = userService.findById(details.getUsername())
-				.orElseThrow(() -> new IllegalArgumentException("User is not present"));
-
-		model.addAttribute("token", user.getToken());
-
-		return "token";
-	}
 
 	@PostMapping("/token/new")
 	public String newToken(Authentication authentication, RedirectAttributes redirectAttrs) {
@@ -72,7 +60,7 @@ public class PersonalTokenController {
 
 		redirectAttrs.addFlashAttribute("generated", true);
 
-		return "redirect:/token";
+		return "redirect:/settings";
 	}
 
 	@PostMapping("/token/delete")
@@ -92,6 +80,6 @@ public class PersonalTokenController {
 			tokenService.deleteToken(personalToken);
 		}
 
-		return "redirect:/token";
+		return "redirect:/settings";
 	}
 }

@@ -6,36 +6,22 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
-		integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
 
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
 	<link rel="stylesheet" href="/css/index.css">
 
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-		integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-		crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 
 	<title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">lectureStreaming</title>
 </head>
 
-<body class="d-flex flex-column">
-	<div class="container d-flex flex-column flex-grow-1">
-		<nav class="navbar navbar-expand-md navbar-light bg-light border-bottom">
-			<div class="container-fluid">
-				<a th:href="@{/}" th:text="${appName}" class="navbar-brand abs"></a>
-				<button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNavbar">
-					<span class="navbar-toggler-icon"></span>
-				</button>
-				<div class="navbar-collapse collapse" id="collapseNavbar">
-					<div class="navbar-nav align-items-end py-3">
-
-					</div>
-					<div class="navbar-nav ms-auto">
-
-					</div>
-				</div>
+<body class="d-flex flex-column vh-100">
+	<div class="container-fluid d-flex flex-column flex-grow-1 g-0">
+		<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+			<div class="container-fluid ms-3">
+				<a class="navbar-brand abs" th:href="@{/}" th:text="${appName}"></a>
 			</div>
 		</nav>
 
@@ -52,7 +38,7 @@
 			<a th:href="@{/privacy}" th:text="#{index.privacy.policy}" class="link-primary px-2"></a>
 			<a th:href="@{/manual/de/index.html}" target="_blank" th:text="#{index.manual}" class="link-primary px-2"></a>
 		</div>
-		<p th:text="|&copy; 2021 ${appName}|"></p>
+		<p th:text="|&copy; 2022 ${appName}|"></p>
 		<p th:text="|Version ${appVersion}|"></p>
 	</footer>
 

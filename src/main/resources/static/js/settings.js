@@ -1,7 +1,8 @@
 let mediaRecorder = null;
+let deviceStream = null;
 let chunks = [];
 
-function fillMediaProfile() {
+function initMediaProfile() {
 	const storedMediaProfile = localStorage.getItem("media.profile");
 	const mediaProfiles = document.querySelectorAll('input[name = "mediaProfile"]');
 	let selected = false;
@@ -25,7 +26,66 @@ function fillMediaProfile() {
 	}
 }
 
+function initMediaRecorder(stream) {
+	mediaRecorder = new MediaRecorder(stream);
+	mediaRecorder.onstop = function (e) {
+		const soundClips = document.querySelector('#sound-clips');
+		const clipContainer = document.createElement('article');
+		const audio = document.createElement('audio');
+		const deleteButton = document.createElement('button');
+
+		audio.setAttribute('controls', '');
+		audio.classList.add('flex-grow-1');
+		audio.style.borderRadius = '5px';
+
+		deleteButton.innerHTML = '<i class="bi bi-trash"></i>'
+		deleteButton.className = 'btn btn-danger btn-block';
+		deleteButton.style.marginLeft = '10px';
+
+		clipContainer.classList.add('clip');
+		clipContainer.classList.add('d-flex', 'bd-highlight');
+		clipContainer.style.marginTop = '10px';
+
+		clipContainer.appendChild(audio);
+		clipContainer.appendChild(deleteButton);
+		soundClips.appendChild(clipContainer);
+
+		const blob = new Blob(chunks, { 'type': 'audio/ogg; codecs=opus' });
+		chunks = [];
+
+		audio.addEventListener("play", function () {
+			window.setAudioSink(audio, speakerSelect.value);
+		});
+		audio.controls = true;
+		audio.src = window.URL.createObjectURL(blob);
+
+		deleteButton.onclick = function (e) {
+			soundClips.removeChild(clipContainer);
+		}
+
+	}
+	mediaRecorder.ondataavailable = function (e) {
+		chunks.push(e.data);
+	}
+}
+
+function initTabs() {
+	const devicesTab = document.querySelector("#devicesTab");
+	devicesTab.addEventListener("shown.bs.tab", function () {
+		initDevices();
+	});
+	devicesTab.addEventListener("hidden.bs.tab", function () {
+		if (deviceStream) {
+			window.stopMediaTracks(deviceStream);
+
+			deviceStream = null;
+		}
+	});
+}
+
 function fillForm(devices, stream, constraints) {
+	deviceStream = stream;
+
 	const recordStart = document.getElementById("record-start");
 	const recordStop = document.getElementById("record-stop");
 
@@ -188,9 +248,8 @@ function fillForm(devices, stream, constraints) {
 	window.getAudioLevel(stream.getAudioTracks()[0], meterCanvas);
 }
 
-fillMediaProfile();
-
-window.enumerateDevices(true, true)
+function initDevices() {
+	window.enumerateDevices(true, true)
 	.then(result => {
 		fillForm(result.devices, result.stream, result.constraints);
 	})
@@ -219,46 +278,7 @@ window.enumerateDevices(true, true)
 				});
 		}
 	});
-
-function initMediaRecorder(stream) {
-	mediaRecorder = new MediaRecorder(stream);
-	mediaRecorder.onstop = function (e) {
-		const soundClips = document.querySelector('#sound-clips');
-		const clipContainer = document.createElement('article');
-		const audio = document.createElement('audio');
-		const deleteButton = document.createElement('button');
-
-		audio.setAttribute('controls', '');
-		audio.classList.add('flex-grow-1');
-		audio.style.borderRadius = '5px';
-
-		deleteButton.innerHTML = '<i class="bi bi-trash"></i>'
-		deleteButton.className = 'btn btn-danger btn-block';
-		deleteButton.style.marginLeft = '10px';
-
-		clipContainer.classList.add('clip');
-		clipContainer.classList.add('d-flex', 'bd-highlight');
-		clipContainer.style.marginTop = '10px';
-
-		clipContainer.appendChild(audio);
-		clipContainer.appendChild(deleteButton);
-		soundClips.appendChild(clipContainer);
-
-		const blob = new Blob(chunks, { 'type': 'audio/ogg; codecs=opus' });
-		chunks = [];
-
-		audio.addEventListener("play", function () {
-			window.setAudioSink(audio, speakerSelect.value);
-		});
-		audio.controls = true;
-		audio.src = window.URL.createObjectURL(blob);
-
-		deleteButton.onclick = function (e) {
-			soundClips.removeChild(clipContainer);
-		}
-
-	}
-	mediaRecorder.ondataavailable = function (e) {
-		chunks.push(e.data);
-	}
 }
+
+initTabs();
+initMediaProfile();

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout}">
+	layout:decorate="~{layout-course}">
 
 <head>
 	<title th:text="${course.title}"></title>
@@ -8,27 +8,8 @@
 
 <body>
 	<th:block layout:fragment="content">
-		<div class="d-flex justify-content-between theme-content-head">
-			<div th:text="${course.title}"></div>
-		</div>
-		<div class="d-flex flex-column flex-grow-1 bg-light border rounded-3 p-4">
-			<div class="d-flex w-100 justify-content-between">
-				<small>
-					<i th:if="${course.isProtected}" class="bi bi-shield-lock text-primary"></i>
-					<i class="bi bi-chat-square-text text-primary" th:classappend="${course.messageFeature != null ? '' : 'd-none'}" th:id="|course-messenger-${course.id}|"></i>
-					<i class="bi bi-card-checklist text-primary" th:classappend="${course.quizFeature != null ? '' : 'd-none'}" th:id="|course-quiz-${course.id}|"></i>
-					<i th:if="${course.isLive}" th:classappend="${course.isLive ? '' : 'd-none'}" th:id="|course-live-${course.id}|" class="bi bi-play-btn text-success"></i>
-				</small>
-			</div>
-			<div class="d-flex w-100">
-				<small>
-					<th:block th:each="author: ${course.authors}"
-						th:text="|#{course.by} ${author.firstName} ${author.familyName}| + (${!authorStat.last ? ', ' : ''})">
-					</th:block>
-				</small>
-			</div>
-			<div class="d-flex flex-column flex-grow-1 h-100 w-100">
-
+		<div class="d-flex flex-column h-100 bg-light p-2">
+			<div class="d-flex flex-column h-100 w-100">
 				<div th:classappend="${course.isLive ? '' : 'd-none'}" class="d-flex flex-column w-100 justify-content-center align-items-center py-2" id="course-loading">
 					<div class="spinner-grow text-primary" role="status">
 						<span class="visually-hidden">Loading...</span>
@@ -70,19 +51,7 @@
 				<div id="course-content" class="invisible d-flex flex-column"></div>
 
 				<div id="messenger-content" class="messenger-content"></div>
-				<div id="quiz-content">
-					<!-- <th:block th:if="${course.hasQuiz()}">
-						<div th:replace="fragments/quiz :: quiz"></div>
-					</th:block> -->
-				</div>
-			</div>
-			<div class="w-100">
-				<div class="theme-content-head">
-					<small><i class="bi bi-card-text"></i>&nbsp;[[#{course.description}]]</small>
-				</div>
-				<div class="">
-					<div th:utext="${course.description}"></div>
-				</div>
+				<div id="quiz-content"></div>
 			</div>
 		</div>
 
