@@ -7,6 +7,7 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -252,8 +253,8 @@ public class CoursePublisherController {
 	}
 
 	@PostMapping("/messenger/start/{courseId}")
-	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId) {
-		return startFeature(courseId, new CourseMessageFeature());
+	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId, Authentication authentication) {
+		return startFeature(courseId, new CourseMessageFeature(), authentication);
 	}
 
 	@PostMapping("/messenger/stop/{courseId}")
@@ -291,13 +292,13 @@ public class CoursePublisherController {
 	}
 
 	@PostMapping("/quiz/start/{courseId}")
-	public ResponseEntity<String> startQuiz(@PathVariable("courseId") long courseId, @RequestBody Quiz quiz) {
+	public ResponseEntity<String> startQuiz(@PathVariable("courseId") long courseId, @RequestBody Quiz quiz, Authentication authentication) {
 		CourseQuizFeature feature = new CourseQuizFeature();
 		feature.setQuestion(StringUtils.cleanHtml(quiz.getQuestion()));
 		feature.setType(quiz.getType());
 		feature.setOptions(quiz.getOptions());
 
-		return startFeature(courseId, feature);
+		return startFeature(courseId, feature, authentication);
 	}
 
 	@PostMapping("/quiz/stop/{courseId}")
@@ -305,7 +306,7 @@ public class CoursePublisherController {
 		return stopFeature(courseId, CourseQuizFeature.class);
 	}
 
-	ResponseEntity<String> startFeature(long courseId, CourseFeature feature) {
+	ResponseEntity<String> startFeature(long courseId, CourseFeature feature, Authentication authentication) {
 		Course course = courseService.findById(courseId)
 				.orElseThrow(() -> new CourseNotFoundException());
 
@@ -315,7 +316,11 @@ public class CoursePublisherController {
 				.findFirst().orElse(null);
 
 		if (isNull(courseFeature)) {
+			User initiator = userService.findById(authentication.getName()).get();
+
+
 			feature.setCourse(course);
+			feature.setInitiator(initiator);
 			feature.setFeatureId(Long.toString(new SecureRandom().nextLong()));
 
 			course.getFeatures().add(feature);
@@ -384,7 +389,7 @@ public class CoursePublisherController {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+		User lecturer = feature.getInitiator();
 
 		JsonNode jsonNode = this.objectMapper.readTree(messageString);
 		String type = jsonNode.get("type").asText();
@@ -404,9 +409,19 @@ public class CoursePublisherController {
 				message = this.objectMapper.readValue(messageString, MessengerDirectMessage.class);
 				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
 				MessengerDirectMessage mdm = (MessengerDirectMessage) message;
-				Set<String> stompDestinationUsernamesInUse = messengerFeatureUserRegistry.getUser(mdm.getMessageDestinationUsername()).getAddressesInUse();
-				Set<String> stompUsernamesInUse = messengerFeatureUserRegistry.getUser(details.getUsername()).getAddressesInUse();
-				ArrayList<Set<String>> sets = new ArrayList<>(Arrays.asList(stompDestinationUsernamesInUse, stompUsernamesInUse));
+
+				MessengerFeatureUser destinationUser = messengerFeatureUserRegistry.getUser(mdm.getMessageDestinationUsername());
+				MessengerFeatureUser user = messengerFeatureUserRegistry.getUser(authentication.getName());
+
+				ArrayList<Set<String>> sets = new ArrayList<>();
+
+				if (nonNull(destinationUser)) {
+					sets.add(destinationUser.getAddressesInUse());
+				}
+				if (nonNull(user)) {
+					sets.add(user.getAddressesInUse());
+				}
+				sets.add(Collections.singleton(lecturer.getUserId()));
 				for (Set<String> set : sets) {
 					for (String userDestination : set) {
 						simpMessagingTemplate.convertAndSendToUser(userDestination,"/queue/chat/" + courseId, message, Map.of("payloadType", "MessengerDirectMessage"));
