@@ -77,7 +77,9 @@ public class CourseController {
 		"course.feature.quiz.input.invalid",
 		"course.speech.request.speak",
 		"course.speech.request.ended",
-		"course.speech.request.rejected"
+		"course.speech.request.rejected",
+		"course.emoji.accepted",
+		"course.emoji.rejected"
 	);
 
 

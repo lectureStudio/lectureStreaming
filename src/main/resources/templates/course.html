@@ -238,6 +238,9 @@
 		<script th:inline="javascript" th:if="${course.hasQuiz()}">
 			window.course.loadQuiz();
 		</script>
+		<script th:inline="javascript">
+			window.course.initEmojis();//th:if="${course.hasEmojis()}"
+		</script>
 	</th:block>
 </body>
 

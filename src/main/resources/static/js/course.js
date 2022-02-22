@@ -17,6 +17,7 @@ class Course {
 		this.stompClient = null;
 		this.messengerIsVisible = false;
 		this.messengerModal = null;
+		this.emojis;
 	}
 
 	init(userId, courseId, startTime, dict) {
@@ -602,6 +603,11 @@ class Course {
 		}
 	}	
 
+	initEmojis(){
+		this.emojis = new Emojis();
+		this.emojis.init(this);
+	}
+
 	loadQuiz() {
 		fetch("/course/quiz/" + this.courseId, {
 			method: "GET",
@@ -1085,4 +1091,70 @@ function mountInModal(root, element, title = null, hiddenCallback = null){
 	}
 
 	return modal;
+}
+
+class Emojis{
+
+	emojis = ['👍', '👎', '☕️', '👏', '🙈'];
+
+	init(course){
+		this.course = course;
+		if(course.player){
+			const player = course.player;
+			player.addToolbarElement(this.createToolbarButton());
+		}
+	}
+
+	createEmojiList(){
+		const emojisList = document.createElement('ul');
+		emojisList.classList.add('dropdown-menu');
+		emojisList.ariaLabel='Emojis';
+		emojisList.style.minWidth = '1em';
+
+		this.emojis.forEach((emoji) => {
+			const emojiElement = document.createElement('li');
+
+			const anchor = document.createElement('a');
+			anchor.href='#';
+			anchor.classList.add('dropdown-item');
+			anchor.onclick = () => {
+				this.emojiClicked(emoji);
+			}
+			anchor.innerHTML = emoji;
+
+			emojiElement.appendChild(anchor);
+			emojisList.appendChild(emojiElement);
+		});
+		return emojisList;
+	}
+
+	createToolbarButton(){
+		const dropup = document.createElement("div");
+		dropup.classList.add('dropup');
+
+		const button = document.createElement('button');
+		button.classList.add('dropdown-toggle');
+		button.type = 'button';
+		button.id = 'emoji-dropdown-button';
+		button.innerHTML = '<i class="bi bi-emoji-smile"></i>';
+		button.dataset.bsToggle = 'dropdown';
+
+		dropup.appendChild(button);
+		dropup.appendChild(this.createEmojiList());
+		return dropup;
+	}
+
+	emojiClicked(emoji){
+		fetch("/course/emoji/" + this.course.courseId, {
+			method: "POST",
+			body: {
+				emoji
+			}
+		}).then(() => {
+			this.course.showToast("toast-success", "course.emoji.accepted");
+		}).catch((error) => {
+			this.course.showToast("toast-warn", "course.emoji.rejected");
+			console.log(error);
+		});
+	}
 }
