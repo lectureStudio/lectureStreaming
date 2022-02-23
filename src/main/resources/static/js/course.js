@@ -18,9 +18,10 @@ class Course {
 		this.startTime = null;
 		this.dict = null;
 		this.devicesSelected = false;
+		this.courseRecordedModal = null;
 	}
 
-	init(userId, courseId, startTime, dict) {
+	init(userId, courseId, startTime, isRecorded, dict) {
 		this.userId = userId;
 		this.courseId = courseId;
 		this.startTime = startTime;
@@ -31,6 +32,12 @@ class Course {
 		this.contentContainer = document.getElementById("course-content");
 		this.messengerContainer = document.getElementById("messenger-content");
 		this.quizContainer = document.getElementById("quiz-content");
+
+		const courseRecordeElement = document.getElementById("recordedModal");
+		this.courseRecordedModal = bootstrap.Modal.getOrCreateInstance(courseRecordeElement, {
+			backdrop: "static",
+			keyboard: false
+		});
 
 		window.dict = dict;
 
@@ -68,6 +75,18 @@ class Course {
 				}
 
 				this.player = null;
+			}
+		});
+		window.portalApp.addOnCourseRecordedState((event) => {
+			if (event.courseId !== this.courseId) {
+				return;
+			}
+
+			if (event.started) {
+				this.courseRecordedModal.show();
+			}
+			else {
+				this.courseRecordedModal.hide();
 			}
 		});
 		window.portalApp.addOnSpeechState((event) => {
@@ -140,6 +159,10 @@ class Course {
 		tooltipTriggerList.map(function (tooltipTriggerEl) {
 			return new bootstrap.Tooltip(tooltipTriggerEl)
 		});
+
+		if (isRecorded) {
+			this.courseRecordedModal.show();
+		}
 	}
 
 	initPlayer() {
