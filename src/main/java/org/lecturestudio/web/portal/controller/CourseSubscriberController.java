@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -428,6 +429,7 @@ public class CourseSubscriberController {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
+
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		Message payload = message.getPayload();
@@ -444,32 +446,46 @@ public class CourseSubscriberController {
 
 		WebMessage forwardMessage = null;
 
-		if (messageType.equals("user")) {
-			String messageDestinationUsername = accessor.getNativeHeader("username").get(0);
+		switch(messageType) {
+			case "user":
+			case "lecturer":
+				String messageDestinationUsername = (messageType.equals("user")) ?  accessor.getNativeHeader("username").get(0) : feature.getInitiator().getUserId();
 
-			forwardMessage = new MessengerDirectMessage(messageDestinationUsername, payload, details.getUsername(), ZonedDateTime.now());
-			forwardMessage.setFirstName(details.getFirstName());
-			forwardMessage.setFamilyName(details.getFamilyName());
+				forwardMessage = new MessengerDirectMessage(messageDestinationUsername, payload, details.getUsername(), ZonedDateTime.now());
+				forwardMessage.setFirstName(details.getFirstName());
+				forwardMessage.setFamilyName(details.getFamilyName());
 
-			courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
+				courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
 
-			Set<String> stompDestinationUsernamesInUse = messengerFeatureUserRegistry.getUser(messageDestinationUsername).getAddressesInUse();
-			Set<String> stompUsernamesInUse = messengerFeatureUserRegistry.getUser(details.getUsername()).getAddressesInUse();
-			ArrayList<Set<String>> sets = new ArrayList<>(Arrays.asList(stompDestinationUsernamesInUse, stompUsernamesInUse));
-			for (Set<String> set : sets) {
-				for (String userDestination : set) {
-					simpMessagingTemplate.convertAndSendToUser(userDestination,"/queue/chat/" + courseId, forwardMessage, Map.of("payloadType", "MessengerDirectMessage"));
+				MessengerFeatureUser destinationUser = messengerFeatureUserRegistry.getUser(messageDestinationUsername);
+				MessengerFeatureUser user = messengerFeatureUserRegistry.getUser(details.getUsername());
+
+				ArrayList<Set<String>> sets = new ArrayList<>();
+
+				if (nonNull(destinationUser)) {
+					sets.add(destinationUser.getAddressesInUse());
 				}
-			}
-		}
-		else if (messageType.equals("public")) { 
-			forwardMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
-			forwardMessage.setFirstName(details.getFirstName());
-			forwardMessage.setFamilyName(details.getFamilyName());
-
-			courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
-
-			simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, forwardMessage, Map.of("payloadType", "MessengerMessage")); 
+				if (nonNull(user)) {
+					sets.add(user.getAddressesInUse());
+				}
+				if (messageType.equals("lecturer")) {
+					sets.add(Collections.singleton(messageDestinationUsername));
+				}
+				for (Set<String> set : sets) {
+					for (String userDestination : set) {
+						simpMessagingTemplate.convertAndSendToUser(userDestination,"/queue/chat/" + courseId, forwardMessage, Map.of("payloadType", "MessengerDirectMessage"));
+					}
+				}
+				break;
+			case "public":
+				forwardMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
+				forwardMessage.setFirstName(details.getFirstName());
+				forwardMessage.setFamilyName(details.getFamilyName());
+	
+				courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
+	
+				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, forwardMessage, Map.of("payloadType", "MessengerMessage"));
+				break;
 		}
     }
 

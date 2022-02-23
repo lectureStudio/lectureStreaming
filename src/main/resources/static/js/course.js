@@ -762,6 +762,10 @@ class Course {
 				innerText: this.dict["course.feature.message.destination.all"]
 			},
 			{
+				type: "lecturer",
+				innerText: this.dict["course.feature.message.destination.lecturer"]
+			},
+			{
 				type: "header",
 				innerText: this.dict["course.feature.message.private"]
 			}];
