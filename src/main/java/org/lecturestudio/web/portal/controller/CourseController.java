@@ -127,6 +127,7 @@ public class CourseController {
 			.messageFeature(messageFeature)
 			.quizFeature(quizFeature)
 			.isLive(nonNull(state))
+			.isRecorded(nonNull(state) ? state.getRecordedState() : false)
 			.isProtected(isProtected)
 			.build();
 

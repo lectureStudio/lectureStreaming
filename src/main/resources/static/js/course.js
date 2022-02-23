@@ -135,6 +135,11 @@ class Course {
 				this.unavailableVisible(true);
 			}
 		});
+
+		const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+		tooltipTriggerList.map(function (tooltipTriggerEl) {
+			return new bootstrap.Tooltip(tooltipTriggerEl)
+		});
 	}
 
 	initPlayer() {
@@ -197,8 +202,6 @@ class Course {
 	}
 
 	onPlayerConnectedState(connected) {
-		console.log("Connected to course media:", connected);
-
 		if (connected) {
 			if (this.messengerElement) {
 				this.player.setContainerA(this.messengerElement);
@@ -1066,8 +1069,6 @@ class Course {
 	}
 
 	unavailableVisible(visible) {
-		console.log("Course player:", !!(this.player), ", Course messaging:", !!(this.messengerElement), ", Course quiz:", !!(this.quizElement), " Connection:", this.connectionInfoContainer.classList.contains("d-none"));
-
 		this.elementVisible(this.unavailableContainer, visible & !(this.player || this.messengerElement || this.quizElement || !this.connectionInfoContainer.classList.contains("d-none")));
 	}
 

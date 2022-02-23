@@ -113,6 +113,7 @@ public class HomeController {
 				.url(uri)
 				.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
 				.isLive(nonNull(state))
+				.isRecorded(nonNull(state) ? state.getRecordedState() : false)
 				.canDelete(canDelete)
 				.canEdit(canEdit)
 				.build());

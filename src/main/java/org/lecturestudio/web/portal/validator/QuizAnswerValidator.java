@@ -5,10 +5,9 @@ import static java.util.Objects.isNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.lecturestudio.web.api.model.ClassroomServiceResponse;
-import org.lecturestudio.web.api.model.ClassroomServiceResponse.Status;
 import org.lecturestudio.web.api.model.quiz.Quiz;
 import org.lecturestudio.web.api.model.quiz.QuizAnswer;
+import org.lecturestudio.web.api.stream.model.CourseFeatureResponse;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 
 import org.springframework.http.HttpStatus;
@@ -19,12 +18,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class QuizAnswerValidator {
 
-	public ResponseEntity<ClassroomServiceResponse> validate(String userName, CourseQuizFeature feature, QuizAnswer quizAnswer) {
-		ClassroomServiceResponse serviceResponse = new ClassroomServiceResponse();
+	public ResponseEntity<CourseFeatureResponse> validate(String userName, CourseQuizFeature feature, QuizAnswer quizAnswer) {
+		CourseFeatureResponse serviceResponse = new CourseFeatureResponse();
 		BodyBuilder responseBuilder;
 
 		if (isNull(feature)) {
-			serviceResponse.statusCode = Status.ERROR.getCode();
+			serviceResponse.statusCode = 1;
 			serviceResponse.statusMessage = "quiz.service.absent";
 
 			responseBuilder = ResponseEntity.status(HttpStatus.BAD_REQUEST);
@@ -37,15 +36,15 @@ public class QuizAnswerValidator {
 				validateServiceId(feature, quizAnswer.getServiceId());
 				validateInputFields(feature, quizAnswer.getOptions(), fieldErrors);
 
-				serviceResponse.statusCode = Status.SUCCESS.getCode();
+				serviceResponse.statusCode = 0;
 				serviceResponse.statusMessage = "course.feature.quiz.sent";
 
 				responseBuilder = ResponseEntity.ok();
 			}
 			catch (Exception e) {
-				serviceResponse.statusCode = Status.DATA_ERROR.getCode();
+				serviceResponse.statusCode = 2;
 				serviceResponse.statusMessage = e.getMessage();
-				serviceResponse.data = fieldErrors;
+				// serviceResponse.data = fieldErrors;
 
 				responseBuilder = ResponseEntity.status(HttpStatus.BAD_REQUEST);
 			}

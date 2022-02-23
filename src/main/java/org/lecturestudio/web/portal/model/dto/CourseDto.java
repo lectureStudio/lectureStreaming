@@ -44,6 +44,8 @@ public class CourseDto {
 
 	boolean isLive;
 
+	boolean isRecorded;
+
 	boolean canEdit;
 
 	boolean canDelete;

@@ -29,7 +29,11 @@
 			</button>
 			<div class="collapse navbar-collapse" id="navbarSupportedContent">
 				<ul class="navbar-nav ms-auto mb-2 mb-sm-0">
-					<li class="nav-item"><span class="nav-link" th:text="${course.title}"></span></li>
+					<li class="nav-item d-inline-flex align-items-center">
+						<i class="bi bi-record-circle text-danger" th:classappend="${course.isRecorded ? '' : 'd-none'}"
+							th:id="|course-recording-${course.id}|" data-bs-toggle="tooltip" data-bs-placement="bottom" th:title="#{course.recorded}"></i>
+						<span class="nav-link" th:text="${course.title}"></span>
+					</li>
 				</ul>
 				<ul class="navbar-nav ms-auto mb-2 mb-sm-0">
 					<li class="nav-item">

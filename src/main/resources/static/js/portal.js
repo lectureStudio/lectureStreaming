@@ -3,6 +3,7 @@ class PortalApp {
 	constructor() {
 		this.eventSource = null;
 		this.onCourseState = null;
+		this.onCourseRecordedState = null;
 		this.onSpeechState = null;
 		this.onMessengerState = null;
 		this.onQuizState = null;
@@ -12,6 +13,10 @@ class PortalApp {
 
 	addOnCourseState(callback) {
 		this.onCourseState = callback;
+	}
+
+	addOnCourseRecordedState(callback) {
+		this.onCourseRecordedState = callback;
 	}
 
 	addOnSpeechState(callback) {
@@ -32,11 +37,18 @@ class PortalApp {
 		}
 	}
 
-	courseStateChange(type, courseId) {
+	courseStateChange(type, courseId, started) {
 		const element = document.getElementById("course-" + type + "-" + courseId);
 
-		if (element) {
-			element.classList.toggle("d-none");
+		if (!element) {
+			return;
+		}
+
+		if (started) {
+			element.classList.remove("d-none");
+		}
+		else {
+			element.classList.add("d-none");
 		}
 	}
 
@@ -54,8 +66,20 @@ class PortalApp {
 
 			const message = JSON.parse(event.data);
 
-			this.courseStateChange("live", message.courseId);
+			this.courseStateChange("live", message.courseId, message.started);
 			this.execCallback(this.onCourseState, message);
+
+			if (!message.started) {
+				this.courseStateChange("recording", message.courseId, false);
+			}
+		});
+		this.eventSource.addEventListener("recording-state", (event) => {
+			console.log("Recording state", event.data);
+
+			const message = JSON.parse(event.data);
+
+			this.courseStateChange("recording", message.courseId, message.started);
+			this.execCallback(this.onCourseRecordedState, message);
 		});
 		this.eventSource.addEventListener("speech-state", (event) => {
 			console.log("Speech state", event.data);
@@ -69,7 +93,7 @@ class PortalApp {
 
 			const message = JSON.parse(event.data);
 
-			this.courseStateChange("messenger", message.courseId);
+			this.courseStateChange("messenger", message.courseId, message.started);
 			this.execCallback(this.onMessengerState, message);
 		});
 		this.eventSource.addEventListener("quiz-state", (event) => {
@@ -77,7 +101,7 @@ class PortalApp {
 
 			const message = JSON.parse(event.data);
 
-			this.courseStateChange("quiz", message.courseId);
+			this.courseStateChange("quiz", message.courseId, message.started);
 			this.execCallback(this.onQuizState, message);
 		});
 

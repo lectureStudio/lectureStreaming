@@ -5,9 +5,8 @@ import static java.util.Objects.isNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.lecturestudio.web.api.model.ClassroomServiceResponse;
 import org.lecturestudio.web.api.model.Message;
-import org.lecturestudio.web.api.model.ClassroomServiceResponse.Status;
+import org.lecturestudio.web.api.stream.model.CourseFeatureResponse;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 
 import org.springframework.http.HttpStatus;
@@ -18,12 +17,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class MessageValidator {
 	
-	public ResponseEntity<ClassroomServiceResponse> validate(CourseMessageFeature feature, Message message) {
+	public ResponseEntity<CourseFeatureResponse> validate(CourseMessageFeature feature, Message message) {
 		BodyBuilder responseBuilder;
 
 		if (isNull(feature)) {
-			ClassroomServiceResponse serviceResponse = new ClassroomServiceResponse();
-			serviceResponse.statusCode = Status.ERROR.getCode();
+			CourseFeatureResponse serviceResponse = new CourseFeatureResponse();
+			serviceResponse.statusCode = 1;
 			serviceResponse.statusMessage = "message.service.absent";
 
 			responseBuilder = ResponseEntity.status(HttpStatus.BAD_REQUEST);
@@ -36,18 +35,18 @@ public class MessageValidator {
 				validateServiceId(feature, message);
 				validateInputFields(message, fieldErrors);
 
-				ClassroomServiceResponse serviceResponse = new ClassroomServiceResponse();
-				serviceResponse.statusCode = Status.SUCCESS.getCode();
+				CourseFeatureResponse serviceResponse = new CourseFeatureResponse();
+				serviceResponse.statusCode = 0;
 				serviceResponse.statusMessage = "message.sent";
 
 				responseBuilder = ResponseEntity.ok();
 				responseBuilder.body(serviceResponse);
 			}
 			catch (Exception e) {
-				ClassroomServiceResponse serviceResponse = new ClassroomServiceResponse();
-				serviceResponse.statusCode = Status.DATA_ERROR.getCode();
+				CourseFeatureResponse serviceResponse = new CourseFeatureResponse();
+				serviceResponse.statusCode = 2;
 				serviceResponse.statusMessage = e.getMessage();
-				serviceResponse.data = fieldErrors;
+				// serviceResponse.data = fieldErrors;
 
 				responseBuilder = ResponseEntity.status(HttpStatus.BAD_REQUEST);
 				responseBuilder.body(serviceResponse);

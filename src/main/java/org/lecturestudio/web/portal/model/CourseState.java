@@ -31,6 +31,8 @@ public class CourseState {
 
 	private CourseStateDocument avtiveDocument;
 
+	private boolean isRecorded;
+
 
 	public CourseState(UserService userService, long courseId, BiConsumer<Long, SpeechBaseMessage> speechListener, BiConsumer<Long, CourseParticipantMessage> connectedListener) {
 		this.userService = userService;
@@ -46,6 +48,14 @@ public class CourseState {
 
 	public long getCreatedTimestamp() {
 		return timestamp;
+	}
+
+	public boolean getRecordedState() {
+		return isRecorded;
+	}
+
+	public void setRecordedState(boolean recorded) {
+		this.isRecorded = recorded;
 	}
 
 	/**

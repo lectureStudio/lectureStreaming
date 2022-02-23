@@ -20,6 +20,8 @@ import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseSpeechEvent;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
+import org.lecturestudio.web.portal.model.CourseState;
+import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.SubscriberEmitterService;
@@ -47,6 +49,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RestController
 @RequestMapping("/api/publisher")
 public class CoursePublisherController {
+
+	@Autowired
+	private CourseStates courseStates;
 
 	@Autowired
 	private CourseService courseService;
@@ -143,6 +148,31 @@ public class CoursePublisherController {
 			.build();
 
 		subscriberEmmiter.send(speechRequest.getUserId(), new GenericMessage<>(sEvent));
+
+		return ResponseEntity.status(HttpStatus.OK).build();
+	}
+
+	@PostMapping("/course/recorded/{courseId}/{recorded}")
+	public ResponseEntity<Void> setCourseRecordingState(@PathVariable("courseId") long courseId,
+			@PathVariable("recorded") boolean isRecorded) {
+		courseService.findById(courseId)
+				.orElseThrow(() -> new CourseNotFoundException());
+
+		CourseState courseState = courseStates.getCourseState(courseId);
+		courseState.setRecordedState(isRecorded);
+
+		CourseEvent courseEvent = CourseEvent.builder()
+				.courseId(courseId)
+				.createdTimestamp(System.currentTimeMillis())
+				.started(isRecorded)
+				.build();
+
+		var sEvent = ServerSentEvent.<CourseEvent>builder()
+				.event("recording-state")
+				.data(courseEvent)
+				.build();
+
+		subscriberEmmiter.send(new GenericMessage<>(sEvent));
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
