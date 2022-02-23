@@ -530,7 +530,7 @@ class Course {
 					destinations.push({
 						type: "user",
 						username: user.username,
-						innerText: user.username,
+						innerText: user.firstName + " " + user.familyName,
 					})
 				}
 			})

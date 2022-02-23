@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public class KeycloakUserDetailsAuthenticationProvider extends KeycloakAuthenticationProvider {
 
@@ -40,8 +41,14 @@ public class KeycloakUserDetailsAuthenticationProvider extends KeycloakAuthentic
         Optional<User> userOpt = userService.findById(username);
 
         if (userOpt.isEmpty()) {
+            UUID uuid = null;
+            do {
+                uuid = UUID.randomUUID();
+            } while (userService.hasUser(uuid));
+
             userService.saveUser(User.builder()
                     .userId(username)
+                    .anonymousUserId(uuid)
                     .firstName(firstName)
                     .familyName(familyName)
                     .build());
