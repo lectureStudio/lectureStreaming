@@ -825,6 +825,9 @@ class Course {
 			window.stopMediaTracks(stream);
 
 			video.srcObject = null;
+
+			const settingsButton = document.querySelector("#controlContainer #settingsButton");
+			settingsButton.disabled = false;
 		};
 
 		cancelButton.addEventListener("click", cancelHandler);

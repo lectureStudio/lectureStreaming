@@ -1,5 +1,7 @@
 let mediaRecorder = null;
 let deviceStream = null;
+let audioInputStream = null;
+let videoInputStream = null;
 let chunks = [];
 
 function initMediaProfile() {
@@ -76,9 +78,29 @@ function initTabs() {
 	});
 	devicesTab.addEventListener("hidden.bs.tab", function () {
 		if (deviceStream) {
+			console.log("stopMediaTracks");
+
 			window.stopMediaTracks(deviceStream);
 
 			deviceStream = null;
+		}
+		if (audioInputStream) {
+			window.stopMediaTracks(audioInputStream);
+		}
+		if (videoInputStream) {
+			window.stopMediaTracks(videoInputStream);
+		}
+		if (mediaRecorder) {
+			try {
+				mediaRecorder.stop();
+			}
+			catch {}
+
+			const recordStart = document.getElementById("record-start");
+			const recordStop = document.getElementById("record-stop");
+
+			recordStart.style.display = "";
+			recordStop.style.display = "none";
 		}
 	});
 }
@@ -113,14 +135,13 @@ function fillForm(devices, stream, constraints) {
 	const speakerSelect = document.getElementById("speakerSelect");
 	const meterCanvas = document.getElementById("meter");
 
-	const saveButton = document.getElementById("saveDeviceSelection");
-	saveButton.addEventListener("click", () => {
+	function saveDevices() {
 		const form = document.getElementById("deviceSelectForm");
 		const data = new FormData(form);
 		const devices = Object.fromEntries(data.entries());
 
 		window.saveDeviceChoice(devices);
-	});
+	};
 
 	const audioInputContainer = document.getElementById("settingsAudioInputContainer");
 
@@ -141,9 +162,13 @@ function fillForm(devices, stream, constraints) {
 
 		navigator.mediaDevices.getUserMedia(audioConstraints)
 			.then(audioStream => {
+				audioInputStream = audioStream;
+
 				initMediaRecorder(audioStream);
 
 				window.getAudioLevel(audioStream.getAudioTracks()[0], meterCanvas);
+
+				saveDevices();
 			})
 			.catch(error => {
 				console.error(error);
@@ -155,6 +180,8 @@ function fillForm(devices, stream, constraints) {
 	};
 	const onAudioOutputDeviceChange = () => {
 		window.setAudioSink(video, speakerSelect.value);
+
+		saveDevices();
 	};
 	const onVideoDeviceChange = () => {
 		window.stopVideoTracks(video.srcObject);
@@ -164,6 +191,7 @@ function fillForm(devices, stream, constraints) {
 
 		if (videoSource === "none") {
 			video.style.display = "none";
+			saveDevices();
 			return;
 		}
 
@@ -181,10 +209,14 @@ function fillForm(devices, stream, constraints) {
 				video.srcObject.getAudioTracks().forEach(track => newStream.addTrack(track));
 				videoStream.getVideoTracks().forEach(track => newStream.addTrack(track));
 
+				videoInputStream = newStream;
+
 				video.srcObject = newStream;
 				video.style.display = "block";
 
 				cameraBlockedAlert.classList.add("d-none");
+
+				saveDevices();
 			})
 			.catch(error => {
 				console.error(error);
@@ -198,6 +230,9 @@ function fillForm(devices, stream, constraints) {
 			});
 	};
 
+	cameraSelect.length = 1;
+	microphoneSelect.length = 0;
+	speakerSelect.length = 0;
 	cameraSelect.onchange = onVideoDeviceChange;
 	microphoneSelect.onchange = onAudioInputDeviceChange;
 	speakerSelect.onchange = onAudioOutputDeviceChange;
