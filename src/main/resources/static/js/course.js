@@ -251,7 +251,7 @@ class Course {
 
 	async onMessengerMessageReceive(message) {
 		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
-		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "public"};
+		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "public", to: ""};
 
 		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
@@ -281,7 +281,7 @@ class Course {
 
 	async onMessengerDirectMessageReceive(message) {
 		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
-		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "user"};
+		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "user", to: message.messageDestinationUsername};
 
 		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
@@ -714,7 +714,7 @@ class Course {
 					destinations.push({
 						type: "user",
 						username: user.username,
-						innerText: user.username,
+						innerText: user.firstName + " " + user.familyName,
 					})
 				}
 			})

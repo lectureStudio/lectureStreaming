@@ -51,7 +51,6 @@ import org.lecturestudio.web.portal.service.SubscriberEmitterService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry.MessengerFeatureUser;
 import org.lecturestudio.web.portal.util.StringUtils;
-import org.lecturestudio.web.portal.validator.MessageValidator;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
@@ -120,9 +119,7 @@ public class CoursePublisherController {
 		messengerFeatureUserRegistry.addUserConnectionListener(new MessengerFeatureUserConnectionListener() {
 
 			@Override
-			public void onMessengerFeatureUserConnected(long courseId, String username) {
-				System.out.println("User " + username  + " connected to the messenger of course " + courseId);
-				
+			public void onMessengerFeatureUserConnected(long courseId, String username) {	
 				Optional<User> optUser = userService.findById(username);
 				User user = optUser.get();
 				if (nonNull(user)) {
@@ -137,8 +134,6 @@ public class CoursePublisherController {
 
 			@Override
 			public void onMessengerFeatureUserDisconnected(long courseId, String username) {
-				System.out.println("User " + username  + " disconnected from the messenger of course " + courseId);
-
 				Optional<User> optUser = userService.findById(username);
 				User user = optUser.get();
 				if (nonNull(user)) {

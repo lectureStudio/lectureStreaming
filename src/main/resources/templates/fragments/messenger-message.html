@@ -4,21 +4,17 @@
     <meta charset="UTF-8">
 </head>
 <body>
-    <div th:id="${id}" th:fragment="messenger-message (id, timestamp, content, messageType)">
+    <div th:id="${id}" th:fragment="messenger-message (id, timestamp, content, messageType, to)">
         <div class="chat-right">
             <div class="chat-content-right">
                 <div class="chat-hour" th:text="${timestamp}"></div>
                 <div class="chat-message-boxed">
-                    <div class="chat-message-type" th:switch="${messageType}">
+                    <div class="chat-message-head" th:switch="${messageType}">
                         <div th:case="'public'">
-                            <i class="bi bi-person"></i>
-                            <i class="bi bi-arrow-right-short"></i>
-                            <i class="bi bi-people"></i>
+                            <span class="noselect chat-name" th:text="|#{course.feature.message.head.from} #{course.feature.message.head.from.myself}|"></span>
                         </div>
                         <div th:case="'user'">
-                            <i class="bi bi-person"></i>
-                            <i class="bi bi-arrow-right-short"></i>
-                            <i class="bi bi-person"></i>
+                            <span class="noselect chat-name" th:text="|#{course.feature.message.head.from} #{course.feature.message.head.from.myself} #{course.feature.message.head.to} ${to}|"></span>
                         </div>
                     </div>
                     <div class="chat-message-text">
@@ -28,7 +24,6 @@
                     </div>
                 </div>
                 <div class="chat-avatar">
-                    <div class="chat-name">Ich</div>
                 </div>
             </div>
         </div>

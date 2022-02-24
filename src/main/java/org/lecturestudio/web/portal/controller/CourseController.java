@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.validation.Valid;
 
@@ -301,17 +302,35 @@ public class CourseController {
 
 	@RequestMapping("/messenger/messageReceived")
 	public String getMessageReceived(@RequestParam("timestamp") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date, @RequestParam("content") String content,
-		@RequestParam("from") String from, @RequestParam("id") String id, @RequestParam("messageType") String messageType, Authentication authentication) {
+		@RequestParam("from") String from, @RequestParam("id") String id, @RequestParam("messageType") String messageType, @RequestParam("to") String to, Authentication authentication) {
 
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		String time = String.format("%02d:%02d", date.getHour(), date.getMinute());
-		System.out.println(messageType);
+		StringBuilder destinationStringBuilder = new StringBuilder();
+		if (!to.isEmpty()) {
+			Optional<User> destinationUser = userService.findById(to);
+			if (destinationUser.isPresent()) {
+				destinationStringBuilder.append(destinationUser.get().getFirstName());
+				destinationStringBuilder.append(" ");
+				destinationStringBuilder.append(destinationUser.get().getFamilyName());
+			}
+		}
+
+		StringBuilder fromStringBuilder = new StringBuilder();
+		if (!from.isEmpty()) {
+			Optional<User> fromUser = userService.findById(from);
+			if (fromUser.isPresent()) {
+				fromStringBuilder.append(fromUser.get().getFirstName());
+				fromStringBuilder.append(" ");
+				fromStringBuilder.append(fromUser.get().getFamilyName());
+			}
+		}
 		if (details.getUsername().equals(from)) {
-			return String.format("fragments/messenger-message :: messenger-message(id='%s', timestamp='%s', content='%s', messageType='%s')", id, time, content, messageType);
+			return String.format("fragments/messenger-message :: messenger-message(id='%s', timestamp='%s', content='%s', messageType='%s', to='%s')", id, time, content, messageType, destinationStringBuilder.toString());
 		}
 		else {
-			return String.format("fragments/messenger-other-message :: messenger-other-message(id='%s', timestamp='%s', content='%s', from='%s', messageType='%s')", id, time, content, from, messageType);
+			return String.format("fragments/messenger-other-message :: messenger-other-message(id='%s', timestamp='%s', content='%s', from='%s', messageType='%s', to='%s')", id, time, content, fromStringBuilder.toString(), messageType, destinationStringBuilder.toString());
 		}
 	}
 

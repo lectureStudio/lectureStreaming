@@ -6,6 +6,16 @@ html, body {
     display: none;
 }
 
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Old versions of Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Non-prefixed version, currently
+                                    supported by Chrome, Opera and Firefox */
+}
+
 .theme-header {
 	line-height: 1;
 	border-bottom: 1px solid #e5e5e5;
@@ -103,7 +113,6 @@ html, body {
 
 .chat-container div .chat-name {
     font-size: .75rem;
-    color: #999999;
     text-align: center;
 }
 
@@ -146,10 +155,6 @@ html, body {
     max-width: 100%;
 }
 
-.chat-container div.chat-content-right .chat-message-text {
-    text-align: right;
-}
-
 .chat-container .chat-message-text p {
     margin-bottom: 0px;
 }
@@ -167,8 +172,12 @@ html, body {
     color: white;
 }
 
-.chat-container div.chat-left .chat-text-content a {
-    color: blue;
+.chat-container div.chat-right .chat-message-head span {
+    font-weight: bold;
+}
+
+.chat-container div.chat-left .chat-message-head span {
+    font-weight: bold;
 }
 
 .chat-container div.chat-content-right > .chat-message-boxed:before {

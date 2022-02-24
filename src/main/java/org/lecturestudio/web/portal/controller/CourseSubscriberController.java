@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -350,8 +351,6 @@ public class CourseSubscriberController {
 
 		Set<MessengerFeatureUser> connectedUsers = messengerFeatureUserRegistry.getUsers(courseId);
 
-		System.out.println(connectedUsers);
-
 		Comparator<UserDto> userComparator = new Comparator<UserDto>() {
 			@Override
 			public int compare(UserDto arg0, UserDto arg1) {
@@ -364,7 +363,7 @@ public class CourseSubscriberController {
 		connectedUsers.forEach((user) -> {
 			if (!user.getUsername().equals(details.getUsername())) {
 				User u = userService.findById(user.getUsername()).get();
-				UserDto userDto = new UserDto(u.getFirstName(), u.getFamilyName(), u.getUserId());
+				UserDto userDto = new UserDto(u.getFirstName(), u.getFamilyName(), u.getAnonymousUserId().toString());
 				sortedConnectedUsers.add(userDto);
 			}
 		});
@@ -449,7 +448,18 @@ public class CourseSubscriberController {
 		switch(messageType) {
 			case "user":
 			case "lecturer":
-				String messageDestinationUsername = (messageType.equals("user")) ?  accessor.getNativeHeader("username").get(0) : feature.getInitiator().getUserId();
+				String messageDestinationUsername = "";
+				if (messageType.equals("user")) {
+					String anonymousMessageDestinationUsername = accessor.getNativeHeader("username").get(0);
+					Optional<User> optDestinationUser = userService.findByAnonymousId(UUID.fromString(anonymousMessageDestinationUsername));
+					if (optDestinationUser.isPresent()) {
+						User destinationUser = optDestinationUser.get();
+						messageDestinationUsername = destinationUser.getUserId();
+					}
+				}
+				else {
+					messageDestinationUsername = feature.getInitiator().getUserId();
+				}
 
 				forwardMessage = new MessengerDirectMessage(messageDestinationUsername, payload, details.getUsername(), ZonedDateTime.now());
 				forwardMessage.setFirstName(details.getFirstName());
@@ -457,8 +467,8 @@ public class CourseSubscriberController {
 
 				courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
 
-				MessengerFeatureUser destinationUser = messengerFeatureUserRegistry.getUser(messageDestinationUsername);
 				MessengerFeatureUser user = messengerFeatureUserRegistry.getUser(details.getUsername());
+				MessengerFeatureUser destinationUser = messengerFeatureUserRegistry.getUser(messageDestinationUsername);
 
 				ArrayList<Set<String>> sets = new ArrayList<>();
 

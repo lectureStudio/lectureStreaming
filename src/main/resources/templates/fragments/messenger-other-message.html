@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
 </head>
 <body>
-    <div th:id="${id}" th:fragment="messenger-other-message (id, timestamp, content, from, messageType)">
+    <div th:id="${id}" th:fragment="messenger-other-message (id, timestamp, content, from, messageType, to)">
         <div class="chat-left">
             <div class="chat-content-left">
                 <div class="chat-avatar">
-                    <div class="chat-name" th:text="${from}"></div>
                 </div>
                 <div class="chat-message-boxed">
-                    <div class="chat-message-type" th:switch="${messageType}">
-                        <i th:case="'public'" class="bi bi-people"></i>
-                        <i th:case="'user'" class="bi bi-person"></i>
+                    <div class="chat-message-head" th:switch="${messageType}">
+                        <div th:case="'public'">
+                            <span class="noselect chat-name" th:text="|#{course.feature.message.head.from} ${from}|"></span>
+                        </div>
+                        <div th:case="'user'">
+                            <span class="noselect chat-name" th:text="|#{course.feature.message.head.from} ${from} (#{course.feature.message.head.direct})|"></span>
+                        </div>
                     </div>
                     <div class="chat-message-text">
                         <p class="chat-text-content" style="overflow-wrap: break-word;" th:text="${content}"></p>
