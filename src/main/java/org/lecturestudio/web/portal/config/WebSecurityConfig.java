@@ -8,6 +8,7 @@ import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurer
 import org.lecturestudio.web.portal.keycloak.KeycloakUserDetailsAuthenticationProvider;
 import org.lecturestudio.web.portal.security.TokenAuthenticationProvider;
 import org.lecturestudio.web.portal.security.TokenSecurityConfiguration;
+import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,9 @@ public class WebSecurityConfig {
 		@Autowired
 		private UserService userService;
 
+		@Autowired
+		private RoleService roleService;
+
 
 		@Autowired
 		public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
@@ -47,7 +51,7 @@ public class WebSecurityConfig {
 
 		@Override
 		protected KeycloakAuthenticationProvider keycloakAuthenticationProvider() {
-			return new KeycloakUserDetailsAuthenticationProvider(userService);
+			return new KeycloakUserDetailsAuthenticationProvider(userService, roleService);
 		}
 
 		@Bean
