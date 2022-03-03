@@ -18,7 +18,9 @@ import org.lecturestudio.web.portal.model.CourseForm;
 import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseRole;
 import org.lecturestudio.web.portal.model.CourseRoleId;
+import org.lecturestudio.web.portal.model.CourseUser;
 import org.lecturestudio.web.portal.model.Role;
+import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.PrivilegeFormDataSink;
 import org.lecturestudio.web.portal.repository.CourseRepository;
 
@@ -38,6 +40,9 @@ public class CourseService {
 
 	@Autowired
 	private RoleService roleService;
+
+	@Autowired
+	private UserService userService;
 
 
 	public Optional<Course> findById(Long id) {
@@ -113,6 +118,8 @@ public class CourseService {
 		form.setCourseRoles(roles);
 		form.setPrivilegeSinks(privilegeSinks);
 		form.setNumOfPrivileges(privileges.size());
+		form.setUsername("");
+		form.setPersonallyPrivilegedUsers(new LinkedList<>());
 
 		return form;
 	}
@@ -122,6 +129,18 @@ public class CourseService {
 			.toList();
 
 		List<CoursePrivilege> privileges = Streamable.of(this.roleService.getAllPrivilegesOrderByIdAsc())
+			.toList();
+
+		List<CourseUser> personallyPrivilegedCourseUsers = Streamable.of(this.roleService.getAllCourseUsersOfCourse(course))
+			.toList();
+
+		List<User> personallyPrivilegedUsers = personallyPrivilegedCourseUsers.stream()
+			.filter((courseUser) -> {
+				return this.userService.findById(courseUser.getUserId()).isPresent();
+			})
+			.map((courseUser) -> {
+				return this.userService.findById(courseUser.getUserId()).get();
+			})
 			.toList();
 
 		List<PrivilegeFormDataSink> privilegeSinks = new LinkedList<>();
@@ -136,15 +155,22 @@ public class CourseService {
 			}
 		}
 
-		CourseForm form = new CourseForm();
-		form.setId(course.getId());
-		form.setTitle(course.getTitle());
-		form.setDescription(course.getDescription());
-		form.setPasscode(course.getPasscode());
-		form.setRoomId(course.getRoomId());
+		for (CourseUser user : personallyPrivilegedCourseUsers) {
+			for (CoursePrivilege privilege : privileges) {
+				privilegeSinks.add(PrivilegeFormDataSink.builder()
+										.privilege(privilege)
+										.expressed(user.getPrivileges().contains(privilege))
+										.build());
+			}
+		}
+
+		CourseForm form = course.getCourseFormFromCourse();
 		form.setCourseRoles(roles);
 		form.setPrivilegeSinks(privilegeSinks);
 		form.setNumOfPrivileges(privileges.size());
+		form.setUsername("");
+		form.setPersonallyPrivilegedUsers(personallyPrivilegedUsers);
+
 		return form;
 	}
 }

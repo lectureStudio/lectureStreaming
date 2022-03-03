@@ -25,5 +25,11 @@ public class CourseForm extends Course {
 
     @Transient
     private int numOfPrivileges;
+
+    @Transient
+    private List<User> personallyPrivilegedUsers;
+
+    @Transient
+    private String username;
     
 }

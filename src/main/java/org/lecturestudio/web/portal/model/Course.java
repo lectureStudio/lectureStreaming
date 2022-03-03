@@ -53,4 +53,15 @@ public class Course {
 	@OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
 	Set<CourseFeature> features;
 
+	public CourseForm getCourseFormFromCourse() {
+		CourseForm courseForm = new CourseForm();
+		courseForm.setId(this.id);
+		courseForm.setRoomId(this.roomId);
+		courseForm.setTitle(this.title);
+		courseForm.setDescription(this.description);
+		courseForm.setPasscode(this.passcode);
+
+		return courseForm;
+	}
+
 }

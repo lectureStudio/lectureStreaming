@@ -12,13 +12,17 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.lecturestudio.web.portal.model.Course;
+import org.lecturestudio.web.portal.model.CourseUser;
+import org.lecturestudio.web.portal.model.CourseUserId;
 import org.lecturestudio.web.portal.model.CourseForm;
 import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.Role;
+import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.CourseRole;
 import org.lecturestudio.web.portal.model.CourseRoleId;
 import org.lecturestudio.web.portal.model.PrivilegeFormDataSink;
 import org.lecturestudio.web.portal.repository.RoleRepository;
+import org.lecturestudio.web.portal.repository.CourseUserRepository;
 import org.lecturestudio.web.portal.repository.CourseRoleRepository;
 import org.lecturestudio.web.portal.repository.CoursePrivilegeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +40,9 @@ public class RoleService {
 
     @Autowired
     private CourseRoleRepository courseRoleRepository;
+
+    @Autowired
+    private CourseUserRepository courseUserRepository;
 
     private final String ROLE_DATA_SOURCE = "classpath:data/data.json";
 
@@ -160,6 +167,58 @@ public class RoleService {
         courseRoleRepository.deleteCourseRoleByCourseId(courseId);
     }
 
+
+
+    /*
+    *   Service methods for Course Users
+    */
+    public Optional<CourseUser> findCourseUserById(CourseUserId id) {
+        return courseUserRepository.findById(id);
+    }
+
+    public Iterable<CourseUser> getAllCourseUsers() {
+        return courseUserRepository.findAll();
+    }
+
+    public Iterable<CourseUser> getAllCourseUsersOfCourse(Course course) {
+        return courseUserRepository.findByCourseId(course.getId());
+    }
+
+    public CourseUser saveCourseUser(CourseUser courseUser) {
+        return courseUserRepository.save(courseUser);
+    }
+
+    public CourseUser saveCourseUser(Course course, User user, Set<CoursePrivilege> privileges) {
+        CourseUser courseUser = CourseUser.builder()
+            .courseId(course.getId())
+            .userId(user.getUserId())
+            .privileges(privileges)
+            .build();
+        return this.saveCourseUser(courseUser);
+    }
+
+    public void deleteCourseUser(CourseUserId id) {
+        this.courseUserRepository.deleteById(id);
+    }
+
+    public void deleteCourseUser(CourseUser courseUser) {
+        this.courseUserRepository.deleteById(new CourseUserId(courseUser.getCourseId(), courseUser.getUserId()));
+    }
+
+    public void deleteCourseUserByCourse(Long courseId) {
+        this.courseUserRepository.deleteCourseUserByCourseId(courseId);
+    }
+
+    public void deleteCourseUserByUser(String userId) {
+        this.courseUserRepository.deleteCourseUserByUserId(userId);
+    }
+
+    public boolean hasCourseUser(CourseUserId courseUserId) {
+        return this.courseUserRepository.existsById(courseUserId);
+    }
+
+
+
     public void flushCourseFormRoles(Course course, CourseForm courseForm) {
         int base = 0;
 		List<PrivilegeFormDataSink> dataSinks = courseForm.getPrivilegeSinks();
@@ -178,6 +237,21 @@ public class RoleService {
 
 			base += courseForm.getNumOfPrivileges();
 		}
+
+        for (User user : courseForm.getPersonallyPrivilegedUsers()) {
+
+            Set<CoursePrivilege> coursePrivileges = new HashSet<>();
+			for (int i=0; i<courseForm.getNumOfPrivileges(); ++i) {
+				PrivilegeFormDataSink current = dataSinks.get(base + i);
+				if (current.isExpressed()) {
+					coursePrivileges.add(current.getPrivilege());
+				}
+			}
+
+            this.saveCourseUser(course, user, coursePrivileges);
+
+            base += courseForm.getNumOfPrivileges();
+        }
  
     }
 
