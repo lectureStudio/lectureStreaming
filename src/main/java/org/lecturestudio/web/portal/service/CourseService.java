@@ -56,6 +56,7 @@ public class CourseService {
 	@Transactional
 	public void deleteById(Long id) {
 		roleService.deleteCourseRoleByCourse(id);
+		roleService.deleteCourseUserByCourse(id);
 		repository.deleteById(id);
 	}
 

@@ -26,7 +26,7 @@ public class CourseRoleSystemDataLoader implements ApplicationListener<ContextRe
     @Transactional
     public void onApplicationEvent(ContextRefreshedEvent event){
         if (done.compareAndSet(false, true)) {
-            roleService.loadInitialRoleData();
+            //roleService.loadInitialRoleData();
         }
     }
 }

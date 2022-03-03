@@ -383,9 +383,11 @@ public class CourseController {
 				int base = (roleCount + indx) * privilegeCount;
 
 				ListIterator<PrivilegeFormDataSink> iter = courseForm.getPrivilegeSinks().listIterator(base);
-				while (iter.hasNext() && iter.nextIndex() <= base + courseForm.getNumOfPrivileges()) {
+				int i=0;
+				while (iter.hasNext() && i < privilegeCount) {
 					iter.next();
 					iter.remove();
+					i++;
 				}
 
 				if (edit) {
