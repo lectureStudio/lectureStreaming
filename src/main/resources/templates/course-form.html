@@ -16,12 +16,12 @@
 			<div th:text="${edit} ? #{course.form.edit.course} : #{course.form.add.course}"></div>
 		</div>
 		<div class="bg-light border rounded-3 p-4">
-			<form id="course-form" th:action="${edit} ? @{/course/edit/{id}(id=${course.id})} : @{/course/new}" th:object="${course}" method="post">
+			<form id="course-form" th:action="${edit} ? @{/course/edit/{id}(id=${courseForm.id})} : @{/course/new}" th:object="${courseForm}" method="post">
 				<input type="hidden" th:field="*{description}" id="course-description">
 				<div class="mb-3">
 					<label th:text="#{course.form.title}" for="title" class="form-label"></label>
 					<input type="text" class="form-control" id="title" th:field="*{title}" th:errorclass="is-invalid" aria-describedby="title-feedback">
-					<div id="title-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+					<div id="title-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="${courseForm.title}"></div>
 					<div id="titleHelpBlock" class="form-text">
 						<span th:text="#{course.form.title.description}"></span> <span th:text="#{form.required}" class="badge bg-light text-dark"></span>
 					</div>
@@ -33,12 +33,72 @@
 				<div class="mb-3">
 					<label th:text="#{course.form.passcode}" for="passcode" class="form-label"></label>
 					<div class="input-group">
-						<input type="password" class="form-control" id="passcode" name="passcode" th:value="*{passcode}" aria-describedby="passVisibility">
+						<input type="password" class="form-control" id="passcode" name="passcode" th:field="*{passcode}" aria-describedby="passVisibility">
 						<button type="button" is="password-visibility" for="passcode" class="btn btn-outline-secondary" id="passVisibility" data-class-visible="bi-eye" data-class-hidden="bi-eye-slash"><i id="visibility-icon" class="bi bi-eye-slash"></i></button>
 					</div>
 					<div th:text="#{course.form.passcode.description}" id="pinHelpBlock" class="form-text"></div>
 				</div>
-				<div class="col-12">
+				<div class="mb-3">
+					<input type="hidden" th:field="*{courseRoles}">
+					<input type="hidden" th:field="*{numOfPrivileges}">
+					<label for="role-accordion" class="form-label" th:text="#{course.form.role.title}"></label>
+					<div id="role-accordion" class="accordion">
+						<div class="accordion-item" th:each="role,idx : ${courseForm.courseRoles}">
+							<h2 class="accordion-header" th:id="heading + ${role.id}">
+								<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" th:attr="data-bs-target='#collapse' + ${role.id}, aria-expanded=false" aria-controls="collapseOne" th:text="#{${role.nameLink}}"></button>
+							</h2>
+							<div th:id="collapse + ${role.id}" class="accordion-collapse collapse" th:attr="aria-labelledby='heading' + ${role.id}" data-bs-parent="#role-accordion">
+								<div class="accordion-body">
+									<div class="form-check form-switch" th:each="privInd : ${#numbers.sequence(0, courseForm.numOfPrivileges-1)}">
+										<div th:with="i=${((idx.getCount()-1) * courseForm.numOfPrivileges) + privInd}">
+											<div th:with="privSink=${courseForm.privilegeSinks[__${i}__]}">
+												<input type="hidden" th:field="*{privilegeSinks[__${i}__].privilege}">
+												<input class="form-check-input" type="checkbox" th:id="privCheck + ${i}" th:field="*{privilegeSinks[__${i}__].expressed}" th:checked="${privSink.expressed}">
+												<label class="form-check-label" th:for="privCheck + ${i}" th:text="#{${privSink.privilege.descriptionKey}}"></label>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="courseRoleHelpBlock" class="form-text">
+						<span th:text="#{course.form.role.description}"></span>
+						<span th:text="#{course.form.role.owner.info}" class="badge bg-light text-dark"></span>
+					</div>
+				</div>
+				<div class="mb-3">
+					<input type="hidden" th:field="*{personallyPrivilegedUsers}">
+					<label th:text="#{course.form.user.privileges.title}" for="username-accordion" class="form-label"></label>
+					<div id="username-accordion" class="accordion mb-3">
+						<div class="accordion-item" th:each="user,useridx : ${courseForm.personallyPrivilegedUsers}">
+							<h2 class="accordion-header d-flex" th:id="UserHeading + ${user.userId}">
+								<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" th:attr="data-bs-target='#UserCollapse' + ${user.userId}, aria-expanded=false" aria-controls="collapseOne" th:text="${user.userId}"></button>
+								<button type="submit" action="action" class="btn btn-outline-danger btn-sm" th:text="#{course.form.remove.user}" th:formaction="${edit} ? @{/course/edit/{id}/removeUser/{userId}(id=${courseForm.id}, userId=${user.userId})} : @{/course/new/removeUser/{userId}(userId=${user.userId})}"></button>
+							</h2>
+							<div th:id="UserCollapse + ${user.userId}" class="accordion-collapse collapse" th:attr="aria-labelledby='UserHeading' + ${user.userId}" data-bs-parent="#username-accordion">
+								<div class="accordion-body">
+									<div class="form-check form-switch" th:each="privInd : ${#numbers.sequence(0, courseForm.numOfPrivileges-1)}">
+										<div th:with="i=${((useridx.getCount()-1 + #lists.size(courseForm.courseRoles)) * courseForm.numOfPrivileges) + privInd}">
+											<div th:with="privSink=${courseForm.privilegeSinks[__${i}__]}">
+												<input type="hidden" th:field="*{privilegeSinks[__${i}__].privilege}">
+												<input class="form-check-input" type="checkbox" th:id="privCheck + ${i}" th:field="*{privilegeSinks[__${i}__].expressed}" th:checked="${privSink.expressed}">
+												<label class="form-check-label" th:for="privCheck + ${i}" th:text="#{${privSink.privilege.descriptionKey}}"></label>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="input-group">
+						<input type="text" th:attr="class=${#fields.hasErrors('username') ? 'form-control is-invalid' : 'form-control'}" id="username" name="username" th:field="*{username}" aria-describedby="add-user-feedback">
+						<button th:text="#{course.form.add.user}" type="submit" name="action" class="btn btn-outline-primary btn-sm" th:formaction="${edit} ? @{/course/edit/{id}/addUser(id=${courseForm.id})} : @{/course/new/addUser}"></button>
+					</div>
+					<div id="add-user-feedback" class="form-text text-danger" th:if="${#fields.hasErrors('username')}" th:errors="${courseForm.username}"></div>
+					<div th:text="#{course.form.add.user.description}" id="pinHelpBlock" class="form-text"></div>
+				</div>
+				<div class="mt-3 col-12">
 					<button th:text="${edit} ? #{course.form.update} : #{course.form.create}" type="submit" class="btn btn-outline-primary btn-sm"></button>
 				</div>
 			</form>

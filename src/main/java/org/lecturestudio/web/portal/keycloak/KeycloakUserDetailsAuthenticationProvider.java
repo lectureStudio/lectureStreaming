@@ -4,23 +4,29 @@ import org.keycloak.adapters.OidcKeycloakAccount;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.keycloak.representations.AccessToken;
-
+import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
+import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class KeycloakUserDetailsAuthenticationProvider extends KeycloakAuthenticationProvider {
 
     private final UserService userService;
 
+    private final RoleService roleService;
 
-    public KeycloakUserDetailsAuthenticationProvider(UserService userService) {
+
+    public KeycloakUserDetailsAuthenticationProvider(UserService userService, RoleService roleService) {
         this.userService = userService;
+        this.roleService = roleService;
     }
 
     @Override
@@ -40,6 +46,13 @@ public class KeycloakUserDetailsAuthenticationProvider extends KeycloakAuthentic
 
         Optional<User> userOpt = userService.findById(username);
 
+        Set<String> userRoleStrings = account.getRoles();
+        Set<Role> userRoles = userRoleStrings.stream().filter((s) -> {
+            return roleService.existsByName(s);
+        }).map((s) -> {
+            return roleService.findRoleByName(s).get();
+        }).collect(Collectors.toSet());
+
         if (userOpt.isEmpty()) {
             UUID uuid = null;
             do {
@@ -51,6 +64,7 @@ public class KeycloakUserDetailsAuthenticationProvider extends KeycloakAuthentic
                     .anonymousUserId(uuid)
                     .firstName(firstName)
                     .familyName(familyName)
+                    .roles(userRoles)
                     .build());
         }
 

@@ -6,9 +6,12 @@ import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.Valid;
 
@@ -16,28 +19,38 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseCredentials;
+import org.lecturestudio.web.portal.model.CourseForm;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
+import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseRegistration;
+import org.lecturestudio.web.portal.model.CourseRole;
+import org.lecturestudio.web.portal.model.CourseRolesFormDataSink;
 import org.lecturestudio.web.portal.model.CourseState;
+import org.lecturestudio.web.portal.model.PrivilegeFormDataSink;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.model.CourseUserId;
+import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 import org.lecturestudio.web.portal.service.CourseRegistrationService;
 import org.lecturestudio.web.portal.service.CourseService;
+import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.util.StringUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.util.Streamable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -67,6 +80,9 @@ public class CourseController {
 	@Autowired
 	private LocaleResolver localeResolver;
 
+	@Autowired
+	private RoleService roleService;
+
 	private final Map<String, String> dict = new HashMap<>();
 
 	private final List<String> DICT_KEYS = List.of(
@@ -86,7 +102,10 @@ public class CourseController {
 		"course.feature.message.public",
 		"course.feature.message.private",
 		"course.feature.message.destination.all",
-		"course.feature.message.destination.lecturer"
+		"course.feature.message.destination.lecturer",
+		"course.form.user.error.notFound",
+		"course.form.user.error.owner",
+		"course.form.user.error.already"
 	);
 
 
@@ -190,24 +209,47 @@ public class CourseController {
 
 	@RequestMapping("/new")
 	public String addCourse(Authentication authentication, Model model) {
-		model.addAttribute("course", new Course());
+		CourseForm courseForm = courseService.getEmptyCourseForm();
+
+		model.addAttribute("courseForm", courseForm);
 		model.addAttribute("edit", false);
 
 		return "course-form";
 	}
 
-	@PostMapping("/new")
-	public String newCourse(Authentication authentication, @Valid Course course, BindingResult result, Model model) {
+	@RequestMapping("/edit/{id}")
+	public String editCourse(@PathVariable("id") long id, Authentication authentication, Model model) {
+		Course course = courseService.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
+
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
+		checkAuthorization(course.getId(), details);
+
+		CourseForm courseForm = courseService.getCourseForm(course);
+
+		model.addAttribute("courseForm", courseForm);
+		model.addAttribute("edit", true);
+
+		return "course-form";
+	}
+
+	@PostMapping("/new")
+	public String newCourse(Authentication authentication, @Valid CourseForm courseForm, BindingResult result, Model model) {
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+ 
 		if (result.hasErrors()) {
 			model.addAttribute("edit", false);
 
 			return "course-form";
 		}
 
+		Course course = new Course();
+
 		course.setRoomId(RandomStringUtils.randomAlphanumeric(17));
-		course.setDescription(StringUtils.cleanHtml(course.getDescription()));
+		course.setDescription(StringUtils.cleanHtml(courseForm.getDescription()));
+		course.setTitle(courseForm.getTitle());
+		course.setPasscode(courseForm.getPasscode());
 
 		User user = userService.findById(details.getUsername())
 			.orElseThrow(() -> new IllegalArgumentException("User is not present"));
@@ -222,31 +264,17 @@ public class CourseController {
 
 		courseService.saveCourse(course);
 		userService.saveUser(user);
+		roleService.flushCourseFormRoles(course, courseForm);
 
 		return "redirect:/";
 	}
 
-	@RequestMapping("/edit/{id}")
-	public String editCourse(@PathVariable("id") long id, Authentication authentication, Model model) {
-		Course course = courseService.findById(id)
-				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		checkAuthorization(course.getId(), details);
-
-		model.addAttribute("course", course);
-		model.addAttribute("edit", true);
-
-		return "course-form";
-	}
-
 	@PostMapping("/edit/{id}")
-	public String updateCourse(Authentication authentication, @PathVariable("id") long id, @Valid Course course,
+	public String updateCourse(Authentication authentication, @PathVariable("id") long id, @Valid CourseForm courseForm,
 			BindingResult result, Model model) {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
-		checkAuthorization(course.getId(), details);
+		checkAuthorization(id, details);
 
 		if (result.hasErrors()) {
 			model.addAttribute("edit", true);
@@ -256,13 +284,122 @@ public class CourseController {
 
 		Course dbCourse = courseService.findById(id)
 			.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
-		dbCourse.setTitle(course.getTitle());
-		dbCourse.setDescription(StringUtils.cleanHtml(course.getDescription()));
-		dbCourse.setPasscode(course.getPasscode());
+		dbCourse.setTitle(courseForm.getTitle());
+		dbCourse.setDescription(StringUtils.cleanHtml(courseForm.getDescription()));
+		dbCourse.setPasscode(courseForm.getPasscode());
 
 		courseService.saveCourse(dbCourse);
+		roleService.flushCourseFormRoles(dbCourse, courseForm);
 
 		return "redirect:/";
+	}
+
+	@PostMapping("/new/addUser")
+	public String newCourseAddUser(Authentication authentication, @Valid CourseForm courseForm, BindingResult result, Model model) {
+		this.addUserToPersonalPrivilegeSelection(authentication, courseForm, result, model, false);
+		return "course-form";
+	}
+
+	@PostMapping("/edit/{id}/addUser")
+	public String updateCourseAddUser(Authentication authentication, @PathVariable("id") long id, @Valid CourseForm courseForm,
+			BindingResult result, Model model) {
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		checkAuthorization(id, details);
+
+		this.addUserToPersonalPrivilegeSelection(authentication, courseForm, result, model, true);
+
+		return "course-form";
+	}
+
+	private void addUserToPersonalPrivilegeSelection(Authentication authentication, CourseForm courseForm, BindingResult result, Model model, boolean edit) {
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		Optional<User> optUserToAdd = userService.findById(courseForm.getUsername());
+
+		courseForm.setUsername("");
+		model.addAttribute("edit", edit);
+
+		String errorMessageKey = "course.form.user.error.notFound";
+
+		if (optUserToAdd.isPresent()) {
+
+			errorMessageKey = "course.form.user.error.owner";
+			User userToAdd = optUserToAdd.get();
+			if (! details.getUsername().equals(userToAdd.getUserId())) {
+
+				errorMessageKey = "course.form.user.error.already";
+				List<User> personallyPrivilegeSelectedUsers = courseForm.getPersonallyPrivilegedUsers();
+				if (! personallyPrivilegeSelectedUsers.contains(userToAdd)) {
+					courseForm.getPersonallyPrivilegedUsers().add(userToAdd);
+					List<PrivilegeFormDataSink> newUserSinks = Streamable.of(roleService.getAllPrivilegesOrderByIdAsc())
+						.map(privilege -> {
+							return PrivilegeFormDataSink.builder()
+								.privilege(privilege)
+								.expressed(false)
+								.build();
+						}).toList();
+			
+					courseForm.getPrivilegeSinks().addAll(newUserSinks);
+					return;
+				}
+			}
+		}
+
+		result.rejectValue("username", errorMessageKey, this.dict.get(errorMessageKey));
+	}
+
+	@PostMapping("/new/removeUser/{userId}")
+	public String newCourseRemoveUser(Authentication authentication, @PathVariable("userId")  String userId, @Valid CourseForm courseForm, BindingResult result, Model model) {
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+		removeUserFromPersonalPrivilegeSelection(authentication, null, userId, courseForm, result, model, false);
+		return "course-form";
+	}
+
+	@PostMapping("/edit/{id}/removeUser/{userId}")
+	public String updateCourseRemoveUser(Authentication authentication, @PathVariable("id") long id, @PathVariable("userId") String userId, @Valid CourseForm courseForm,
+			BindingResult result, Model model) {
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+		checkAuthorization(id, details);
+
+		removeUserFromPersonalPrivilegeSelection(authentication, id, userId, courseForm, result, model, true);
+		return "course-form";
+	}
+
+	private void removeUserFromPersonalPrivilegeSelection(Authentication authentication, Long id, String userId, CourseForm courseForm, 
+			BindingResult result, Model model, boolean edit) {
+			
+		model.addAttribute("edit", edit);
+
+		Optional<User> userToRemoveOpt = userService.findById(userId);
+
+		if (userToRemoveOpt.isPresent()) {
+			User userToRemove = userToRemoveOpt.get();
+			int indx = courseForm.getPersonallyPrivilegedUsers().indexOf(userToRemove);
+			if (indx != -1) {
+				courseForm.getPersonallyPrivilegedUsers().remove(userToRemove);
+
+				int roleCount = courseForm.getCourseRoles().size();
+				int privilegeCount = courseForm.getNumOfPrivileges();
+
+				int base = (roleCount + indx) * privilegeCount;
+
+				ListIterator<PrivilegeFormDataSink> iter = courseForm.getPrivilegeSinks().listIterator(base);
+				int i=0;
+				while (iter.hasNext() && i < privilegeCount) {
+					iter.next();
+					iter.remove();
+					i++;
+				}
+
+				if (edit) {
+					CourseUserId courseUserId = new CourseUserId(id, userId);
+					if (roleService.hasCourseUser(courseUserId)) {
+						roleService.deleteCourseUser(courseUserId);
+					}
+				}
+			}
+		}
 	}
 
 	@PostMapping("/delete/{id}")
