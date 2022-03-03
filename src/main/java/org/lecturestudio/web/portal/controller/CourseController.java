@@ -248,6 +248,7 @@ public class CourseController {
 
 		course.setRoomId(RandomStringUtils.randomAlphanumeric(17));
 		course.setDescription(StringUtils.cleanHtml(courseForm.getDescription()));
+		course.setDtype("Course");
 		course.setTitle(courseForm.getTitle());
 		course.setPasscode(courseForm.getPasscode());
 
