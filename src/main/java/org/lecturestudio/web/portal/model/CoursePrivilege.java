@@ -1,6 +1,7 @@
 package org.lecturestudio.web.portal.model;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.Column;
@@ -9,6 +10,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -42,4 +45,15 @@ public class CoursePrivilege {
 
     @ManyToMany(mappedBy = "privileges")
     Set<CourseRole> courseRoles;
+
+    @ManyToOne
+    CoursePrivilege dependsOn;
+
+    @OneToMany(mappedBy = "dependsOn")
+    Set<CoursePrivilege> dependingOnThis;
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }

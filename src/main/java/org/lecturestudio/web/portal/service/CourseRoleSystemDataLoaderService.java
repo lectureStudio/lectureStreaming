@@ -5,8 +5,6 @@ package org.lecturestudio.web.portal.service;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.transaction.Transactional;
-
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -15,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 
 @Service
-public class CourseRoleSystemDataLoader implements ApplicationListener<ContextRefreshedEvent> {
+public class CourseRoleSystemDataLoaderService implements ApplicationListener<ContextRefreshedEvent> {
 
     private final AtomicBoolean done = new AtomicBoolean();
 
@@ -23,10 +21,9 @@ public class CourseRoleSystemDataLoader implements ApplicationListener<ContextRe
     private RoleService roleService;
 
     @Override
-    @Transactional
     public void onApplicationEvent(ContextRefreshedEvent event){
         if (done.compareAndSet(false, true)) {
-            //roleService.loadInitialRoleData();
+            roleService.loadInitialRoleData();
         }
     }
 }

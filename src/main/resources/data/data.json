@@ -17,36 +17,44 @@
         },
         {
             "id": 4,
+            "name": "ALTER_USER_PRIVILEGES_PRIVILEGE",
+            "description": "role.privilege.alterUserPrivileges.description"  
+        },
+        {
+            "id": 5,
             "name": "COURSE_PRESENTER_ACTIONS_PRIVILEGE",
             "description": "role.privilege.presenterActions.description"  
         },
         {
-            "id": 5,
+            "id": 6,
             "name": "COURSE_MESSENGER_READ_PRIVILEGE",
             "description": "role.privilege.messengerRead.description"  
         },
         {
-            "id": 6,
-            "name": "COURSE_MESSENGER_WRITE_PRIVILEGE",
-            "description": "role.privilege.messengerWrite.public.description"
-        },
-        {
             "id": 7,
-            "name": "COURSE_MESSENGER_WRITE_LECTURER_PRIVILEGE",
-            "description": "role.privilege.messengerWrite.lecturer.description"
+            "name": "COURSE_MESSENGER_WRITE_PRIVILEGE",
+            "description": "role.privilege.messengerWrite.public.description",
+            "dependsOn": 6
         },
         {
             "id": 8,
-            "name": "COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE",
-            "description": "role.privilege.messengerWrite.direct.description"
+            "name": "COURSE_MESSENGER_WRITE_LECTURER_PRIVILEGE",
+            "description": "role.privilege.messengerWrite.lecturer.description",
+            "dependsOn": 6
         },
         {
             "id": 9,
+            "name": "COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE",
+            "description": "role.privilege.messengerWrite.direct.description",
+            "dependsOn": 6
+        },
+        {
+            "id": 10,
             "name": "COURSE_QUIZ_PRIVILEGE",
             "description": "role.privilege.quiz.description"
         },
         {
-            "id": 10,
+            "id": 11,
             "name": "COURSE_RAISE_HAND_PRIVILEGE",
             "description": "role.privilege.raiseHand.description"
         }             

@@ -39,11 +39,13 @@
 					<div th:text="#{course.form.passcode.description}" id="pinHelpBlock" class="form-text"></div>
 				</div>
 				<div class="mb-3">
-					<input type="hidden" th:field="*{courseRoles}">
-					<input type="hidden" th:field="*{numOfPrivileges}">
+					<input id="courseRolesInput" type="hidden" th:field="*{courseRoles}">
+					<input id="numOfPrivilegesInput" type="hidden" th:field="*{numOfPrivileges}">
+					<input id="courseRolesSizeInput" type="hidden" th:value="${#lists.size(courseForm.courseRoles)}">
 					<label for="role-accordion" class="form-label" th:text="#{course.form.role.title}"></label>
 					<div id="role-accordion" class="accordion">
 						<div class="accordion-item" th:each="role,idx : ${courseForm.courseRoles}">
+							<input type="hidden" th:value="${role.id}" class="courseRole">
 							<h2 class="accordion-header" th:id="heading + ${role.id}">
 								<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" th:attr="data-bs-target='#collapse' + ${role.id}, aria-expanded=false" aria-controls="collapseOne" th:text="#{${role.nameLink}}"></button>
 							</h2>
@@ -52,9 +54,10 @@
 									<div class="form-check form-switch" th:each="privInd : ${#numbers.sequence(0, courseForm.numOfPrivileges-1)}">
 										<div th:with="i=${((idx.getCount()-1) * courseForm.numOfPrivileges) + privInd}">
 											<div th:with="privSink=${courseForm.privilegeSinks[__${i}__]}">
-												<input type="hidden" th:field="*{privilegeSinks[__${i}__].privilege}">
-												<input class="form-check-input" type="checkbox" th:id="privCheck + ${i}" th:field="*{privilegeSinks[__${i}__].expressed}" th:checked="${privSink.expressed}">
-												<label class="form-check-label" th:for="privCheck + ${i}" th:text="#{${privSink.privilege.descriptionKey}}"></label>
+												<input th:id="${role.name} + Privilege + ${privInd}" th:attr="class='rolePrivilege'+ ${role.id}" type="hidden" th:field="*{privilegeSinks[__${i}__].privilege}">
+												<input th:id="${role.name} + Privilege + ${privInd} + Depends" th:attr="class='privilegeDependency'+ ${role.id}" type="hidden" th:field="*{privilegeSinks[__${i}__].privilege.dependsOn}">
+												<input th:id="${role.name} + PrivilegeCheck + ${privInd}" th:attr="class='form-check-input privilegeCheck' + ${role.id}" type="checkbox" th:field="*{privilegeSinks[__${i}__].expressed}" th:checked="${privSink.expressed}">
+												<label class="form-check-label" th:for="${role.name} + PrivilegeCheck + ${privInd}" th:text="#{${privSink.privilege.descriptionKey}}"></label>
 											</div>
 										</div>
 									</div>
@@ -68,10 +71,12 @@
 					</div>
 				</div>
 				<div class="mb-3">
-					<input type="hidden" th:field="*{personallyPrivilegedUsers}">
+					<input id="personallyPrivilegedUsers" type="hidden" th:field="*{personallyPrivilegedUsers}">
+					<input id="numOfPersonallyPrivilegedUsers" type="hidden" th:value="${#lists.size(courseForm.personallyPrivilegedUsers)}"
 					<label th:text="#{course.form.user.privileges.title}" for="username-accordion" class="form-label"></label>
 					<div id="username-accordion" class="accordion mb-3">
 						<div class="accordion-item" th:each="user,useridx : ${courseForm.personallyPrivilegedUsers}">
+							<input type="hidden" th:value="${user.userId}" class="courseUser">
 							<h2 class="accordion-header d-flex" th:id="UserHeading + ${user.userId}">
 								<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" th:attr="data-bs-target='#UserCollapse' + ${user.userId}, aria-expanded=false" aria-controls="collapseOne" th:text="${user.userId}"></button>
 								<button type="submit" action="action" class="btn btn-outline-danger btn-sm" th:text="#{course.form.remove.user}" th:formaction="${edit} ? @{/course/edit/{id}/removeUser/{userId}(id=${courseForm.id}, userId=${user.userId})} : @{/course/new/removeUser/{userId}(userId=${user.userId})}"></button>
@@ -81,8 +86,9 @@
 									<div class="form-check form-switch" th:each="privInd : ${#numbers.sequence(0, courseForm.numOfPrivileges-1)}">
 										<div th:with="i=${((useridx.getCount()-1 + #lists.size(courseForm.courseRoles)) * courseForm.numOfPrivileges) + privInd}">
 											<div th:with="privSink=${courseForm.privilegeSinks[__${i}__]}">
-												<input type="hidden" th:field="*{privilegeSinks[__${i}__].privilege}">
-												<input class="form-check-input" type="checkbox" th:id="privCheck + ${i}" th:field="*{privilegeSinks[__${i}__].expressed}" th:checked="${privSink.expressed}">
+												<input th:id="userPrivilege + ${privInd}" class="userPrivilege" type="hidden" th:field="*{privilegeSinks[__${i}__].privilege}">
+												<input th:id="userPrivilege + ${privInd} + Depends" th:attr="class='privilegeDependency'+ ${user.userId}" type="hidden" th:field="*{privilegeSinks[__${i}__].privilege.dependsOn}">
+												<input th:attr="class='form-check-input privilegeCheck' + ${user.userId}" type="checkbox" th:id="privCheck + ${i}" th:field="*{privilegeSinks[__${i}__].expressed}" th:checked="${privSink.expressed}">
 												<label class="form-check-label" th:for="privCheck + ${i}" th:text="#{${privSink.privilege.descriptionKey}}"></label>
 											</div>
 										</div>
@@ -120,6 +126,63 @@
 				description.value = quill.root.innerHTML;
 				return true;
 			}
+
+			/*
+			*	Folgend die Logik dafür, dass Checkboxes von
+			*	Privilegien welche von anderen
+			*	Privilegien abhängen deaktiviert werden, wenn 
+			*	die Privilegien von denen Sie abhängen auch deaktiviert sind.
+			*	Für denjenigen der das hier aus irgend einem Grund 
+			*	nochmal nachvollziehen muss:
+			*	Ich wünsche viel Spaß und Vergnügen :*
+			*	VG
+			*	Hendrik Siemund
+			*/
+
+			const courseRoleIds = Array.from(document.querySelectorAll(".courseRole"))
+				.map(roleInput => roleInput.value);
+			const courseUserIds = Array.from(document.querySelectorAll(".courseUser"))
+				.map(userInput => userInput.value);
+
+			const privilegeCheckInputPostFixes = courseRoleIds.concat(courseUserIds);
+
+			for (const postFix of privilegeCheckInputPostFixes) {
+				const privilegeToPrivilegesDependingOnMap = new Map();
+
+				const privilegeCheckboxInput = Array.from(document.querySelectorAll(".privilegeCheck" + postFix));
+				const privilegeDependencies = Array.from(document.querySelectorAll(".privilegeDependency" + postFix))
+					.map(dep => parseInt(dep.value)-1);
+
+				for (const [i,num] of privilegeDependencies.entries()) {
+					if (! isNaN(num)) {
+						var privParent = privilegeToPrivilegesDependingOnMap.get(num);
+						if (privParent) {
+							privParent.push(i);
+						}
+						else {
+							privilegeToPrivilegesDependingOnMap.set(num, [i]);
+						}
+					}
+				}
+				for (let [key, value] of privilegeToPrivilegesDependingOnMap) {
+					if (value.length > 0) {
+						privilegeCheckboxInput[key].addEventListener("input", function() {
+						for (const dependant of value) {
+							const dependantPrivilegeCheckboxInput = privilegeCheckboxInput[dependant];
+							if (!this.checked) {
+								dependantPrivilegeCheckboxInput.checked = this.checked;
+							}
+							dependantPrivilegeCheckboxInput.disabled = !this.checked;
+						}
+						});
+						for (const dependant of value) {
+							privilegeCheckboxInput[dependant].disabled = ! privilegeCheckboxInput[key].checked;
+						}
+					}
+				}
+
+
+			}			
 		</script>
 
 		<style>
