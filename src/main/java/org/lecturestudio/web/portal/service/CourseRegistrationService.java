@@ -18,4 +18,8 @@ public class CourseRegistrationService {
 	public Optional<CourseRegistration> findByCourseAndUserId(Long courseId, String userId) {
 		return registrationRepository.findByCourseAndUserId(courseId, userId);
 	}
+
+	public Optional<CourseRegistration> findByCourse(Long courseId) {
+		return registrationRepository.findByCourse(courseId);
+	}
 }

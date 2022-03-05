@@ -132,7 +132,7 @@ public class CourseService {
 		List<CoursePrivilege> privileges = Streamable.of(this.roleService.getAllPrivilegesOrderByIdAsc())
 			.toList();
 
-		List<CourseUser> personallyPrivilegedCourseUsers = Streamable.of(this.roleService.getAllCourseUsersOfCourse(course))
+		List<CourseUser> personallyPrivilegedCourseUsers = Streamable.of(this.roleService.findCourseUserByCourse(course))
 			.toList();
 
 		List<User> personallyPrivilegedUsers = personallyPrivilegedCourseUsers.stream()

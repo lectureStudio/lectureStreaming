@@ -260,6 +260,15 @@ public class CourseController {
 		course.getRegistrations().add(registration);
 		user.getRegistrations().add(registration);
 
+		courseForm.getPersonallyPrivilegedUsers().add(user);
+
+		List<PrivilegeFormDataSink> ownerDataSinks = Streamable.of(roleService.getAllPrivileges()).toList().stream().map((p) -> {
+			return new PrivilegeFormDataSink(p, true);
+		}).toList();
+
+		courseForm.getPrivilegeSinks().addAll(ownerDataSinks);
+
+
 		courseService.saveCourse(course);
 		userService.saveUser(user);
 		roleService.flushCourseFormRoles(course, courseForm);
@@ -285,6 +294,16 @@ public class CourseController {
 		dbCourse.setTitle(courseForm.getTitle());
 		dbCourse.setDescription(StringUtils.cleanHtml(courseForm.getDescription()));
 		dbCourse.setPasscode(courseForm.getPasscode());
+
+		//Adding the owner to the courseForm manually
+		User owner = registrationService.findByCourse(dbCourse.getId()).get().getUser();
+		courseForm.getPersonallyPrivilegedUsers().add(owner);
+
+		List<PrivilegeFormDataSink> ownerDataSinks = Streamable.of(roleService.getAllPrivileges()).toList().stream().map((p) -> {
+			return new PrivilegeFormDataSink(p, true);
+		}).toList();
+
+		courseForm.getPrivilegeSinks().addAll(ownerDataSinks);
 
 		courseService.saveCourse(dbCourse);
 		roleService.flushCourseFormRoles(dbCourse, courseForm);

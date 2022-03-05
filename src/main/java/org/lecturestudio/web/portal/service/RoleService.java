@@ -4,17 +4,20 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseUser;
@@ -25,20 +28,27 @@ import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.CourseRole;
 import org.lecturestudio.web.portal.model.CourseRoleId;
+import org.lecturestudio.web.portal.model.CourseState;
+import org.lecturestudio.web.portal.model.CourseStateListener;
 import org.lecturestudio.web.portal.model.PrivilegeFormDataSink;
 import org.lecturestudio.web.portal.repository.RoleRepository;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 import org.lecturestudio.web.portal.repository.CourseUserRepository;
 import org.lecturestudio.web.portal.repository.CourseRoleRepository;
 import org.lecturestudio.web.portal.repository.CoursePrivilegeRepository;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Streamable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Service
-public class RoleService {
+public class RoleService implements CourseStateListener, InitializingBean {
     
     @Autowired
     private CoursePrivilegeRepository coursePrivilegeRepository;
@@ -56,9 +66,34 @@ public class RoleService {
     private UserService userService;
 
     @Autowired
+    private CourseService courseService;
+
+    @Autowired
     private CourseRegistrationService courseRegistrationService;
 
+
+    private final Set<CoursePrivilege> coursePrivileges = ConcurrentHashMap.newKeySet();
+
+
+    private final Set<Role> roles = ConcurrentHashMap.newKeySet();
+
+
+    private final ConcurrentHashMap<Long, RoleService.CourseContext> courseContexts = new ConcurrentHashMap<>();
+
+    
     private final String ROLE_DATA_SOURCE = "classpath:data/data.json";
+
+
+
+    @Transactional
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        //Cache the privileges and roles in the sets coursePrivileges and roles
+        coursePrivileges.addAll(Streamable.of(getAllPrivileges()).toSet());
+        roles.addAll(Streamable.of(getAllRoles()).toSet());
+    }
+
+
 
 
 
@@ -77,18 +112,6 @@ public class RoleService {
         return coursePrivilegeRepository.findAllOrderedByIdAsc();
     }
 
-    public CoursePrivilege saveCoursePrivilege(CoursePrivilege privilege) {
-        return coursePrivilegeRepository.save(privilege);
-    }
-
-    public void deleteCoursePrivilege(CoursePrivilege privilege) {
-        coursePrivilegeRepository.delete(privilege);
-    }
-
-    public void deleteCoursePrivilege(Long id) {
-        coursePrivilegeRepository.deleteById(id);
-    }
-
     public boolean hasCoursePrivilege(Long id) {
         return coursePrivilegeRepository.existsById(id);
     }
@@ -96,6 +119,8 @@ public class RoleService {
     public boolean hasCoursePrivilege(CoursePrivilege privilege) {
         return this.hasCoursePrivilege(privilege.getId());
     }
+
+
 
 
 
@@ -118,18 +143,6 @@ public class RoleService {
         return roleRepository.findAllOrderedByIdAsc();
     }
 
-    public Role saveRole(Role role) {
-		return roleRepository.save(role);
-	}
-
-	public void deleteRole(Role role) {
-		roleRepository.delete(role);
-	}
-
-    public void deleteRole(Long id) {
-        roleRepository.deleteById(id);
-    }
-
 	public boolean hasRole(Long id) {
 		return roleRepository.existsById(id);
 	}
@@ -144,10 +157,23 @@ public class RoleService {
 
 
 
+
+
     /*
     *   Service methods for Course Roles
     */
+    @Transactional
     public Optional<CourseRole> findCourseRoleById(CourseRoleId id) {
+        Course course = courseService.findById(id.getCourseId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (isCourseStarted(course)) {
+            CourseContext contextOfCourse = courseContexts.get(course.getId());
+            Optional<CourseRole> optCourseRole = Optional.of(contextOfCourse
+                                            .getCourseRoles()
+                                            .get(id.getRoleId()));
+            return optCourseRole;
+        }
         return courseRoleRepository.findById(id);
     }
 
@@ -156,8 +182,24 @@ public class RoleService {
     }
 
     @Transactional
+    public Set<CourseRole> findCourseRoleByCourse(Course course) {
+        courseService.findById(course.getId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+
+        if (isCourseStarted(course)) {
+            CourseContext contextOfCourse = courseContexts.get(course.getId());
+            return new HashSet<>(contextOfCourse.getCourseRoles().values());
+        }
+        return courseRoleRepository.findByCourseId(course.getId());
+    } 
+
+    @Transactional
     public CourseRole saveCourseRole(CourseRole courseRole) {
-        if (isConsistentWithDependencies(courseRole.getPrivileges())) {
+        Course course = courseService.findById(courseRole.getCourseId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (isConsistentWithPrivilegeDependencies(courseRole.getPrivileges()) && !isCourseStarted(course)) {
             return courseRoleRepository.save(courseRole);
         }
         return null;
@@ -173,38 +215,80 @@ public class RoleService {
         return this.saveCourseRole(courseRole);
     }
 
+    @Transactional
     public void deleteCourseRole(CourseRoleId id) {
-        this.courseRoleRepository.deleteById(id);
+        Course course = courseService.findById(id.getCourseId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (!isCourseStarted(course)) {
+            this.courseRoleRepository.deleteById(id);
+        }
     }
 
+    @Transactional
     public void deleteCourseRole(CourseRole courseRole) {
-        this.courseRoleRepository.deleteById(new CourseRoleId(courseRole.getCourseId(), courseRole.getRoleId()));
+        Course course = courseService.findById(courseRole.getCourseId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (!isCourseStarted(course)) {
+            this.courseRoleRepository.deleteById(new CourseRoleId(courseRole.getCourseId(), courseRole.getRoleId()));
+        }
     }
 
+    @Transactional
     public void deleteCourseRoleByCourse(Long courseId) {
-        courseRoleRepository.deleteCourseRoleByCourseId(courseId);
+        Course course = courseService.findById(courseId)
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (!isCourseStarted(course)) {
+            courseRoleRepository.deleteCourseRoleByCourseId(courseId);
+        }
     }
+
+
 
 
 
     /*
     *   Service methods for Course Users
     */
+    @Transactional
     public Optional<CourseUser> findCourseUserById(CourseUserId id) {
+        Course course = courseService.findById(id.getCourseId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (isCourseStarted(course)) {
+            CourseContext contextOfCourse = courseContexts.get(course.getId());
+            Optional<CourseUser> optCourseUser = Optional.of(contextOfCourse
+                                            .getCourseUsers()
+                                            .get(id.getUserId()));
+            return optCourseUser;
+        }
         return courseUserRepository.findById(id);
+    }
+
+    @Transactional
+    public Set<CourseUser> findCourseUserByCourse(Course course) {
+        courseService.findById(course.getId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (isCourseStarted(course)) {
+            CourseContext contextOfCourse = courseContexts.get(course.getId());
+            return new HashSet<>(contextOfCourse.getCourseUsers().values());
+        }
+        return courseUserRepository.findByCourseId(course.getId());
     }
 
     public Iterable<CourseUser> getAllCourseUsers() {
         return courseUserRepository.findAll();
     }
 
-    public Iterable<CourseUser> getAllCourseUsersOfCourse(Course course) {
-        return courseUserRepository.findByCourseId(course.getId());
-    }
-
     @Transactional
     public CourseUser saveCourseUser(CourseUser courseUser) {
-        if (isConsistentWithDependencies(courseUser.getPrivileges())) {
+        Course course = courseService.findById(courseUser.getCourseId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (isConsistentWithPrivilegeDependencies(courseUser.getPrivileges()) && !isCourseStarted(course)) {
             return courseUserRepository.save(courseUser);
         }
         return null;
@@ -219,64 +303,87 @@ public class RoleService {
         return this.saveCourseUser(courseUser);
     }
 
+    @Transactional
     public void deleteCourseUser(CourseUserId id) {
-        this.courseUserRepository.deleteById(id);
+        Course course = courseService.findById(id.getCourseId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (!isCourseStarted(course)) {
+            this.courseUserRepository.deleteById(id);
+        }
     }
 
+    @Transactional
     public void deleteCourseUser(CourseUser courseUser) {
-        this.courseUserRepository.deleteById(new CourseUserId(courseUser.getCourseId(), courseUser.getUserId()));
+        Course course = courseService.findById(courseUser.getCourseId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (! isCourseStarted(course)) {
+            this.courseUserRepository.deleteById(new CourseUserId(courseUser.getCourseId(), courseUser.getUserId()));
+        }
     }
 
+    @Transactional
     public void deleteCourseUserByCourse(Long courseId) {
-        this.courseUserRepository.deleteCourseUserByCourseId(courseId);
+        Course course = courseService.findById(courseId)
+            .orElseThrow(() -> new CourseNotFoundException());
+        if (!isCourseStarted(course)) {
+            this.courseUserRepository.deleteCourseUserByCourseId(courseId);
+        }
     }
 
-    public void deleteCourseUserByUser(String userId) {
-        this.courseUserRepository.deleteCourseUserByUserId(userId);
-    }
-
+    @Transactional
     public boolean hasCourseUser(CourseUserId courseUserId) {
+        Course course = courseService.findById(courseUserId.getCourseId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        if (isCourseStarted(course)) {
+            return Objects.nonNull(courseContexts.get(course.getId()).getCourseUsers().get(courseUserId.getUserId()));
+        }
         return this.courseUserRepository.existsById(courseUserId);
     }
 
 
 
+
+
     @Transactional
     public void flushCourseFormRoles(Course course, CourseForm courseForm) {
-        int base = 0;
-		List<PrivilegeFormDataSink> dataSinks = courseForm.getPrivilegeSinks();
+        int numOfPrivileges = courseForm.getNumOfPrivileges();
+        Iterator<PrivilegeFormDataSink> iter = courseForm.getPrivilegeSinks().iterator();
+
+        BiConsumer<Iterator<PrivilegeFormDataSink>, Set<CoursePrivilege>> consumePrivilegeDataSink = new BiConsumer<Iterator<PrivilegeFormDataSink>, Set<CoursePrivilege>>() {
+
+            @Override
+            public void accept(Iterator<PrivilegeFormDataSink> iter, Set<CoursePrivilege> coursePrivileges) {
+                for (int i=0; i<numOfPrivileges; ++i) {
+                    if (iter.hasNext()) {
+                        PrivilegeFormDataSink current = iter.next();
+                        if (current.isExpressed()) {
+                            coursePrivileges.add(current.getPrivilege());
+                        }
+                    }
+                    else {
+                        throw new IndexOutOfBoundsException("There is not enough privilege forms for given roles and number of privileges");
+                    }
+                }
+            }
+        };
 
 		for (Role role : courseForm.getCourseRoles()) {
-
 			Set<CoursePrivilege> coursePrivileges = new HashSet<>();
-			for (int i=0; i<courseForm.getNumOfPrivileges(); ++i) {
-				PrivilegeFormDataSink current = dataSinks.get(base + i);
-				if (current.isExpressed()) {
-					coursePrivileges.add(current.getPrivilege());
-				}
-			}
-
+            consumePrivilegeDataSink.accept(iter, coursePrivileges);
 			this.saveCourseRole(course, role, coursePrivileges);
-
-			base += courseForm.getNumOfPrivileges();
 		}
 
         for (User user : courseForm.getPersonallyPrivilegedUsers()) {
-
             Set<CoursePrivilege> coursePrivileges = new HashSet<>();
-			for (int i=0; i<courseForm.getNumOfPrivileges(); ++i) {
-				PrivilegeFormDataSink current = dataSinks.get(base + i);
-				if (current.isExpressed()) {
-					coursePrivileges.add(current.getPrivilege());
-				}
-			}
-
+			consumePrivilegeDataSink.accept(iter, coursePrivileges);
             this.saveCourseUser(course, user, coursePrivileges);
-
-            base += courseForm.getNumOfPrivileges();
         }
- 
     }
+
+
 
 
 
@@ -284,7 +391,7 @@ public class RoleService {
     *   Service methods for loading initial data
     */
     @Transactional
-    public void loadInitialRoleData() {
+    public void loadInitialData() {
         try {
             File data = ResourceUtils.getFile(this.ROLE_DATA_SOURCE);
 
@@ -351,11 +458,11 @@ public class RoleService {
         LectUserDetails userDetails = (LectUserDetails) authentication.getDetails();
         String username = userDetails.getUsername();
 
+        courseService.findById(course.getId())
+            .orElseThrow(() -> new CourseNotFoundException());
+
         User user = userService.findById(username)
             .orElseThrow(() -> new UsernameNotFoundException("User with username " + username + " could not be found!"));
-
-        System.out.println("Checking Authorization for user " + user.getUserId() + ":");
-        System.out.println("Required Privilege: " + privilege.getName());
 
         if (!isCourseOwner(course, user)) {
         
@@ -374,19 +481,39 @@ public class RoleService {
             }
             
             if (! userPrivileges.contains(privilege)) {
-                System.out.println("Authorization REFUSED!");
                 throw new UnauthorizedException("Authorization refused! User " + username + " does not have the required privilege " + privilege.getName());
             }
         }
-        
-        System.out.println("Authorization GRANTED!");
     }
 
     private boolean isCourseOwner(Course course, User user) {
         return courseRegistrationService.findByCourseAndUserId(course.getId(), user.getUserId()).isPresent();
     }
 
-    private boolean isConsistentWithDependencies(Set<CoursePrivilege> coursePrivileges) {
+    @Transactional
+    @Override
+    public void courseStarted(long courseId, CourseState state) {
+        Course course = courseService.findById(courseId)
+            .orElseThrow(() -> new CourseNotFoundException());
+
+        CourseContext courseContext = new CourseContext(course);
+        this.courseContexts.put(courseId, courseContext);
+    }
+
+    @Transactional
+    @Override
+    public void courseEnded(long courseId, CourseState state) {
+        courseService.findById(courseId)
+            .orElseThrow(() -> new CourseNotFoundException());
+        
+        this.courseContexts.remove(courseId);
+    }
+
+    public boolean isCourseStarted(Course course) {
+        return Objects.nonNull(courseContexts.get(course.getId()));
+    }
+
+    private boolean isConsistentWithPrivilegeDependencies(Set<CoursePrivilege> coursePrivileges) {
         for (CoursePrivilege coursePrivilege : coursePrivileges) {
             CoursePrivilege dependsOn = coursePrivilege.getDependsOn();
             if (Objects.nonNull(dependsOn)) {
@@ -396,5 +523,31 @@ public class RoleService {
             }
         }
         return true;
+    }
+
+    @Getter
+    @Setter
+    private class CourseContext {
+
+        private final Course course;
+
+        private final ConcurrentHashMap<Long, CourseRole> courseRoles = new ConcurrentHashMap();
+
+        private final ConcurrentHashMap<String, CourseUser> courseUsers = new ConcurrentHashMap();
+
+        private CourseContext(Course course) {
+            this.course = course;
+
+            Set<CourseRole> courseRoles = findCourseRoleByCourse(course);
+            Set<CourseUser> courseUsers = findCourseUserByCourse(course);
+
+            courseRoles.forEach((courseRole) -> {
+                this.courseRoles.put(courseRole.getCourseId(), courseRole);
+            });
+
+            courseUsers.forEach((courseUser) -> {
+                this.courseUsers.put(courseUser.getUserId(), courseUser);
+            });
+        }
     }
 }

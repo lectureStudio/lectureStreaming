@@ -23,7 +23,7 @@ public class CourseRoleSystemDataLoaderService implements ApplicationListener<Co
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event){
         if (done.compareAndSet(false, true)) {
-            roleService.loadInitialRoleData();
+            roleService.loadInitialData();
         }
     }
 }
