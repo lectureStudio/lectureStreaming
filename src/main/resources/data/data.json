@@ -7,18 +7,20 @@
         },
         {
             "id": 2,
-            "name": "DELETE_COURSE_PRIVILEGE",
-            "description": "role.privilege.deleteCourse.description"  
+            "name": "ALTER_COURSE_ROLES_PRIVILEGE",
+            "description": "role.privilege.alterRoles.description",
+            "dependsOn": 1
         },
         {
             "id": 3,
-            "name": "ALTER_COURSE_ROLES_PRIVILEGE",
-            "description": "role.privilege.alterRoles.description"  
+            "name": "ALTER_USER_PRIVILEGES_PRIVILEGE",
+            "description": "role.privilege.alterUserPrivileges.description",
+            "dependsOn": 1
         },
         {
             "id": 4,
-            "name": "ALTER_USER_PRIVILEGES_PRIVILEGE",
-            "description": "role.privilege.alterUserPrivileges.description"  
+            "name": "DELETE_COURSE_PRIVILEGE",
+            "description": "role.privilege.deleteCourse.description"  
         },
         {
             "id": 5,
