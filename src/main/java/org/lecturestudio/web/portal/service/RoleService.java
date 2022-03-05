@@ -464,25 +464,23 @@ public class RoleService implements CourseStateListener, InitializingBean {
         User user = userService.findById(username)
             .orElseThrow(() -> new UsernameNotFoundException("User with username " + username + " could not be found!"));
 
-        if (!isCourseOwner(course, user)) {
         
-            CourseUserId id = CourseUserId.getIdFrom(course, user);
-            Set<CoursePrivilege> userPrivileges;
-            if (hasCourseUser(id)) {
-                CourseUser courseUser = findCourseUserById(id).get();
-                userPrivileges = courseUser.getPrivileges();
-            }
-            else {
-                Set<Role> userRoles = user.getRoles();
-                userPrivileges = userRoles.stream()
-                    .flatMap(role -> {
-                        return findCourseRoleById(CourseRoleId.getIdFrom(course, role)).get().getPrivileges().stream();
-                    }).collect(Collectors.toCollection(HashSet::new));
-            }
-            
-            if (! userPrivileges.contains(privilege)) {
-                throw new UnauthorizedException("Authorization refused! User " + username + " does not have the required privilege " + privilege.getName());
-            }
+        CourseUserId id = CourseUserId.getIdFrom(course, user);
+        Set<CoursePrivilege> userPrivileges;
+        if (hasCourseUser(id)) {
+            CourseUser courseUser = findCourseUserById(id).get();
+            userPrivileges = courseUser.getPrivileges();
+        }
+        else {
+            Set<Role> userRoles = user.getRoles();
+            userPrivileges = userRoles.stream()
+                .flatMap(role -> {
+                    return findCourseRoleById(CourseRoleId.getIdFrom(course, role)).get().getPrivileges().stream();
+                }).collect(Collectors.toCollection(HashSet::new));
+        }
+        
+        if (! userPrivileges.contains(privilege)) {
+            throw new UnauthorizedException("Authorization refused! User " + username + " does not have the required privilege " + privilege.getName());
         }
     }
 

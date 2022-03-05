@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.validation.Valid;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -105,6 +106,11 @@ public class CourseController {
 		"course.form.user.error.owner",
 		"course.form.user.error.already"
 	);
+
+	@PostConstruct
+	public void postConstruct() {
+		courseStates.addCourseStateListener(roleService);
+	}
 
 
 	@RequestMapping("/{id}")
