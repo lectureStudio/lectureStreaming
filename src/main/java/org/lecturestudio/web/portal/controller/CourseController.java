@@ -296,7 +296,7 @@ public class CourseController {
 		dbCourse.setPasscode(courseForm.getPasscode());
 
 		//Adding the owner to the courseForm manually
-		User owner = registrationService.findByCourse(dbCourse.getId()).get().getUser();
+		User owner = registrationService.findByCourse(dbCourse).get().getUser();
 		courseForm.getPersonallyPrivilegedUsers().add(owner);
 
 		List<PrivilegeFormDataSink> ownerDataSinks = Streamable.of(roleService.getAllPrivileges()).toList().stream().map((p) -> {

@@ -44,6 +44,9 @@ public class CourseService {
 	@Autowired
 	private UserService userService;
 
+	@Autowired
+	private CourseRegistrationService courseRegistrationService;
+
 
 	public Optional<Course> findById(Long id) {
 		return repository.findById(id);
@@ -133,7 +136,9 @@ public class CourseService {
 			.toList();
 
 		List<CourseUser> personallyPrivilegedCourseUsers = Streamable.of(this.roleService.findCourseUserByCourse(course))
-			.toList();
+			.filter((user) -> {
+				return ! courseRegistrationService.findByCourseAndUserId(course.getId(), user.getUserId()).isPresent();
+			}).toList();
 
 		List<User> personallyPrivilegedUsers = personallyPrivilegedCourseUsers.stream()
 			.filter((courseUser) -> {
