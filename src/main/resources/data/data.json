@@ -1,0 +1,81 @@
+{
+    "privileges": [ 
+        {
+            "id": 1,
+            "name": "EDIT_COURSE_PRIVILEGE",
+            "description": "role.privilege.editCourse.description"
+        },
+        {
+            "id": 2,
+            "name": "DELETE_COURSE_PRIVILEGE",
+            "description": "role.privilege.deleteCourse.description"  
+        },
+        {
+            "id": 3,
+            "name": "ALTER_COURSE_ROLES_PRIVILEGE",
+            "description": "role.privilege.alterRoles.description"  
+        },
+        {
+            "id": 4,
+            "name": "ALTER_USER_PRIVILEGES_PRIVILEGE",
+            "description": "role.privilege.alterUserPrivileges.description"  
+        },
+        {
+            "id": 5,
+            "name": "COURSE_PRESENTER_ACTIONS_PRIVILEGE",
+            "description": "role.privilege.presenterActions.description"  
+        },
+        {
+            "id": 6,
+            "name": "COURSE_MESSENGER_READ_PRIVILEGE",
+            "description": "role.privilege.messengerRead.description"  
+        },
+        {
+            "id": 7,
+            "name": "COURSE_MESSENGER_WRITE_PRIVILEGE",
+            "description": "role.privilege.messengerWrite.public.description",
+            "dependsOn": 6
+        },
+        {
+            "id": 8,
+            "name": "COURSE_MESSENGER_WRITE_LECTURER_PRIVILEGE",
+            "description": "role.privilege.messengerWrite.lecturer.description",
+            "dependsOn": 6
+        },
+        {
+            "id": 9,
+            "name": "COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE",
+            "description": "role.privilege.messengerWrite.direct.description",
+            "dependsOn": 6
+        },
+        {
+            "id": 10,
+            "name": "COURSE_QUIZ_PRIVILEGE",
+            "description": "role.privilege.quiz.description"
+        },
+        {
+            "id": 11,
+            "name": "COURSE_RAISE_HAND_PRIVILEGE",
+            "description": "role.privilege.raiseHand.description"
+        }             
+    ],
+
+    "roles": [
+        {
+            "name": "lecturer",
+            "nameLink": "role.lecturer.name"
+        },
+        {
+            "name": "assistant",
+            "nameLink": "role.assistant.name"
+        },
+        {
+            "name": "student",
+            "nameLink": "role.student.name"
+        },
+        {
+            "name": "guest",
+            "nameLink": "role.guest.name"
+        }
+    ]
+}
