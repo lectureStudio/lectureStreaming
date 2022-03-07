@@ -215,8 +215,18 @@ public class CourseController {
 	public String addCourse(Authentication authentication, Model model) {
 		CourseForm courseForm = courseService.getEmptyCourseForm();
 
+		List<String> users = Streamable.of(userService.getAllUsers())
+			.filter((user) -> {
+			return ! user.getUserId().equals(authentication.getName());
+			})
+			.map((user) -> {
+				return user.getUserId();
+			})
+			.toList();
+
 		model.addAttribute("courseForm", courseForm);
 		model.addAttribute("edit", false);
+		model.addAttribute("users", users);
 
 		return "course-form";
 	}
@@ -232,8 +242,18 @@ public class CourseController {
 
 		CourseForm courseForm = courseService.getCourseForm(course);
 
+		List<String> users = Streamable.of(userService.getAllUsers())
+		.filter((user) -> {
+		return ! user.getUserId().equals(authentication.getName());
+		})
+		.map((user) -> {
+			return user.getUserId();
+		})
+		.toList();
+
 		model.addAttribute("courseForm", courseForm);
 		model.addAttribute("edit", true);
+		model.addAttribute("users", users);
 
 		return "course-form";
 	}
@@ -243,7 +263,17 @@ public class CourseController {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
  
 		if (result.hasErrors()) {
+			List<String> users = Streamable.of(userService.getAllUsers())
+			.filter((user) -> {
+			return ! user.getUserId().equals(authentication.getName());
+			})
+			.map((user) -> {
+				return user.getUserId();
+			})
+			.toList();
+
 			model.addAttribute("edit", false);
+			model.addAttribute("users", users);
 
 			return "course-form";
 		}
@@ -290,7 +320,17 @@ public class CourseController {
 		checkAuthorization(id, details);
 
 		if (result.hasErrors()) {
+			List<String> users = Streamable.of(userService.getAllUsers())
+			.filter((user) -> {
+			return ! user.getUserId().equals(authentication.getName());
+			})
+			.map((user) -> {
+				return user.getUserId();
+			})
+			.toList();
+
 			model.addAttribute("edit", true);
+			model.addAttribute("users", users);
 
 			return "course-form";
 		}
@@ -342,6 +382,17 @@ public class CourseController {
 
 		courseForm.setUsername("");
 		model.addAttribute("edit", edit);
+
+		List<String> users = Streamable.of(userService.getAllUsers())
+		.filter((user) -> {
+		return ! user.getUserId().equals(authentication.getName());
+		})
+		.map((user) -> {
+			return user.getUserId();
+		})
+		.toList();
+
+		model.addAttribute("users", users);
 
 		String errorMessageKey = "course.form.user.error.notFound";
 
@@ -395,6 +446,17 @@ public class CourseController {
 		model.addAttribute("edit", edit);
 
 		Optional<User> userToRemoveOpt = userService.findById(userId);
+
+		List<String> users = Streamable.of(userService.getAllUsers())
+		.filter((user) -> {
+		return ! user.getUserId().equals(authentication.getName());
+		})
+		.map((user) -> {
+			return user.getUserId();
+		})
+		.toList();
+
+		model.addAttribute("users", users);
 
 		if (userToRemoveOpt.isPresent()) {
 			User userToRemove = userToRemoveOpt.get();

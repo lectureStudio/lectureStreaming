@@ -16,7 +16,7 @@
 			<div th:text="${edit} ? #{course.form.edit.course} : #{course.form.add.course}"></div>
 		</div>
 		<div class="bg-light border rounded-3 p-4">
-			<form id="course-form" th:action="${edit} ? @{/course/edit/{id}(id=${courseForm.id})} : @{/course/new}" th:object="${courseForm}" method="post">
+			<form autocomplete="off" id="course-form" th:action="${edit} ? @{/course/edit/{id}(id=${courseForm.id})} : @{/course/new}" th:object="${courseForm}" method="post">
 				<input type="hidden" th:field="*{description}" id="course-description">
 				<div class="mb-3">
 					<label th:text="#{course.form.title}" for="title" class="form-label"></label>
@@ -101,6 +101,8 @@
 						<input type="text" th:attr="class=${#fields.hasErrors('username') ? 'form-control is-invalid' : 'form-control'}" id="username" name="username" th:field="*{username}" aria-describedby="add-user-feedback">
 						<button th:text="#{course.form.add.user}" type="submit" name="action" class="btn btn-outline-primary btn-sm" th:formaction="${edit} ? @{/course/edit/{id}/addUser(id=${courseForm.id})} : @{/course/new/addUser}"></button>
 					</div>
+					<div id="username-autocomplete-container" class="dropdown-menu" style="max-height: 200px; overflow: auto; cursor: default">
+					</div>
 					<div id="add-user-feedback" class="form-text text-danger" th:if="${#fields.hasErrors('username')}" th:errors="${courseForm.username}"></div>
 					<div th:text="#{course.form.add.user.description}" id="pinHelpBlock" class="form-text"></div>
 				</div>
@@ -112,9 +114,14 @@
 	</th:block>
 
 	<th:block layout:fragment="optional">
+		<script src="/js/autocomplete.js"></script>
+		<script th:inline="javascript">
+			const users = /*[[${users}]]*/ "";
+		</script>
 		<script>
 			const form = document.getElementById("course-form");
 			const description = document.getElementById("course-description");
+			const addUserInput = document.getElementById("username");
 
 			const quill = new Quill("#description-editor", {
 				theme: "snow"
@@ -126,6 +133,11 @@
 				description.value = quill.root.innerHTML;
 				return true;
 			}
+
+			const usernameAutocompleteContainer = document.getElementById("username-autocomplete-container");
+
+			autocomplete(addUserInput, users, usernameAutocompleteContainer);
+
 
 			/*
 			*	Folgend die Logik dafür, dass Checkboxes von
