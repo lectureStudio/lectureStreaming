@@ -18,13 +18,15 @@ class Course {
 		this.startTime = null;
 		this.dict = null;
 		this.stompClient = null;
+		this.privileges = null;
 	}
 
-	init(userId, courseId, startTime, dict) {
+	init(userId, courseId, startTime, dict, userPrivileges) {
 		this.userId = userId;
 		this.courseId = courseId;
 		this.startTime = startTime;
 		this.dict = dict;
+		this.privileges = userPrivileges;
 		this.loadingContainer = document.getElementById("course-loading");
 		this.unavailableContainer = document.getElementById("course-unavailable");
 		this.contentContainer = document.getElementById("course-content");

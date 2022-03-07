@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
+import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStates;
@@ -17,7 +18,7 @@ import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 import org.lecturestudio.web.portal.service.CourseService;
-
+import org.lecturestudio.web.portal.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
@@ -38,6 +39,9 @@ public class HomeController {
 
 	@Autowired
 	private CourseStates courseStates;
+
+	@Autowired
+	private RoleService roleService;
 
 
 	@RequestMapping("/")
@@ -75,18 +79,11 @@ public class HomeController {
 			List<UserDto> authors = new ArrayList<>();
 			CourseMessageFeature messageFeature = null;
 			CourseQuizFeature quizFeature = null;
-			boolean canDelete = false;
-			boolean canEdit = false;
+			boolean canDelete = true;
+			boolean canEdit = true;
 
 			for (var registration : course.getRegistrations()) {
 				User user = registration.getUser();
-
-				if (user.getUserId().equals(details.getUsername())) {
-					// If user is the author of the registered course.
-					// Extensible: add more fine grained authorization.
-					canDelete = true;
-					canEdit = true;
-				}
 
 				authors.add(UserDto.builder()
 					.familyName(user.getFamilyName())
@@ -110,6 +107,12 @@ public class HomeController {
 				.build().encode().toUri().toString();
 
 			CourseState state = courseStates.getCourseState(course.getId());
+
+			Optional<CoursePrivilege> requiredToEditPrivilege = roleService.findByPrivilegeName("EDIT_COURSE_PRIVILEGE");
+			canEdit = roleService.checkAuthorizationExceptionless(course, authentication, requiredToEditPrivilege.get());
+
+			Optional<CoursePrivilege> requiredToDeletePrivilege = roleService.findByPrivilegeName("DELETE_COURSE_PRIVILEGE");
+			canDelete = roleService.checkAuthorizationExceptionless(course, authentication, requiredToDeletePrivilege.get());
 
 			courses.add(CourseDto.builder()
 				.id(course.getId())

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -102,6 +103,10 @@ public class RoleService implements CourseStateListener, InitializingBean {
     */
     public Optional<CoursePrivilege> findPrivilegeById(Long id) {
         return coursePrivilegeRepository.findById(id);
+    }
+
+    public Optional<CoursePrivilege> findByPrivilegeName(String name) {
+        return coursePrivilegeRepository.findByName(name);
     }
 
     public Iterable<CoursePrivilege> getAllPrivileges() {
@@ -343,50 +348,6 @@ public class RoleService implements CourseStateListener, InitializingBean {
         return this.courseUserRepository.existsById(courseUserId);
     }
 
-
-
-
-
-    @Transactional
-    public void flushCourseFormRoles(Course course, CourseForm courseForm) {
-        int numOfPrivileges = courseForm.getNumOfPrivileges();
-        Iterator<PrivilegeFormDataSink> iter = courseForm.getPrivilegeSinks().iterator();
-
-        BiConsumer<Iterator<PrivilegeFormDataSink>, Set<CoursePrivilege>> consumePrivilegeDataSink = new BiConsumer<Iterator<PrivilegeFormDataSink>, Set<CoursePrivilege>>() {
-
-            @Override
-            public void accept(Iterator<PrivilegeFormDataSink> iter, Set<CoursePrivilege> coursePrivileges) {
-                for (int i=0; i<numOfPrivileges; ++i) {
-                    if (iter.hasNext()) {
-                        PrivilegeFormDataSink current = iter.next();
-                        if (current.isExpressed()) {
-                            coursePrivileges.add(current.getPrivilege());
-                        }
-                    }
-                    else {
-                        throw new IndexOutOfBoundsException("There is not enough privilege forms for given roles and number of privileges");
-                    }
-                }
-            }
-        };
-
-		for (Role role : courseForm.getCourseRoles()) {
-			Set<CoursePrivilege> coursePrivileges = new HashSet<>();
-            consumePrivilegeDataSink.accept(iter, coursePrivileges);
-			this.saveCourseRole(course, role, coursePrivileges);
-		}
-
-        for (User user : courseForm.getPersonallyPrivilegedUsers()) {
-            Set<CoursePrivilege> coursePrivileges = new HashSet<>();
-			consumePrivilegeDataSink.accept(iter, coursePrivileges);
-            this.saveCourseUser(course, user, coursePrivileges);
-        }
-    }
-
-
-
-
-
     /*
     *   Service methods for loading initial data
     */
@@ -412,7 +373,6 @@ public class RoleService implements CourseStateListener, InitializingBean {
                 return privilege;
             }).toList();
 
-            coursePrivilegeRepository.deleteAll();
             coursePrivilegeRepository.saveAll(iterablePrivileges);
 
             for (HashMap<?,?> privMap : (ArrayList<HashMap<?,?>>) privileges) {
@@ -434,10 +394,11 @@ public class RoleService implements CourseStateListener, InitializingBean {
             Iterable<Role> iterableRoles = roles.stream().map(obj -> {
                 HashMap<?, ?> roleMap = (HashMap<?, ?>) obj;
 
+                Long id = Long.valueOf(((Integer) roleMap.get("id")).longValue());
                 String roleName = (String) roleMap.get("name");
                 String roleNameLink = (String) roleMap.get("nameLink");
-
                 Role role = Role.builder()
+                    .id(id)
                     .name(roleName)
                     .nameLink(roleNameLink)
                     .build();
@@ -445,7 +406,6 @@ public class RoleService implements CourseStateListener, InitializingBean {
                 return role;
             }).toList();
 
-            roleRepository.deleteAll();
             roleRepository.saveAll(iterableRoles);
 
         } catch (Exception exc) {
@@ -455,8 +415,13 @@ public class RoleService implements CourseStateListener, InitializingBean {
 
     @Transactional
     public void checkAuthorization(Course course, Authentication authentication, CoursePrivilege privilege) {
-        LectUserDetails userDetails = (LectUserDetails) authentication.getDetails();
-        String username = userDetails.getUsername();
+        if (!checkAuthorizationExceptionless(course, authentication, privilege)) {
+            throw new UnauthorizedException("Authorization refused! User " + authentication.getName() + " does not have the required privilege " + privilege.getName());
+        }
+    }
+
+    public boolean checkAuthorizationExceptionless(Course course, Authentication authentication, CoursePrivilege privilege) {
+        String username = authentication.getName();
 
         courseService.findById(course.getId())
             .orElseThrow(() -> new CourseNotFoundException());
@@ -480,8 +445,10 @@ public class RoleService implements CourseStateListener, InitializingBean {
         }
         
         if (! userPrivileges.contains(privilege)) {
-            throw new UnauthorizedException("Authorization refused! User " + username + " does not have the required privilege " + privilege.getName());
+            return false;
         }
+
+        return true;
     }
 
     private boolean isCourseOwner(Course course, User user) {
@@ -521,6 +488,22 @@ public class RoleService implements CourseStateListener, InitializingBean {
             }
         }
         return true;
+    }
+
+    public Set<CoursePrivilege> getCoursePrivilegesOfUser(Course course, User user) {
+        CourseUserId courseUserId = CourseUserId.getIdFrom(course, user);
+        if (hasCourseUser(courseUserId)) {
+            CourseUser courseUser = findCourseUserById(courseUserId).get();
+            return courseUser.getPrivileges();
+        }
+        Set<CoursePrivilege> userPrivileges;
+        Set<Role> userRoles = user.getRoles();
+        userPrivileges = userRoles.stream()
+            .flatMap(role -> {
+                return findCourseRoleById(CourseRoleId.getIdFrom(course, role)).get().getPrivileges().stream();
+            }).collect(Collectors.toCollection(HashSet::new));
+
+        return userPrivileges;
     }
 
     @Getter

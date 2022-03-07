@@ -38,6 +38,7 @@ import org.lecturestudio.web.portal.model.CourseFeatureEvent;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
+import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseSpeechEvent;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
@@ -47,6 +48,7 @@ import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry;
+import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.SubscriberEmitterService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry.MessengerFeatureUser;
@@ -114,6 +116,9 @@ public class CoursePublisherController {
 	@Autowired
 	private MessengerFeatureUserRegistry messengerFeatureUserRegistry;
 
+	@Autowired
+	private RoleService roleService;
+
 	@PostConstruct
 	private void postConstruct() {
 		messengerFeatureUserRegistry.addUserConnectionListener(new MessengerFeatureUserConnectionListener() {
@@ -167,15 +172,17 @@ public class CoursePublisherController {
 	@GetMapping("/courses")
 	public List<CourseDto> getCourses(Authentication authentication) {
 		List<CourseDto> courses = new ArrayList<>();
-
-		courseService.findAllByUserId(authentication.getName()).forEach(course -> {
-			courses.add(CourseDto.builder()
+		Optional<CoursePrivilege> requiredPrivilege = roleService.findByPrivilegeName("COURSE_PRESENTER_ACTIONS_PRIVILEGE");
+		courseService.getAllCourses().forEach(course -> {
+			if (requiredPrivilege.isPresent() && roleService.checkAuthorizationExceptionless(course, authentication, requiredPrivilege.get())) {
+				courses.add(CourseDto.builder()
 				.id(course.getId())
 				.roomId(course.getRoomId())
 				.title(course.getTitle())
 				.description(course.getDescription())
 				.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
 				.build());
+			}
 		});
 
 		return courses;
