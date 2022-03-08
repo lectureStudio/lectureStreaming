@@ -23,6 +23,7 @@ import javax.validation.Valid;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
+import org.lecturestudio.web.portal.exception.CoursePrivilegeNotFoundException;
 import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseCredentials;
@@ -48,7 +49,7 @@ import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.util.StringUtils;
-
+import org.opensaml.saml2.metadata.AuthnAuthorityDescriptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -111,7 +112,8 @@ public class CourseController {
 		"course.feature.message.destination.lecturer",
 		"course.form.user.error.notFound",
 		"course.form.user.error.owner",
-		"course.form.user.error.already"
+		"course.form.user.error.already",
+		"role.privilege.unauthorized.toast"
 	);
 
 	@PostConstruct
@@ -158,18 +160,6 @@ public class CourseController {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 		CourseState state = courseStates.getCourseState(course.getId());
 
-		User user = userService.findById(details.getUsername()).get();
-
-		LinkedList<CoursePrivilege> userPrivileges = new LinkedList<>(roleService.getCoursePrivilegesOfUser(course, user));
-		List<CoursePrivilegeDto> userPrivilegesDto = userPrivileges.stream().map((privilege) -> {
-			CoursePrivilegeDto dto = CoursePrivilegeDto.builder()
-				.id(privilege.getId())
-				.name(privilege.getName())
-				.descriptionKey(privilege.getDescriptionKey())
-				.build();
-			return dto;	
-		}).toList();
-
 		CourseDto courseDto = CourseDto.builder()
 			.id(course.getId())
 			.userId(details.getUsername())
@@ -182,7 +172,6 @@ public class CourseController {
 			.quizFeature(quizFeature)
 			.isLive(nonNull(state))
 			.isProtected(isProtected)
-			.userPrivileges(userPrivilegesDto)
 			.build();
 
 		model.addAttribute("course", courseDto);
@@ -244,12 +233,13 @@ public class CourseController {
 
 	@RequestMapping("/edit/{id}")
 	public String editCourse(@PathVariable("id") long id, Authentication authentication, Model model) {
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 		Course course = courseService.findById(id)
 				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
 
 		Optional<CoursePrivilege> requiredToEditPrivilege = roleService.findByPrivilegeName("EDIT_COURSE_PRIVILEGE");
 		if (requiredToEditPrivilege.isPresent()) {
-			roleService.checkAuthorization(course, authentication, requiredToEditPrivilege.get());
+			roleService.checkAuthorization(course, details, requiredToEditPrivilege.get());
 		}
 
 		boolean canAlterPrivileges = true;
@@ -257,7 +247,7 @@ public class CourseController {
 		Optional<CoursePrivilege> requiredToAlterCourseRolesPrivilege = roleService.findByPrivilegeName("ALTER_PRIVILEGES_PRIVILEGE");
 		if (requiredToAlterCourseRolesPrivilege.isPresent()) {
 			try {
-				roleService.checkAuthorization(course, authentication, requiredToAlterCourseRolesPrivilege.get());
+				roleService.checkAuthorization(course, details, requiredToAlterCourseRolesPrivilege.get());
 			}
 			catch (UnauthorizedException exc) {
 				canAlterPrivileges = false;
@@ -323,6 +313,7 @@ public class CourseController {
 	@PostMapping("/edit/{id}")
 	public String updateCourse(Authentication authentication, @PathVariable("id") long id, @Valid CourseForm courseForm,
 			BindingResult result, Model model) {
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		Course dbCourse = courseService.findById(id)
 			.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
@@ -330,12 +321,7 @@ public class CourseController {
 
 		Optional<CoursePrivilege> requiredToAlterPrivileges = roleService.findByPrivilegeName("ALTER_COURSE_ROLES_PRIVILEGE");
 		if (requiredToAlterPrivileges.isPresent()) {
-			try {
-				roleService.checkAuthorization(dbCourse, authentication, requiredToAlterPrivileges.get());
-			}
-			catch (UnauthorizedException exc) {
-				canAlterPrivileges = false;
-			}
+			canAlterPrivileges = roleService.isAuthorized(dbCourse, details, requiredToAlterPrivileges.get());
 		}
 
 		if (result.hasErrors()) {
@@ -347,7 +333,7 @@ public class CourseController {
 
 		Optional<CoursePrivilege> requiredToEditPrivilege = roleService.findByPrivilegeName("EDIT_COURSE_PRIVILEGE");
 		if (requiredToEditPrivilege.isPresent()) {
-			roleService.checkAuthorization(dbCourse, authentication, requiredToEditPrivilege.get());
+			roleService.checkAuthorization(dbCourse, details, requiredToEditPrivilege.get());
 		}
 
 		dbCourse.setTitle(courseForm.getTitle());
@@ -416,11 +402,13 @@ public class CourseController {
 		Course course = courseService.findById(id)
 			.orElseThrow(() -> new UnauthorizedException());
 
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
 		courseForm.setId(course.getId());
 
 		Optional<CoursePrivilege> requiredPrivilege = roleService.findByPrivilegeName("ALTER_PRIVILEGES_PRIVILEGE");
 		if (requiredPrivilege.isPresent()) {
-			roleService.checkAuthorization(course, authentication, requiredPrivilege.get());
+			roleService.checkAuthorization(course, details, requiredPrivilege.get());
 		}
 
 		this.addUserToPersonalPrivilegeSelection(authentication, courseForm, result, model, true);
@@ -485,10 +473,12 @@ public class CourseController {
 			BindingResult result, Model model) {
 		Course course = courseService.findById(id)
 			.orElseThrow(() -> new UnauthorizedException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 		
 		Optional<CoursePrivilege> requiredPrivilege = roleService.findByPrivilegeName("ALTER_PRIVILEGES_PRIVILEGE");
 		if (requiredPrivilege.isPresent()) {
-			roleService.checkAuthorization(course, authentication, requiredPrivilege.get());
+			roleService.checkAuthorization(course, details, requiredPrivilege.get());
 		}
  
 		removeUserFromPersonalPrivilegeSelection(authentication, id, userId, courseForm, result, model, true);
@@ -540,7 +530,7 @@ public class CourseController {
 
 		Optional<CoursePrivilege> requiredPrivilege = roleService.findByPrivilegeName("DELETE_COURSE_PRIVILEGE");
 		if (requiredPrivilege.isPresent()) {
-			roleService.checkAuthorization(course, authentication, requiredPrivilege.get());
+			roleService.checkAuthorization(course, details, requiredPrivilege.get());
 		}
 
 		courseService.deleteById(id);
@@ -607,9 +597,16 @@ public class CourseController {
 	}
 
 	@RequestMapping("/quiz/{id}")
-	public String getQuiz(@PathVariable("id") long id, Model model) {
+	public String getQuiz(@PathVariable("id") long id, Model model, Authentication authentication) {
 		Course course = courseService.findById(id)
 				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CoursePrivilege requiredPrivilege = roleService.findByPrivilegeName("COURSE_QUIZ_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		roleService.checkAuthorization(course, details, requiredPrivilege);
 
 		CourseQuizFeature quizFeature = null;
 

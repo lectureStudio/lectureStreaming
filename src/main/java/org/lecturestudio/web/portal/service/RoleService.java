@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.UnauthorizedException;
+import org.lecturestudio.web.portal.keycloak.KeycloakUserDetailsAccount;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseUser;
 import org.lecturestudio.web.portal.model.CourseUserId;
@@ -177,6 +178,7 @@ public class RoleService implements CourseStateListener, InitializingBean {
             Optional<CourseRole> optCourseRole = Optional.of(contextOfCourse
                                             .getCourseRoles()
                                             .get(id.getRoleId()));
+
             return optCourseRole;
         }
         return courseRoleRepository.findById(id);
@@ -414,14 +416,14 @@ public class RoleService implements CourseStateListener, InitializingBean {
     }
 
     @Transactional
-    public void checkAuthorization(Course course, Authentication authentication, CoursePrivilege privilege) {
-        if (!checkAuthorizationExceptionless(course, authentication, privilege)) {
-            throw new UnauthorizedException("Authorization refused! User " + authentication.getName() + " does not have the required privilege " + privilege.getName());
+    public void checkAuthorization(Course course, LectUserDetails details, CoursePrivilege privilege) throws UnauthorizedException {
+        if (!isAuthorized(course, details, privilege)) {
+            throw new UnauthorizedException("Authorization refused! User " + details.getUsername() + " does not have the required privilege " + privilege.getName());
         }
     }
 
-    public boolean checkAuthorizationExceptionless(Course course, Authentication authentication, CoursePrivilege privilege) {
-        String username = authentication.getName();
+    public boolean isAuthorized(Course course, LectUserDetails details, CoursePrivilege privilege) {
+        String username = details.getUsername();
 
         courseService.findById(course.getId())
             .orElseThrow(() -> new CourseNotFoundException());
@@ -443,16 +445,11 @@ public class RoleService implements CourseStateListener, InitializingBean {
                     return findCourseRoleById(CourseRoleId.getIdFrom(course, role)).get().getPrivileges().stream();
                 }).collect(Collectors.toCollection(HashSet::new));
         }
-        
         if (! userPrivileges.contains(privilege)) {
             return false;
         }
 
         return true;
-    }
-
-    private boolean isCourseOwner(Course course, User user) {
-        return courseRegistrationService.findByCourseAndUserId(course.getId(), user.getUserId()).isPresent();
     }
 
     @Transactional
@@ -463,6 +460,7 @@ public class RoleService implements CourseStateListener, InitializingBean {
 
         CourseContext courseContext = new CourseContext(course);
         this.courseContexts.put(courseId, courseContext);
+        System.out.println("Course Started " + courseId);
     }
 
     @Transactional
@@ -472,6 +470,7 @@ public class RoleService implements CourseStateListener, InitializingBean {
             .orElseThrow(() -> new CourseNotFoundException());
         
         this.courseContexts.remove(courseId);
+        System.out.println("Course Ended " + courseId);
     }
 
     public boolean isCourseStarted(Course course) {
@@ -523,7 +522,7 @@ public class RoleService implements CourseStateListener, InitializingBean {
             Set<CourseUser> courseUsers = findCourseUserByCourse(course);
 
             courseRoles.forEach((courseRole) -> {
-                this.courseRoles.put(courseRole.getCourseId(), courseRole);
+                this.courseRoles.put(courseRole.getRoleId(), courseRole);
             });
 
             courseUsers.forEach((courseUser) -> {

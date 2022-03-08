@@ -174,7 +174,7 @@ public class CoursePublisherController {
 		List<CourseDto> courses = new ArrayList<>();
 		Optional<CoursePrivilege> requiredPrivilege = roleService.findByPrivilegeName("COURSE_PRESENTER_ACTIONS_PRIVILEGE");
 		courseService.getAllCourses().forEach(course -> {
-			if (requiredPrivilege.isPresent() && roleService.checkAuthorizationExceptionless(course, authentication, requiredPrivilege.get())) {
+			if (requiredPrivilege.isPresent() && roleService.isAuthorized(course, (LectUserDetails) authentication.getPrincipal(), requiredPrivilege.get())) {
 				courses.add(CourseDto.builder()
 				.id(course.getId())
 				.roomId(course.getRoomId())

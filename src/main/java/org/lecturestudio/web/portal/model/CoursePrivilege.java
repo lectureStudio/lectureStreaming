@@ -56,4 +56,13 @@ public class CoursePrivilege {
     public int hashCode() {
         return Objects.hashCode(id);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof CoursePrivilege) {
+            return ((CoursePrivilege) obj).id.equals(this.id);
+        }
+
+        return false;
+    }
 }

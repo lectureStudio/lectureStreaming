@@ -18,15 +18,13 @@ class Course {
 		this.startTime = null;
 		this.dict = null;
 		this.stompClient = null;
-		this.privileges = null;
 	}
 
-	init(userId, courseId, startTime, dict, userPrivileges) {
+	init(userId, courseId, startTime, dict) {
 		this.userId = userId;
 		this.courseId = courseId;
 		this.startTime = startTime;
 		this.dict = dict;
-		this.privileges = userPrivileges;
 		this.loadingContainer = document.getElementById("course-loading");
 		this.unavailableContainer = document.getElementById("course-unavailable");
 		this.contentContainer = document.getElementById("course-content");
@@ -338,7 +336,12 @@ class Course {
 		}
 	}
 
-	onRaiseHand(raised) {
+	async onRaiseHand(raised) {
+		const authorized = await this.isAuthorized("COURSE_RAISE_HAND_PRIVILEGE");
+		if (! authorized) {
+			return;
+		}
+		console.log("test");
 		if (raised) {
 			this.initSpeech();
 		}
@@ -351,7 +354,12 @@ class Course {
 		}
 	}
 
-	onShowQuiz(show) {
+	async onShowQuiz(show) {
+		const authorized = await this.isAuthorized("COURSE_QUIZ_PRIVILEGE");
+		if (! authorized) {
+			return;
+		}
+
 		if (show) {
 			this.initQuizModal();
 		}
@@ -1072,6 +1080,17 @@ class Course {
 		else {
 			element.classList.add("d-none");
 		}
+	}
+
+	async isAuthorized(privilege) {
+		const response = fetch("/course/privileges/" + this.courseId + "/check/" + privilege, {
+			method: "GET"
+		})
+		if (response.ok) {
+			return true;
+		}
+		this.showToast("toast-warn", "role.privilege.unauthorized.toast");
+		return false;
 	}
 }
 

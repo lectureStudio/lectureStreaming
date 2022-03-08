@@ -107,12 +107,11 @@ public class HomeController {
 				.build().encode().toUri().toString();
 
 			CourseState state = courseStates.getCourseState(course.getId());
-
 			Optional<CoursePrivilege> requiredToEditPrivilege = roleService.findByPrivilegeName("EDIT_COURSE_PRIVILEGE");
-			canEdit = roleService.checkAuthorizationExceptionless(course, authentication, requiredToEditPrivilege.get());
+			canEdit = roleService.isAuthorized(course, details, requiredToEditPrivilege.get());
 
 			Optional<CoursePrivilege> requiredToDeletePrivilege = roleService.findByPrivilegeName("DELETE_COURSE_PRIVILEGE");
-			canDelete = roleService.checkAuthorizationExceptionless(course, authentication, requiredToDeletePrivilege.get());
+			canDelete = roleService.isAuthorized(course, details, requiredToDeletePrivilege.get());
 
 			courses.add(CourseDto.builder()
 				.id(course.getId())
@@ -131,7 +130,6 @@ public class HomeController {
 		});
 
 		model.addAttribute("courses", courses);
-
 		return "home";
 	}
 
