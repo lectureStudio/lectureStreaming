@@ -10,14 +10,14 @@
 	<th:block layout:fragment="content">
 		<div class="d-flex flex-column h-100 bg-light">
 			<div class="d-flex flex-column h-100 w-100">
-				<div th:classappend="${course.isLive ? '' : 'd-none'}" class="d-flex flex-column w-100 justify-content-center align-items-center py-2" id="course-loading">
+				<div th:classappend="${course.isLive ? '' : 'd-none'}" class="d-flex flex-column w-100 justify-content-center align-items-center p-2" id="course-loading">
 					<div class="spinner-grow text-primary" role="status">
 						<span class="visually-hidden">Loading...</span>
 					</div>
 					<span th:text="#{course.loading}" class="py-2"></span>
 				</div>
 
-				<div th:classappend="${course.isLive || course.hasFeatures ? 'd-none' : ''}" class="d-flex flex-column w-100 justify-content-center align-items-center py-2" id="course-unavailable">
+				<div th:classappend="${course.isLive || course.hasFeatures ? 'd-none' : ''}" class="d-flex flex-column w-100 justify-content-center align-items-center p-2" id="course-unavailable">
 					<i class="h1 bi bi-calendar-x text-primary" ></i>
 					<strong th:text="#{course.unavailable}" class="text-muted py-2"></strong>
 				</div>
