@@ -30,15 +30,19 @@
 					<div class="btn-group" role="group">
 						<div th:if="${course.canEdit}" class="list-inline-item">
 							<input type="hidden" th:id="|course-url-${course.id}|" th:value="${course.url}" />
-							<button is="clipboard-copy" class="btn btn-outline-success btn-sm" th:for="|course-url-${course.id}|">
-								[[#{course.copy.url}]]
+							<button is="clipboard-copy" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" th:title="#{course.copy.url}" th:for="|course-url-${course.id}|">
+								<i class="bi bi-clipboard"></i>
 							</button>
 						</div>
 						<form th:if="${course.canEdit}" class="list-inline-item" th:action="@{/course/edit/{id}(id=${course.id})}" method="get">
-							<button th:text="#{course.edit}" class="btn btn-outline-primary btn-sm"></button>
+							<button class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" th:title="#{course.edit}">
+								<i class="bi bi-pencil-square"></i>
+							</button>
 						</form>
 						<form th:if="${course.canDelete}" class="list-inline-item" th:action="@{/course/delete/{id}(id=${course.id})}" method="post">
-							<button th:text="#{course.delete}" class="btn btn-outline-danger btn-sm"></button>
+							<button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" th:title="#{course.delete}">
+								<i class="bi bi-trash3"></i>
+							</button>
 						</form>
 					</div>
 				</div>

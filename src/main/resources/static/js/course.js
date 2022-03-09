@@ -54,6 +54,7 @@ class Course {
 				}
 				if (this.quizElement) {
 					removeAllChildNodes(this.quizContainer);
+					this.quizContainer.classList.add("d-none");
 	
 					const submitButton = this.quizElement.querySelector("#quizSubmit");
 					submitButton.classList.add("d-none");
@@ -125,6 +126,7 @@ class Course {
 				}
 				else {
 					removeAllChildNodes(this.messengerContainer);
+					this.messengerContainer.classList.add("d-none");
 				}
 
 				this.messengerElement = null;
@@ -149,27 +151,43 @@ class Course {
 				}
 
 				removeAllChildNodes(this.quizContainer);
+				this.quizContainer.classList.add("d-none");
 
 				this.quizElement = null;
 				this.unavailableVisible(true);
 			}
 		});
-
-		const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-		tooltipTriggerList.map(function (tooltipTriggerEl) {
-			return new bootstrap.Tooltip(tooltipTriggerEl)
+		window.addEventListener("unload", () => {
+			this.cancelSpeech();
 		});
+		window.onbeforeunload = () => {
+			this.cancelSpeech();
+			return null;
+		}
 
 		if (isRecorded) {
 			this.courseRecordedModal.show();
 		}
 	}
 
+	showFeatures(show) {
+		const featureContainer = document.getElementById("course-feature-container");
+
+		if (show) {
+			featureContainer.classList.remove("d-none");
+		}
+		else {
+			featureContainer.classList.add("d-none");
+		}
+	}
+
 	initPlayer() {
 		const mediaProfile = localStorage.getItem("media.profile");
 
-		if (mediaProfile === "home") {
+		if (mediaProfile === "classroom") {
 			this.loadingVisible(false);
+
+			this.showFeatures(true);
 			return;
 		}
 
@@ -215,17 +233,40 @@ class Course {
 	detachFeaturesFromPlayer() {
 		if (this.messengerElement) {
 			this.messengerContainer.appendChild(this.messengerElement);
+			this.messengerContainer.classList.remove("d-none");
 		}
 		if (this.quizElement) {
 			const submitButton = this.quizElement.querySelector("#quizSubmit");
 			submitButton.classList.remove("d-none");
 
 			this.quizContainer.appendChild(this.quizElement);
+			this.quizContainer.classList.remove("d-none");
 		}
 	}
 
 	onPlayerConnectedState(connected) {
 		if (connected) {
+			this.showFeatures(false);
+
+			const playerContainer = document.getElementById("playerContainer");
+			const speechDeviceModal = document.getElementById("speechDeviceModal");
+			const speechAcceptedModal = document.getElementById("speechAcceptedModal");
+			const deviceModal = document.getElementById("deviceModal");
+			const deviceModalInit = document.getElementById("deviceModalInit");
+			const deviceModalPermission = document.getElementById("deviceModalPermission");
+			const quizModal = document.getElementById("quizModal");
+			const recordedModal = document.getElementById("recordedModal");
+			const toastContainer = document.getElementById("toast-container");
+
+			playerContainer.appendChild(speechDeviceModal);
+			playerContainer.appendChild(speechAcceptedModal);
+			playerContainer.appendChild(deviceModal);
+			playerContainer.appendChild(deviceModalInit);
+			playerContainer.appendChild(deviceModalPermission);
+			playerContainer.appendChild(quizModal);
+			playerContainer.appendChild(recordedModal);
+			playerContainer.appendChild(toastContainer);
+
 			if (this.messengerElement) {
 				this.player.setContainerA(this.messengerElement);
 			}
@@ -324,7 +365,9 @@ class Course {
 
 	cancelSpeech() {
 		if (!this.speechRequestId) {
-			this.player.setRaiseHand(false);
+			if (this.player) {
+				this.player.setRaiseHand(false);
+			}
 			return;
 		}
 
@@ -351,10 +394,6 @@ class Course {
 		.catch(error => console.error(error));
 	}
 
-	cancelSpeechRequest() {
-		
-	}
-
 	loadMessenger() {
 		fetch("/course/messenger/" + this.courseId, {
 			method: "GET",
@@ -377,6 +416,7 @@ class Course {
 				}
 				else {
 					this.messengerContainer.appendChild(this.messengerElement);
+					this.messengerContainer.classList.remove("d-none");
 				}
 
 				this.initMessenger();
@@ -495,6 +535,7 @@ class Course {
 		}
 		else {
 			this.quizContainer.appendChild(this.quizElement);
+			this.quizContainer.classList.remove("d-none");
 		}
 	}
 
@@ -803,7 +844,7 @@ class Course {
 		});
 
 		const cancelHandler = () => {
-			this.cancelSpeech();
+			
 		};
 		const saveHandler = () => {
 			const data = new FormData(deviceForm);

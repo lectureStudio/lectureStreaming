@@ -13,7 +13,6 @@
 	<link rel="stylesheet" href="/css/index.css">
 
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-	<script src="/js/portal.js"></script>
 
 	<title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">lectureStreaming</title>
 </head>
@@ -59,23 +58,28 @@
 		</div>
 	</nav>
 
-	<div class="container h-100 g-0 p-3">
-		<section layout:fragment="content">
-			<p>This is filled by the content template.</p>
-		</section>
-	</div>
-	<footer th:fragment="footer" class="theme-footer mt-auto">
-		<div class="pb-2">
-			<a th:href="@{/contact}" th:text="#{index.contact}" class="link-primary px-2"></a>
-			<a th:href="@{/imprint}" th:text="#{index.imprint}" class="link-primary px-2"></a>
-			<a th:href="@{/privacy}" th:text="#{index.privacy.policy}" class="link-primary px-2"></a>
-			<a th:href="@{/manual/de/index.html}" target="_blank" th:text="#{index.manual}" class="link-primary px-2"></a>
+	<div class="d-flex flex-column h-100 g-0 pt-3">
+		<div class="container col-md-8 pb-3 px-1">
+			<section layout:fragment="content">
+				<p>This is filled by the content template.</p>
+			</section>
 		</div>
-		<p th:text="|&copy; 2022 ${appName}|"></p>
-		<p th:text="|Version ${appVersion}|"></p>
-	</footer>
+
+		<footer th:fragment="footer" class="theme-footer mt-auto">
+			<div class="pb-2">
+				<a th:href="@{/contact}" th:text="#{index.contact}" class="link-primary px-2"></a>
+				<a th:href="@{/imprint}" th:text="#{index.imprint}" class="link-primary px-2"></a>
+				<a th:href="@{/privacy}" th:text="#{index.privacy.policy}" class="link-primary px-2"></a>
+				<a th:href="@{/manual/de/index.html}" target="_blank" th:text="#{index.manual}" class="link-primary px-2"></a>
+			</div>
+			<p th:text="|&copy; 2022 ${appName}|"></p>
+			<p th:text="|Version ${appVersion}|"></p>
+		</footer>
+	</div>
 
 	<th:block layout:fragment="optional" />
+
+	<script src="/js/portal.js"></script>
 </body>
 
 </html>

@@ -29,6 +29,11 @@ html, body {
 	margin-bottom: 0.5em;
 }
 
+.disabled-content {
+	pointer-events: none;
+	opacity: 0.4;
+}
+
 .overlay-link {
 	position: absolute;
 	left: 0;
@@ -49,6 +54,14 @@ html, body {
 
 .shrink {
 	height: 3px;
+}
+
+#messenger-content #flush-chat-heading {
+	display: none !important;
+}
+
+.playerContainer #flush-chat-heading {
+	display: flex;
 }
 
 .message-header {

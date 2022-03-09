@@ -78,8 +78,6 @@ function initTabs() {
 	});
 	devicesTab.addEventListener("hidden.bs.tab", function () {
 		if (deviceStream) {
-			console.log("stopMediaTracks");
-
 			window.stopMediaTracks(deviceStream);
 
 			deviceStream = null;
@@ -301,6 +299,8 @@ function initDevices() {
 				})
 				.catch(error => {
 					console.error(error);
+
+					showDevicePermissionDeniedModal();
 				});
 		}
 		else {
@@ -310,9 +310,31 @@ function initDevices() {
 				})
 				.catch(error => {
 					console.error(error);
+
+					showDevicePermissionDeniedModal();
 				});
 		}
 	});
+}
+
+function showDevicePermissionDeniedModal() {
+	const deviceContainer = document.getElementById("devices");
+	deviceContainer.classList.add("disabled-content");
+
+	const deviceModalElement = document.getElementById("deviceModalPermission");
+	const deviceModal = bootstrap.Modal.getOrCreateInstance(deviceModalElement, {
+		backdrop: "static",
+		keyboard: false
+	});
+
+	const hiddenHandler = () => {
+		deviceModalElement.removeEventListener("hidden.bs.modal", hiddenHandler);
+		deviceModal.dispose();
+	};
+
+	deviceModalElement.addEventListener("hidden.bs.modal", hiddenHandler);
+
+	deviceModal.show();
 }
 
 initTabs();

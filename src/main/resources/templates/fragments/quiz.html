@@ -26,8 +26,11 @@
 			</th:block>
 		</div>
 		
-		<div class="col-auto">
-			<button th:text="#{course.feature.message.send}" type="submit" class="btn btn-outline-primary btn-sm" id="quizSubmit"></button>
+		<div class="col-auto d-flex justify-content-end">
+			<button type="submit" class="btn btn-outline-primary btn-sm" id="quizSubmit">
+				<i class="bi bi-send"></i>
+				<span th:text="#{course.feature.message.send}"></span>
+			</button>
 		</div>
 	</form>
 </div>

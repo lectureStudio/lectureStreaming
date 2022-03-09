@@ -8,7 +8,7 @@
 
 <body>
 	<th:block layout:fragment="content">
-		<div class="d-flex flex-column h-100 bg-light p-2">
+		<div class="d-flex flex-column h-100 bg-light">
 			<div class="d-flex flex-column h-100 w-100">
 				<div th:classappend="${course.isLive ? '' : 'd-none'}" class="d-flex flex-column w-100 justify-content-center align-items-center py-2" id="course-loading">
 					<div class="spinner-grow text-primary" role="status">
@@ -50,8 +50,10 @@
 
 				<div id="course-content" class="invisible d-flex flex-column"></div>
 
-				<div id="messenger-content" class="messenger-content"></div>
-				<div id="quiz-content"></div>
+				<div id="course-feature-container" class="container col-md-6">
+					<div id="messenger-content" class="d-none bg-white border rounded-2 mt-2 p-3 pt-0 messenger-content"></div>
+					<div id="quiz-content" class="d-none bg-white border rounded-2 mt-2 p-3 pt-0"></div>
+				</div>
 			</div>
 		</div>
 
@@ -154,22 +156,6 @@
 				</div>
 			</div>
 		</div>
-		<div aria-live="polite" aria-atomic="true" class="d-flex position-absolute top-0 start-50 translate-middle-x" style="z-index: 1090">
-			<div class="toast-container">
-				<div id="toast-success" class="toast align-items-center text-white bg-success hide" role="alert" aria-live="assertive" aria-atomic="true">
-					<div class="d-flex">
-						<div class="toast-body"></div>
-						<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" th:attr="aria-label=#{toast.close}"></button>
-					</div>
-				</div>
-				<div id="toast-warn" class="toast align-items-center bg-warning hide" role="alert" aria-live="assertive" aria-atomic="true">
-					<div class="d-flex">
-						<div class="toast-body"></div>
-						<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" th:attr="aria-label=#{toast.close}"></button>
-					</div>
-				</div>
-			</div>
-		</div>
 		<div class="modal fade" id="quizModal" aria-hidden="true" aria-labelledby="quizModalLabel" tabindex="-1">
 			<div class="modal-dialog">
 				<div class="modal-content">
@@ -194,6 +180,22 @@
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-outline-primary btn-sm" data-bs-dismiss="modal" th:text="#{course.recorded.modal.accept}"></button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="toast-container" aria-live="polite" aria-atomic="true" class="d-flex position-absolute top-0 start-50 translate-middle-x" style="z-index: 1090">
+			<div class="toast-container">
+				<div id="toast-success" class="toast align-items-center text-white bg-success hide" role="alert" aria-live="assertive" aria-atomic="true">
+					<div class="d-flex">
+						<div class="toast-body"></div>
+						<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" th:attr="aria-label=#{toast.close}"></button>
+					</div>
+				</div>
+				<div id="toast-warn" class="toast align-items-center bg-warning hide" role="alert" aria-live="assertive" aria-atomic="true">
+					<div class="d-flex">
+						<div class="toast-body"></div>
+						<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" th:attr="aria-label=#{toast.close}"></button>
 					</div>
 				</div>
 			</div>

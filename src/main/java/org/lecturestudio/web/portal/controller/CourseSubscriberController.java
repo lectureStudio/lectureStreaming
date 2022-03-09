@@ -224,6 +224,8 @@ public class CourseSubscriberController {
 			@PathVariable("requestId") long requestId, Authentication authentication) {
 		CourseState courseState = courseStates.getCourseState(courseId);
 
+System.out.println("cancel speech");
+
 		if (isNull(courseState)) {
 			throw new CourseNotFoundException();
 		}
