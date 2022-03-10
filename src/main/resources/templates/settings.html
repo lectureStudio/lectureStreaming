@@ -136,24 +136,24 @@
 												aria-label=".form-select-sm speaker">
 											</select>
 										</div>
-										<div class="mb-3">
-											<div class="card">
-												<div class="card-header" th:text="#{devices.audio.rec.test}"></div>
-												<div class="card-body pt-0 px-3">
-													<small class="d-block form-text text-muted" th:text="#{devices.audio.rec.test.description}"></small>
-													<button type="button" class="btn btn-outline-primary btn-sm mt-2" id="record-start">
-														<i class="bi bi-record-fill"></i>
-														<span th:text="#{devices.audio.rec.test.start}"></span>
-													</button>
-													<button type="button" class="btn btn-danger btn-sm mt-2" id="record-stop" style="display:none;">
-														<i class="bi bi-stop-fill"></i>
-														<span th:text="#{devices.audio.rec.test.stop}"></span>
-													</button>
-													<section id="sound-clips"></section>
-												</div>
+									</form>
+									<div class="mb-3">
+										<div class="card">
+											<div class="card-header" th:text="#{devices.audio.rec.test}"></div>
+											<div class="card-body pt-0 px-3">
+												<small class="d-block form-text text-muted" th:text="#{devices.audio.rec.test.description}"></small>
+												<button type="button" class="btn btn-outline-primary btn-sm mt-2" id="record-start">
+													<i class="bi bi-record-fill"></i>
+													<span th:text="#{devices.audio.rec.test.start}"></span>
+												</button>
+												<button type="button" class="btn btn-danger btn-sm mt-2" id="record-stop" style="display:none;">
+													<i class="bi bi-stop-fill"></i>
+													<span th:text="#{devices.audio.rec.test.stop}"></span>
+												</button>
+												<section id="sound-clips" class="mt-2"></section>
 											</div>
 										</div>
-									</form>
+									</div>
 								</div>
 							</div>
 							<div class="row pb-3">

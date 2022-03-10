@@ -34,37 +34,70 @@ function initMediaRecorder(stream) {
 		const soundClips = document.querySelector('#sound-clips');
 		const clipContainer = document.createElement('article');
 		const audio = document.createElement('audio');
+		const playButton = document.createElement('button');
 		const deleteButton = document.createElement('button');
 
-		audio.setAttribute('controls', '');
-		audio.classList.add('flex-grow-1');
-		audio.style.borderRadius = '5px';
+		const progress = document.createElement('div');
+		progress.classList.add('progress', 'mx-2', 'w-100');
+		progress.style.height = "10px";
 
-		deleteButton.innerHTML = '<i class="bi bi-trash"></i>'
-		deleteButton.className = 'btn btn-danger btn-block';
-		deleteButton.style.marginLeft = '10px';
+		const progressBar = document.createElement('div');
+		progressBar.classList.add('progress-bar');
+		progressBar.setAttribute("role", "progressbar");
+		progressBar.setAttribute("aria-valuenow", "0");
+		progressBar.setAttribute("aria-valuemin", "0");
+		progressBar.setAttribute("aria-valuemax", "100");
 
-		clipContainer.classList.add('clip');
-		clipContainer.classList.add('d-flex', 'bd-highlight');
-		clipContainer.style.marginTop = '10px';
+		progress.appendChild(progressBar);
+
+		audio.controls = false;
+
+		playButton.innerHTML = '<i class="bi bi-play-fill"></i>';
+		playButton.className = 'btn btn-outline-success btn-block';
+
+		deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
+		deleteButton.className = 'btn btn-outline-danger btn-block';
+
+		clipContainer.classList.add('d-flex', 'flex-row', 'bd-highlight', 'py-1');
+		clipContainer.style.alignItems = 'center';
 
 		clipContainer.appendChild(audio);
+		clipContainer.appendChild(playButton);
+		clipContainer.appendChild(progress);
 		clipContainer.appendChild(deleteButton);
 		soundClips.appendChild(clipContainer);
 
 		const blob = new Blob(chunks, { 'type': 'audio/ogg; codecs=opus' });
 		chunks = [];
 
-		audio.addEventListener("play", function () {
+		audio.addEventListener("play", () => {
 			window.setAudioSink(audio, speakerSelect.value);
 		});
-		audio.controls = true;
+		audio.addEventListener("timeupdate", () => {
+			const value = audio.currentTime / audio.duration * 100;
+
+			// progressBar.setAttribute("aria-valuenow", value);
+			progressBar.style.width = value + "%";
+		});
+		audio.addEventListener("ended", () => {
+			playButton.innerHTML = '<i class="bi bi-play-fill"></i>';
+		});
 		audio.src = window.URL.createObjectURL(blob);
 
+		playButton.onclick = function (e) {
+			audio.paused ? audio.play() : audio.pause();
+
+			if (audio.paused) {
+				playButton.innerHTML = '<i class="bi bi-play-fill"></i>';
+			}
+			else {
+				playButton.innerHTML = '<i class="bi bi-pause-fill"></i>';
+			}
+		}
 		deleteButton.onclick = function (e) {
+			audio.pause();
 			soundClips.removeChild(clipContainer);
 		}
-
 	}
 	mediaRecorder.ondataavailable = function (e) {
 		chunks.push(e.data);
