@@ -22,7 +22,7 @@
 					<strong th:text="#{course.unavailable}" class="text-muted py-2"></strong>
 				</div>
 
-				<div class="alert alert-info mt-4 d-none" id="connection-info" role="alert">
+				<div class="container col-md-6 px-1 alert alert-info mt-4 d-none" id="connection-info" role="alert">
 					<div>
 						<p th:text="#{course.connection.unavailable.text}"></p>
 					</div>
@@ -50,152 +50,154 @@
 
 				<div id="course-content" class="invisible d-flex flex-column"></div>
 
-				<div id="course-feature-container" class="container col-md-6">
+				<div id="course-feature-container" class="container col-md-6 px-1">
 					<div id="messenger-content" class="d-none bg-white border rounded-2 mt-2 p-3 pt-0 messenger-content"></div>
 					<div id="quiz-content" class="d-none bg-white border rounded-2 mt-2 p-3 pt-0"></div>
 				</div>
 			</div>
 		</div>
 
-		<div class="modal fade" id="deviceModalInit" aria-hidden="true" aria-labelledby="deviceModalInitLabel" tabindex="-1">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 th:text="#{devices.settings}" class="modal-title" id="deviceModalInitLabel"></h5>
+		<div id="modals">
+			<div class="modal fade" id="deviceModalInit" aria-hidden="true" aria-labelledby="deviceModalInitLabel" tabindex="-1">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 th:text="#{devices.settings}" class="modal-title" id="deviceModalInitLabel"></h5>
+						</div>
+						<div class="modal-body">
+							<form id="deviceSelectInitForm">
+								<div class="mb-3">
+									<label th:text="#{devices.audio.input.init}" class="form-label"></label>
+								</div>
+								<div class="mb-3">
+									<div class="form-check">
+										<input name="video" class="form-check-input" type="checkbox" value="true" id="cameraCheck">
+										<label th:text="#{devices.camera.activate}" class="form-check-label" for="cameraCheck"></label>
+									</div>
+								</div>
+								<div class="mb-3">
+									<label th:text="#{devices.init.once}" class="form-label text-muted"></label>
+								</div>
+							</form>
+						</div>
+						<div class="modal-footer">
+							<button th:text="#{devices.cancel}" type="button" id="deviceInitCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
+							<button th:text="#{devices.next}" type="button" id="nextDeviceSelection" class="btn btn-primary btn-sm"></button>
+						</div>
 					</div>
-					<div class="modal-body">
-						<form id="deviceSelectInitForm">
+				</div>
+			</div>
+			<div class="modal fade" id="speechDeviceModal" aria-hidden="true" aria-labelledby="deviceModalInitLabel" tabindex="-1">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 th:text="#{devices.settings}" class="modal-title" id="deviceModalLabel"></h5>
+						</div>
+						<div class="modal-body">
+						</div>
+						<div class="modal-footer">
+							<button th:text="#{devices.cancel}" type="button" id="deviceSaveCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
+							<button th:text="#{course.speech.request.start}" type="button" id="saveDeviceSelection" class="btn btn-primary btn-sm"></button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal fade" id="deviceModal" aria-hidden="true" aria-labelledby="deviceModalInitLabel" tabindex="-1">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 th:text="#{devices.settings}" class="modal-title" id="deviceModalLabel"></h5>
+						</div>
+						<div class="modal-body">
+						</div>
+						<div class="modal-footer">
+							<button th:text="#{devices.cancel}" type="button" id="deviceSaveCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
+							<button th:text="#{devices.save.changes}" type="button" id="saveDeviceSelection" class="btn btn-primary btn-sm"></button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal fade" id="deviceModalPermission" aria-hidden="true" aria-labelledby="deviceModalPermissionLabel" tabindex="-1">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 th:text="#{devices.permission.required}" class="modal-title" id="deviceModalPermissionLabel"></h5>
+						</div>
+						<div class="modal-body">
 							<div class="mb-3">
-								<label th:text="#{devices.audio.input.init}" class="form-label"></label>
+								<label th:text="#{devices.permission}" class="form-label"></label>
 							</div>
+						</div>
+						<div class="modal-footer">
+							<button th:text="#{devices.close}" type="button" id="devicePermissionCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal fade" id="speechAcceptedModal" aria-hidden="true" aria-labelledby="speechAcceptedModalLabel" tabindex="-1">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 th:text="#{course.speech.request.accepted}" class="modal-title" id="speechAcceptedModalLabel"></h5>
+						</div>
+						<div class="modal-body">
 							<div class="mb-3">
-								<div class="form-check">
-									<input name="video" class="form-check-input" type="checkbox" value="true" id="cameraCheck">
-									<label th:text="#{devices.camera.activate}" class="form-check-label" for="cameraCheck"></label>
+								<label th:text="#{course.speech.request.accepted.description}" class="form-label"></label>
+	
+								<div class="row alert alert-warning m-2 d-none" id="cameraBlockedModalAlert" role="alert">
+									<span th:text="#{devices.camera.blocked}"></span>
+									<span th:text="#{course.speech.request.without.camera}"></span>
 								</div>
 							</div>
-							<div class="mb-3">
-								<label th:text="#{devices.init.once}" class="form-label text-muted"></label>
-							</div>
-						</form>
-					</div>
-					<div class="modal-footer">
-						<button th:text="#{devices.cancel}" type="button" id="deviceInitCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
-						<button th:text="#{devices.next}" type="button" id="nextDeviceSelection" class="btn btn-primary btn-sm"></button>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="modal fade" id="speechDeviceModal" aria-hidden="true" aria-labelledby="deviceModalInitLabel" tabindex="-1">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 th:text="#{devices.settings}" class="modal-title" id="deviceModalLabel"></h5>
-					</div>
-					<div class="modal-body">
-					</div>
-					<div class="modal-footer">
-						<button th:text="#{devices.cancel}" type="button" id="deviceSaveCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
-						<button th:text="#{course.speech.request.start}" type="button" id="saveDeviceSelection" class="btn btn-primary btn-sm"></button>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="modal fade" id="deviceModal" aria-hidden="true" aria-labelledby="deviceModalInitLabel" tabindex="-1">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 th:text="#{devices.settings}" class="modal-title" id="deviceModalLabel"></h5>
-					</div>
-					<div class="modal-body">
-					</div>
-					<div class="modal-footer">
-						<button th:text="#{devices.cancel}" type="button" id="deviceSaveCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
-						<button th:text="#{devices.save.changes}" type="button" id="saveDeviceSelection" class="btn btn-primary btn-sm"></button>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="modal fade" id="deviceModalPermission" aria-hidden="true" aria-labelledby="deviceModalPermissionLabel" tabindex="-1">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 th:text="#{devices.permission.required}" class="modal-title" id="deviceModalPermissionLabel"></h5>
-					</div>
-					<div class="modal-body">
-						<div class="mb-3">
-							<label th:text="#{devices.permission}" class="form-label"></label>
+						</div>
+						<div class="modal-footer">
+							<button th:text="#{course.speech.request.cancel}" type="button" id="speechRequestCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
+							<button th:text="#{course.speech.request.start}" type="button" id="speechRequestStart" class="btn btn-primary btn-sm" data-bs-dismiss="modal"></button>
 						</div>
 					</div>
-					<div class="modal-footer">
-						<button th:text="#{devices.close}" type="button" id="devicePermissionCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
-					</div>
 				</div>
 			</div>
-		</div>
-		<div class="modal fade" id="speechAcceptedModal" aria-hidden="true" aria-labelledby="speechAcceptedModalLabel" tabindex="-1">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 th:text="#{course.speech.request.accepted}" class="modal-title" id="speechAcceptedModalLabel"></h5>
-					</div>
-					<div class="modal-body">
-						<div class="mb-3">
-							<label th:text="#{course.speech.request.accepted.description}" class="form-label"></label>
-
-							<div class="row alert alert-warning m-2 d-none" id="cameraBlockedModalAlert" role="alert">
-								<span th:text="#{devices.camera.blocked}"></span>
-								<span th:text="#{course.speech.request.without.camera}"></span>
-							</div>
+			<div class="modal fade" id="quizModal" aria-hidden="true" aria-labelledby="quizModalLabel" tabindex="-1">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-body" id="quizModalContent">
+							
+						</div>
+						<div class="modal-footer">
+							<button th:text="#{course.feature.close}" type="button" id="quizModalCancel" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"></button>
+							<button th:text="#{course.feature.message.send}" type="submit" id="submitAnswer" form="course-quiz-form" class="btn btn-outline-primary btn-sm" data-bs-dismiss="modal"></button>
 						</div>
 					</div>
-					<div class="modal-footer">
-						<button th:text="#{course.speech.request.cancel}" type="button" id="speechRequestCancel" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"></button>
-						<button th:text="#{course.speech.request.start}" type="button" id="speechRequestStart" class="btn btn-primary btn-sm" data-bs-dismiss="modal"></button>
+				</div>
+			</div>
+			<div class="modal fade" id="recordedModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
+				<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 class="modal-title" id="staticBackdropLabel" th:text="#{course.recorded.modal.title}"></h5>
+						</div>
+						<div class="modal-body">
+							<span th:text="#{course.recorded.modal.message}"></span>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline-primary btn-sm" data-bs-dismiss="modal" th:text="#{course.recorded.modal.accept}"></button>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-		<div class="modal fade" id="quizModal" aria-hidden="true" aria-labelledby="quizModalLabel" tabindex="-1">
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-body" id="quizModalContent">
-						
+			<div id="toast-container" aria-live="polite" aria-atomic="true" class="d-flex position-absolute top-0 start-50 translate-middle-x" style="z-index: 1090">
+				<div class="toast-container">
+					<div id="toast-success" class="toast align-items-center text-white bg-success hide" role="alert" aria-live="assertive" aria-atomic="true">
+						<div class="d-flex">
+							<div class="toast-body"></div>
+							<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" th:attr="aria-label=#{toast.close}"></button>
+						</div>
 					</div>
-					<div class="modal-footer">
-						<button th:text="#{course.feature.close}" type="button" id="quizModalCancel" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"></button>
-						<button th:text="#{course.feature.message.send}" type="submit" id="submitAnswer" form="course-quiz-form" class="btn btn-outline-primary btn-sm" data-bs-dismiss="modal"></button>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="modal fade" id="recordedModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
-			<div class="modal-dialog modal-dialog-centered">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 class="modal-title" id="staticBackdropLabel" th:text="#{course.recorded.modal.title}"></h5>
-					</div>
-					<div class="modal-body">
-						<span th:text="#{course.recorded.modal.message}"></span>
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-outline-primary btn-sm" data-bs-dismiss="modal" th:text="#{course.recorded.modal.accept}"></button>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div id="toast-container" aria-live="polite" aria-atomic="true" class="d-flex position-absolute top-0 start-50 translate-middle-x" style="z-index: 1090">
-			<div class="toast-container">
-				<div id="toast-success" class="toast align-items-center text-white bg-success hide" role="alert" aria-live="assertive" aria-atomic="true">
-					<div class="d-flex">
-						<div class="toast-body"></div>
-						<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" th:attr="aria-label=#{toast.close}"></button>
-					</div>
-				</div>
-				<div id="toast-warn" class="toast align-items-center bg-warning hide" role="alert" aria-live="assertive" aria-atomic="true">
-					<div class="d-flex">
-						<div class="toast-body"></div>
-						<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" th:attr="aria-label=#{toast.close}"></button>
+					<div id="toast-warn" class="toast align-items-center bg-warning hide" role="alert" aria-live="assertive" aria-atomic="true">
+						<div class="d-flex">
+							<div class="toast-body"></div>
+							<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" th:attr="aria-label=#{toast.close}"></button>
+						</div>
 					</div>
 				</div>
 			</div>

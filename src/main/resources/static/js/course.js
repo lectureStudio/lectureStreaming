@@ -46,6 +46,14 @@ class Course {
 				return;
 			}
 
+			const mediaProfile = localStorage.getItem("media.profile");
+
+			if (mediaProfile === "classroom") {
+				this.loadingVisible(false);
+				this.showFeatures(true);
+				return;
+			}
+
 			if (event.started) {
 				this.startTime = event.createdTimestamp;
 
@@ -186,7 +194,6 @@ class Course {
 
 		if (mediaProfile === "classroom") {
 			this.loadingVisible(false);
-
 			this.showFeatures(true);
 			return;
 		}
@@ -230,7 +237,54 @@ class Course {
 		this.connectionInfoVisible(true);
 	}
 
+	attachFeaturesToPlayer() {
+		const playerContainer = document.getElementById("playerContainer");
+		const speechDeviceModal = document.getElementById("speechDeviceModal");
+		const speechAcceptedModal = document.getElementById("speechAcceptedModal");
+		const deviceModal = document.getElementById("deviceModal");
+		const deviceModalInit = document.getElementById("deviceModalInit");
+		const deviceModalPermission = document.getElementById("deviceModalPermission");
+		const quizModal = document.getElementById("quizModal");
+		const recordedModal = document.getElementById("recordedModal");
+		const toastContainer = document.getElementById("toast-container");
+
+		playerContainer.appendChild(speechDeviceModal);
+		playerContainer.appendChild(speechAcceptedModal);
+		playerContainer.appendChild(deviceModal);
+		playerContainer.appendChild(deviceModalInit);
+		playerContainer.appendChild(deviceModalPermission);
+		playerContainer.appendChild(quizModal);
+		playerContainer.appendChild(recordedModal);
+		playerContainer.appendChild(toastContainer);
+
+		if (this.messengerElement) {
+			this.player.setContainerA(this.messengerElement);
+		}
+		if (this.quizElement) {
+			this.player.setQuizActive(true);
+		}
+	}
+
 	detachFeaturesFromPlayer() {
+		const modalsContainer = document.getElementById("modals");
+		const speechDeviceModal = document.getElementById("speechDeviceModal");
+		const speechAcceptedModal = document.getElementById("speechAcceptedModal");
+		const deviceModal = document.getElementById("deviceModal");
+		const deviceModalInit = document.getElementById("deviceModalInit");
+		const deviceModalPermission = document.getElementById("deviceModalPermission");
+		const quizModal = document.getElementById("quizModal");
+		const recordedModal = document.getElementById("recordedModal");
+		const toastContainer = document.getElementById("toast-container");
+
+		modalsContainer.appendChild(speechDeviceModal);
+		modalsContainer.appendChild(speechAcceptedModal);
+		modalsContainer.appendChild(deviceModal);
+		modalsContainer.appendChild(deviceModalInit);
+		modalsContainer.appendChild(deviceModalPermission);
+		modalsContainer.appendChild(quizModal);
+		modalsContainer.appendChild(recordedModal);
+		modalsContainer.appendChild(toastContainer);
+
 		if (this.messengerElement) {
 			this.messengerContainer.appendChild(this.messengerElement);
 			this.messengerContainer.classList.remove("d-none");
@@ -245,34 +299,12 @@ class Course {
 	}
 
 	onPlayerConnectedState(connected) {
+		console.log("player connected", connected);
+
 		if (connected) {
 			this.showFeatures(false);
 
-			const playerContainer = document.getElementById("playerContainer");
-			const speechDeviceModal = document.getElementById("speechDeviceModal");
-			const speechAcceptedModal = document.getElementById("speechAcceptedModal");
-			const deviceModal = document.getElementById("deviceModal");
-			const deviceModalInit = document.getElementById("deviceModalInit");
-			const deviceModalPermission = document.getElementById("deviceModalPermission");
-			const quizModal = document.getElementById("quizModal");
-			const recordedModal = document.getElementById("recordedModal");
-			const toastContainer = document.getElementById("toast-container");
-
-			playerContainer.appendChild(speechDeviceModal);
-			playerContainer.appendChild(speechAcceptedModal);
-			playerContainer.appendChild(deviceModal);
-			playerContainer.appendChild(deviceModalInit);
-			playerContainer.appendChild(deviceModalPermission);
-			playerContainer.appendChild(quizModal);
-			playerContainer.appendChild(recordedModal);
-			playerContainer.appendChild(toastContainer);
-
-			if (this.messengerElement) {
-				this.player.setContainerA(this.messengerElement);
-			}
-			if (this.quizElement) {
-				this.player.setQuizActive(true);
-			}
+			this.attachFeaturesToPlayer();
 
 			this.loadingVisible(false);
 			this.connectionInfoVisible(false);
@@ -281,6 +313,7 @@ class Course {
 		}
 		else {
 			this.detachFeaturesFromPlayer();
+			this.showFeatures(true);
 
 			this.player = null;
 
@@ -1140,6 +1173,8 @@ class Course {
 	}
 
 	playerVisible(visible) {
+console.log("playerVisible", visible);
+
 		if (visible) {
 			this.contentContainer.classList.remove("invisible");
 			this.contentContainer.classList.add("flex-grow-1");
