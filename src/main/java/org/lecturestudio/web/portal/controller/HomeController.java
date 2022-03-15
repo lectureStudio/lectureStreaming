@@ -129,6 +129,11 @@ public class HomeController {
 		return "contact";
 	}
 
+	@GetMapping(value = "/sponsors")
+	public String sponsors() {
+		return "sponsors";
+	}
+
 	@GetMapping(value = "/imprint")
 	public String manual() {
 		return "imprint";

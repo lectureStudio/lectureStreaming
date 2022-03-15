@@ -237,6 +237,7 @@ public class WebSecurityConfig {
 				.authorizeRequests()
 					.antMatchers("/").permitAll()
 					.antMatchers("/contact").permitAll()
+					.antMatchers("/sponsors").permitAll()
 					.antMatchers("/imprint").permitAll()
 					.antMatchers("/privacy").permitAll()
 					.antMatchers("/janus/**").permitAll()
