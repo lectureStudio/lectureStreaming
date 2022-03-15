@@ -12,6 +12,8 @@ import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.MessengerReplyMessage;
 import org.lecturestudio.web.api.message.SpeechBaseMessage;
 import org.lecturestudio.web.api.message.WebMessage;
+import org.lecturestudio.web.api.message.EmojiMessage;
+
 
 public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener {
 
@@ -29,6 +31,19 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
             MessengerReplyMessage mReplyMessage = (MessengerReplyMessage) message;
             this.onFeaturMessengerReplyMessage(courseId, mReplyMessage);
         }
+        else if(message instanceof EmojiMessage){
+            this.onFeatureEmojiMessage(courseId, message);
+        }
+    }
+
+    private void onFeatureEmojiMessage(long courseId, WebMessage emojiMessage){
+        StompCourseWebMessageIdProvider courseMessengerIdProvider = courseMessengerIdProviders.get(courseId);
+
+        if (Objects.isNull(courseMessengerIdProvider)) {
+            courseMessengerIdProvider = new StompCourseWebMessageIdProvider(courseId);
+            courseMessengerIdProviders.put(courseId, courseMessengerIdProvider);
+        }
+        courseMessengerIdProvider.setMessageId(emojiMessage);
     }
 
     private void onFeatureMessengerMessage(long courseId, WebMessage message) {

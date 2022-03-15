@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.lecturestudio.core.input.KeyEvent;
 import org.lecturestudio.web.api.message.CourseParticipantMessage;
+import org.lecturestudio.web.api.message.EmojiMessage;
 import org.lecturestudio.web.api.message.SpeechBaseMessage;
 import org.lecturestudio.web.api.stream.action.StreamAction;
 import org.lecturestudio.web.api.stream.action.StreamActionFactory;
@@ -37,6 +38,8 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
+
+import reactor.netty.http.client.WebsocketClientSpec;
 
 public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
@@ -229,6 +232,30 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		}
 	}
 
+	private WebSocketSession getSession(Long courseId){
+		WebSocketSession session = sessions.entrySet().stream()
+		.filter(entry -> entry.getValue() == courseId)
+		.findFirst()
+		.map(Map.Entry::getKey)
+		.orElse(null);
+
+		if (isNull(session)) {
+			throw new RuntimeException("Course not available");
+		}
+		return session;
+	}
+
+	private void onEmojiMessage(Long courseId, EmojiMessage emojiMessage){
+		WebSocketSession session = this.getSession(courseId);
+		try {
+			session.sendMessage(new TextMessage(objectMapper.writeValueAsString(emojiMessage)));
+			System.out.println(objectMapper.writeValueAsString(emojiMessage));
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	private void sessionInit(WebSocketSession session, StreamInitAction initAction) {
 		long courseId = initAction.getCourseId();
 
@@ -236,7 +263,9 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		sessions.put(session, courseId);
 
 		// Bind course state to the course ID.
-		initStates.put(courseId, new CourseState(userService, courseId, List.of(this::onSpeechMessage, this.courseMessengerFeatureSaveFeature::onFeatureMessage), this::onParticipantMessage));
+		CourseState courseState = new CourseState(userService, courseId, List.of(this::onSpeechMessage, this.courseMessengerFeatureSaveFeature::onFeatureMessage), this::onParticipantMessage);
+		courseState.addEmojiListener(this::onEmojiMessage);
+		initStates.put(courseId, courseState);
 	}
 
 	private void sessionStart(StreamStartAction startAction) {

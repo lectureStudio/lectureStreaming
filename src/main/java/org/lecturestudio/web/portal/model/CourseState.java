@@ -15,6 +15,7 @@ import java.util.function.BiConsumer;
 
 import org.lecturestudio.web.api.message.CourseParticipantMessage;
 import org.lecturestudio.web.api.message.SpeechBaseMessage;
+import org.lecturestudio.web.api.message.EmojiMessage;
 import org.lecturestudio.web.portal.service.UserService;
 
 public class CourseState {
@@ -149,5 +150,15 @@ public class CourseState {
 
 	private void postParticipantMessage(Long courseId, CourseParticipantMessage message) {
 		connectedListener.accept(courseId, message);
+	}
+
+	private BiConsumer<Long, EmojiMessage> emojiListener;
+	
+	public void addEmojiListener(BiConsumer<Long, EmojiMessage> emojiListener){
+		this.emojiListener = emojiListener;
+	}
+
+	public void postEmojiMessage(Long courseId, EmojiMessage message){
+		emojiListener.accept(courseId, message);
 	}
 }

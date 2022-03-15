@@ -35,6 +35,7 @@ import org.lecturestudio.web.portal.validator.QuizAnswerValidator;
 import org.lecturestudio.web.portal.validator.SpeechValidator;
 import org.lecturestudio.web.api.message.MessengerDirectMessage;
 import org.lecturestudio.web.api.message.MessengerMessage;
+import org.lecturestudio.web.api.message.EmojiMessage;
 import org.lecturestudio.web.api.message.QuizAnswerMessage;
 import org.lecturestudio.web.api.message.SpeechCancelMessage;
 import org.lecturestudio.web.api.message.SpeechRequestMessage;
@@ -42,6 +43,7 @@ import org.lecturestudio.web.api.message.WebMessage;
 import org.lecturestudio.web.api.model.ClassroomServiceResponse;
 import org.lecturestudio.web.api.model.Message;
 import org.lecturestudio.web.api.model.quiz.QuizAnswer;
+import org.lecturestudio.web.api.model.Emoji;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.DocumentNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
@@ -305,6 +307,24 @@ public class CourseSubscriberController {
 		}
 
 		return response;
+	}
+
+	@PostMapping("/emoji/post/{courseId}")
+	public String postEmoji(@PathVariable("courseId") long courseId,
+			@RequestBody Emoji emoji, Authentication authentication, HttpServletRequest request) {
+		CourseState courseState = courseStates.getCourseState(courseId);
+		//CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
+		//		.orElseThrow(() -> new FeatureNotFoundException());
+		//if (response.getStatusCode().value() == HttpStatus.OK.value()) {
+		EmojiMessage emojiMessage = new EmojiMessage(emoji, request.getRemoteAddr(), ZonedDateTime.now());
+
+		System.out.println(emojiMessage);
+		
+		// Notify service provider endpoint.
+		courseState.postEmojiMessage(courseId, emojiMessage);
+		//}
+
+		return "ok";
 	}
 
 	@PostMapping("/message/post/{courseId}")
