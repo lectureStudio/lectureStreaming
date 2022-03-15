@@ -84,7 +84,7 @@ public class CourseController {
 		"course.feature.message.public",
 		"course.feature.message.private",
 		"course.feature.message.destination.all",
-		"course.feature.message.destination.lecturer"
+		"course.feature.message.destination.lecturer",
 		"course.emoji.accepted",
 		"course.emoji.rejected"
 	);
