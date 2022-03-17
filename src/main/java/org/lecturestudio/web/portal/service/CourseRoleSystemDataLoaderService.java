@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class CourseRoleSystemDataLoaderService implements ApplicationListener<ContextRefreshedEvent> {
 
-    private final AtomicBoolean done = new AtomicBoolean();
+    private final AtomicBoolean done = new AtomicBoolean(true);
 
     @Autowired
     private RoleService roleService;

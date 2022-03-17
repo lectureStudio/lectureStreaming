@@ -3,6 +3,7 @@ package org.lecturestudio.web.portal.model;
 import java.util.Set;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.ManyToMany;
@@ -28,7 +29,7 @@ public class CourseUser {
     @Id
     String userId;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     Set<CoursePrivilege> privileges;
     
 }
