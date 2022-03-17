@@ -539,9 +539,35 @@ public class CourseController {
 	}
 
 	@RequestMapping("/messenger/{id}")
-	public String getMessenger(@PathVariable("id") long id, Model model) {
+	public String getMessenger(@PathVariable("id") long id, Model model, Authentication authentication) {
 		Course course = courseService.findById(id)
 				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CoursePrivilege requiredToReadPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_READ_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		CoursePrivilege requiredToWritePrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		CoursePrivilege requiredToWriteToLecturerPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_LECTURER_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		CoursePrivilege requiredToWriteDirectPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+
+		roleService.checkAuthorization(course, details, requiredToReadPrivilege);
+
+		boolean canWrite = false;
+		canWrite = roleService.isAuthorized(course, details, requiredToWritePrivilege);
+		boolean canWriteToLecturerOrUser = false;
+		canWriteToLecturerOrUser = 
+			roleService.isAuthorized(course, details, requiredToWriteToLecturerPrivilege) ||
+			roleService.isAuthorized(course, details, requiredToWriteDirectPrivilege);
+
+
 
 		CourseMessageFeature messageFeature = null;
 
@@ -558,15 +584,25 @@ public class CourseController {
 			.build();
 
 		model.addAttribute("course", courseDto);
+		model.addAttribute("canWrite", canWrite);
+		model.addAttribute("canWriteToLecturerOrUser", canWriteToLecturerOrUser);
 
 		return "fragments/messenger :: messenger";
 	}
 
 	@RequestMapping("/messenger/messageReceived")
-	public String getMessageReceived(@RequestParam("timestamp") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date, @RequestParam("content") String content,
+	public String getMessageReceived(@RequestParam("courseId") Long courseId, @RequestParam("timestamp") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date, @RequestParam("content") String content,
 		@RequestParam("from") String from, @RequestParam("id") String id, @RequestParam("messageType") String messageType, @RequestParam("to") String to, Authentication authentication) {
 
+		Course course = courseService.findById(courseId)
+			.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
+
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CoursePrivilege requiredToReadPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_READ_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		roleService.checkAuthorization(course, details, requiredToReadPrivilege);
 
 		String time = String.format("%02d:%02d", date.getHour(), date.getMinute());
 		StringBuilder destinationStringBuilder = new StringBuilder();

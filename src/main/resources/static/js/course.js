@@ -232,7 +232,7 @@ class Course {
 
 	async onMessengerMessageReceive(message) {
 		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
-		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "public", to: ""};
+		var params = {courseId: this.courseId, timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "public", to: ""};
 
 		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
@@ -262,7 +262,7 @@ class Course {
 
 	async onMessengerDirectMessageReceive(message) {
 		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
-		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "user", to: message.messageDestinationUsername};
+		var params = {courseId: this.courseId, timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "user", to: message.messageDestinationUsername};
 
 		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
@@ -421,6 +421,11 @@ class Course {
 	}
 
 	async loadMessenger() {
+		const authorized = await this.isAuthorized("COURSE_MESSENGER_READ_PRIVILEGE");
+		if (! authorized) {
+			return;
+		}
+
 		await fetch("/course/messenger/" + this.courseId, {
 			method: "GET",
 		})
@@ -586,16 +591,27 @@ class Course {
 			{
 				type: "public",
 				innerText: this.dict["course.feature.message.destination.all"]
-			},
-			{
-				type: "lecturer",
-				innerText: this.dict["course.feature.message.destination.lecturer"]
-			},
-			{
-				type: "header",
-				innerText: this.dict["course.feature.message.private"]
 			}];
-		await this.getConnectedMessengerUsers(destinations);
+
+		const isAuthorizedToWriteMessageToLecturer = await this.isAuthorized("COURSE_MESSENGER_WRITE_LECTURER_PRIVILEGE", false);
+		if (isAuthorizedToWriteMessageToLecturer) {
+			destinations.push(
+				{
+					type: "lecturer",
+					innerText: this.dict["course.feature.message.destination.lecturer"]
+				}
+			)
+		}
+		const isAuthorizedToWriteDirectMessages = await this.isAuthorized("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE", false);
+		if (isAuthorizedToWriteDirectMessages) {
+			destinations.push(
+				{
+					type: "header",
+					innerText: this.dict["course.feature.message.private"]
+				}
+			)
+			await this.getConnectedMessengerUsers(destinations);
+		}
 		destinations.forEach((element) => this.forDestination(element))
 	}
 
@@ -1082,14 +1098,16 @@ class Course {
 		}
 	}
 
-	async isAuthorized(privilege) {
-		const response = fetch("/course/privileges/" + this.courseId + "/check/" + privilege, {
+	async isAuthorized(privilege, showNotification=true) {
+		const response = await fetch("/course/privileges/" + this.courseId + "/check/" + privilege, {
 			method: "GET"
 		})
 		if (response.ok) {
 			return true;
 		}
-		this.showToast("toast-warn", "role.privilege.unauthorized.toast");
+		if (showNotification) {
+			this.showToast("toast-warn", "role.privilege.unauthorized.toast");
+		}
 		return false;
 	}
 }

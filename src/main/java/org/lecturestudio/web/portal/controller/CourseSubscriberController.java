@@ -366,10 +366,18 @@ public class CourseSubscriberController {
 
 	@GetMapping("/messenger/history/{courseId}")
 	public CourseMessengerHistoryDto getMessengerHistoryOfCourse(@PathVariable("courseId") long courseId, Authentication authentication) {
-		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
-		.orElseThrow(() -> new FeatureNotFoundException());
+		Course course = courseService.findById(courseId)
+			.orElseThrow(() -> new CourseNotFoundException());
 
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CoursePrivilege requiredToReadPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_READ_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		roleService.checkAuthorization(course, details, requiredToReadPrivilege);
+
+		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
+			.orElseThrow(() -> new FeatureNotFoundException());
 
 		User user = userService.findById(details.getUsername()).get();
 		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId, user));
@@ -379,7 +387,15 @@ public class CourseSubscriberController {
 	public CourseMessengerConnectedUsersDto getConnectedMessengerUsers(@PathVariable("courseId") long courseId, Authentication authentication) {
 		courseFeatureService.findMessageByCourseId(courseId).orElseThrow(() -> new FeatureNotFoundException());
 
+		Course course = courseService.findById(courseId)
+			.orElseThrow(() -> new CourseNotFoundException());
+
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CoursePrivilege requiredPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		roleService.checkAuthorization(course, details, requiredPrivilege);
 
 		CourseMessengerConnectedUsersDto connectedUsersDto = new CourseMessengerConnectedUsersDto();
 

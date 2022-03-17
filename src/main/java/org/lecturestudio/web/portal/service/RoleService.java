@@ -460,7 +460,6 @@ public class RoleService implements CourseStateListener, InitializingBean {
 
         CourseContext courseContext = new CourseContext(course);
         this.courseContexts.put(courseId, courseContext);
-        System.out.println("Course Started " + courseId);
     }
 
     @Transactional
@@ -470,7 +469,6 @@ public class RoleService implements CourseStateListener, InitializingBean {
             .orElseThrow(() -> new CourseNotFoundException());
         
         this.courseContexts.remove(courseId);
-        System.out.println("Course Ended " + courseId);
     }
 
     public boolean isCourseStarted(Course course) {
