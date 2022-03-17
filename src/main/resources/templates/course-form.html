@@ -38,10 +38,7 @@
 					</div>
 					<div th:text="#{course.form.passcode.description}" id="pinHelpBlock" class="form-text"></div>
 				</div>
-				<div class="mb-3">
-					<input id="courseRolesInput" type="hidden" th:field="*{courseRoles}">
-					<input id="numOfPrivilegesInput" type="hidden" th:field="*{numOfPrivileges}">
-					<input id="courseRolesSizeInput" type="hidden" th:value="${#lists.size(courseForm.courseRoles)}">
+				<div class="mb-3" th:if="${canAlterPrivileges}">
 					<label for="role-accordion" class="form-label" th:text="#{course.form.role.title}"></label>
 					<div id="role-accordion" class="accordion">
 						<div class="accordion-item" th:each="role,idx : ${courseForm.courseRoles}">
@@ -70,9 +67,7 @@
 						<span th:text="#{course.form.role.owner.info}" class="badge bg-light text-dark"></span>
 					</div>
 				</div>
-				<div class="mb-3">
-					<input id="personallyPrivilegedUsers" type="hidden" th:field="*{personallyPrivilegedUsers}">
-					<input id="numOfPersonallyPrivilegedUsers" type="hidden" th:value="${#lists.size(courseForm.personallyPrivilegedUsers)}"
+				<div class="mb-3" th:if="${canAlterPrivileges}">
 					<label th:text="#{course.form.user.privileges.title}" for="username-accordion" class="form-label"></label>
 					<div id="username-accordion" class="accordion mb-3">
 						<div class="accordion-item" th:each="user,useridx : ${courseForm.personallyPrivilegedUsers}">
@@ -105,6 +100,13 @@
 					</div>
 					<div id="add-user-feedback" class="form-text text-danger" th:if="${#fields.hasErrors('username')}" th:errors="${courseForm.username}"></div>
 					<div th:text="#{course.form.add.user.description}" id="pinHelpBlock" class="form-text"></div>
+				</div>
+				<div>
+					<input id="courseRolesInput" type="hidden" th:field="*{courseRoles}">
+					<input id="numOfPrivilegesInput" type="hidden" th:field="*{numOfPrivileges}">
+					<input id="courseRolesSizeInput" type="hidden" th:value="${#lists.size(courseForm.courseRoles)}">
+					<input id="personallyPrivilegedUsers" type="hidden" th:field="*{personallyPrivilegedUsers}">
+					<input id="numOfPersonallyPrivilegedUsers" type="hidden" th:value="${#lists.size(courseForm.personallyPrivilegedUsers)}"
 				</div>
 				<div class="mt-3 col-12">
 					<button th:text="${edit} ? #{course.form.update} : #{course.form.create}" type="submit" class="btn btn-outline-primary btn-sm"></button>
@@ -178,6 +180,7 @@
 				}
 				for (let [key, value] of privilegeToPrivilegesDependingOnMap) {
 					if (value.length > 0) {
+						console.log(privilegeCheckboxInput[key]);
 						privilegeCheckboxInput[key].addEventListener("input", function() {
 						for (const dependant of value) {
 							const dependantPrivilegeCheckboxInput = privilegeCheckboxInput[dependant];

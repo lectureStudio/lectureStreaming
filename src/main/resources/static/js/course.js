@@ -232,7 +232,7 @@ class Course {
 
 	async onMessengerMessageReceive(message) {
 		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
-		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "public", to: ""};
+		var params = {courseId: this.courseId, timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "public", to: ""};
 
 		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
@@ -262,7 +262,7 @@ class Course {
 
 	async onMessengerDirectMessageReceive(message) {
 		var url = new URL("https://" + window.location.host + "/course/messenger/messageReceived");
-		var params = {timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "user", to: message.messageDestinationUsername};
+		var params = {courseId: this.courseId, timestamp: message.time, content: message.text, from: message.username, id: message.messageId, messageType: "user", to: message.messageDestinationUsername};
 
 		Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
@@ -336,7 +336,12 @@ class Course {
 		}
 	}
 
-	onRaiseHand(raised) {
+	async onRaiseHand(raised) {
+		const authorized = await this.isAuthorized("COURSE_RAISE_HAND_PRIVILEGE");
+		if (! authorized) {
+			return;
+		}
+		console.log("test");
 		if (raised) {
 			this.initSpeech();
 		}
@@ -349,7 +354,12 @@ class Course {
 		}
 	}
 
-	onShowQuiz(show) {
+	async onShowQuiz(show) {
+		const authorized = await this.isAuthorized("COURSE_QUIZ_PRIVILEGE");
+		if (! authorized) {
+			return;
+		}
+
 		if (show) {
 			this.initQuizModal();
 		}
@@ -411,6 +421,11 @@ class Course {
 	}
 
 	async loadMessenger() {
+		const authorized = await this.isAuthorized("COURSE_MESSENGER_READ_PRIVILEGE");
+		if (! authorized) {
+			return;
+		}
+
 		await fetch("/course/messenger/" + this.courseId, {
 			method: "GET",
 		})
@@ -576,16 +591,27 @@ class Course {
 			{
 				type: "public",
 				innerText: this.dict["course.feature.message.destination.all"]
-			},
-			{
-				type: "lecturer",
-				innerText: this.dict["course.feature.message.destination.lecturer"]
-			},
-			{
-				type: "header",
-				innerText: this.dict["course.feature.message.private"]
 			}];
-		await this.getConnectedMessengerUsers(destinations);
+
+		const isAuthorizedToWriteMessageToLecturer = await this.isAuthorized("COURSE_MESSENGER_WRITE_LECTURER_PRIVILEGE", false);
+		if (isAuthorizedToWriteMessageToLecturer) {
+			destinations.push(
+				{
+					type: "lecturer",
+					innerText: this.dict["course.feature.message.destination.lecturer"]
+				}
+			)
+		}
+		const isAuthorizedToWriteDirectMessages = await this.isAuthorized("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE", false);
+		if (isAuthorizedToWriteDirectMessages) {
+			destinations.push(
+				{
+					type: "header",
+					innerText: this.dict["course.feature.message.private"]
+				}
+			)
+			await this.getConnectedMessengerUsers(destinations);
+		}
 		destinations.forEach((element) => this.forDestination(element))
 	}
 
@@ -1070,6 +1096,19 @@ class Course {
 		else {
 			element.classList.add("d-none");
 		}
+	}
+
+	async isAuthorized(privilege, showNotification=true) {
+		const response = await fetch("/course/privileges/" + this.courseId + "/check/" + privilege, {
+			method: "GET"
+		})
+		if (response.ok) {
+			return true;
+		}
+		if (showNotification) {
+			this.showToast("toast-warn", "role.privilege.unauthorized.toast");
+		}
+		return false;
 	}
 }
 
