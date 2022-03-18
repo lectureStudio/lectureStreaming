@@ -487,8 +487,15 @@ public class CourseSubscriberController {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
+		Course course = courseService.findById(courseId)
+			.orElseThrow(() -> new CourseNotFoundException());
 
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CoursePrivilege requiredToSendPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		roleService.checkAuthorization(course, details, requiredToSendPrivilege);
 
 		Message payload = message.getPayload();
 
@@ -509,6 +516,11 @@ public class CourseSubscriberController {
 			case "lecturer":
 				String messageDestinationUsername = "";
 				if (messageType.equals("user")) {
+					CoursePrivilege requiredToSendToUserPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE")
+						.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+					roleService.checkAuthorization(course, details, requiredToSendToUserPrivilege);
+
 					String anonymousMessageDestinationUsername = accessor.getNativeHeader("username").get(0);
 					Optional<User> optDestinationUser = userService.findByAnonymousId(UUID.fromString(anonymousMessageDestinationUsername));
 					if (optDestinationUser.isPresent()) {
@@ -517,6 +529,11 @@ public class CourseSubscriberController {
 					}
 				}
 				else {
+
+					CoursePrivilege requiredToSendToLecturerPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_LECTURER_PRIVILEGE")
+						.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+					roleService.checkAuthorization(course, details, requiredToSendToLecturerPrivilege);
 					messageDestinationUsername = feature.getInitiator().getUserId();
 				}
 
