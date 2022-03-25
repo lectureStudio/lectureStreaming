@@ -20,7 +20,7 @@ class Course {
 		this.stompClient = null;
 		this.messengerIsVisible = false;
 		this.messengerModal = null;
-		this.emojis;
+		this.emojis = null;
 	}
 
 	init(userId, courseId, startTime, dict) {
@@ -206,7 +206,7 @@ class Course {
 		const messageBody = stompMessage.body;
 		return JSON.parse(messageBody);
 	}
-  
+
   urlify(text) {
 	const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
 	return text.replace(urlRegex, function(url) {
@@ -292,7 +292,7 @@ class Course {
 
 		return response;
 	}
-          
+
   appendToMessengerHistory(html) {
 	const chatHistory = this.messengerElement.querySelector("#chat-history-list");
 
@@ -324,7 +324,7 @@ class Course {
 				}
 				else if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
 					this.showDevicePermissionDeniedModal();
-				} 
+				}
 			});
 	}
 
@@ -410,7 +410,7 @@ class Course {
 	}
 
 	cancelSpeechRequest() {
-		
+
 	}
 
 	async loadMessenger() {
@@ -864,29 +864,29 @@ class Course {
 		const saveButton = document.getElementById("saveDeviceSelection");
 		const cancelButton = document.getElementById("deviceSaveCancel");
 		const meterCanvas = document.getElementById("meter");
-		
+
 		const video = document.getElementById("cameraPreview");
 		video.srcObject = stream;
 
 		const onAudioDeviceChange = () => {
 			window.stopAudioTracks(video.srcObject);
-	
+
 			const audioSource = microphoneSelect.value;
 			const audioConstraints = {
 				audio: {
 					deviceId: audioSource ? { exact: audioSource } : undefined
 				}
 			};
-	
+
 			navigator.mediaDevices.getUserMedia(audioConstraints)
 				.then(audioStream => {
 					audioStream.getAudioTracks().forEach(track => video.srcObject.addTrack(track));
-	
+
 					window.getAudioLevel(audioStream.getAudioTracks()[0], meterCanvas);
 				})
 				.catch(error => {
 					console.error(error);
-	
+
 					if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
 						this.showDevicePermissionDeniedModal();
 					}
@@ -894,29 +894,29 @@ class Course {
 		};
 		const onVideoDeviceChange = () => {
 			window.stopVideoTracks(video.srcObject);
-	
+
 			const videoSource = cameraSelect.value;
 			const videoConstraints = {};
-	
+
 			if (videoSource === "none") {
 				video.style.display = "none";
 				return;
 			}
-	
+
 			videoConstraints.video = {
 				deviceId: videoSource ? { exact: videoSource } : undefined,
 				width: 1280,
 				height: 720,
 				facingMode: "user"
 			};
-	
+
 			navigator.mediaDevices.getUserMedia(videoConstraints)
 				.then(videoStream => {
 					const newStream = new MediaStream();
 
 					video.srcObject.getAudioTracks().forEach(track => newStream.addTrack(track));
 					videoStream.getVideoTracks().forEach(track => newStream.addTrack(track));
-	
+
 					video.srcObject = newStream;
 					video.style.display = "block";
 
@@ -924,7 +924,7 @@ class Course {
 				})
 				.catch(error => {
 					console.error(error);
-	
+
 					if (error.name == "NotReadableError") {
 						cameraBlockedAlert.classList.remove("d-none");
 					}
@@ -967,7 +967,7 @@ class Course {
 		});
 
 		const cancelHandler = () => {
-			
+
 		};
 		const saveHandler = () => {
 			const form = document.getElementById("deviceSelectForm");
@@ -1095,7 +1095,7 @@ function mountInModal(root, element, title = null, hiddenCallback = null){
 		</div>`
 	}
 	const id = modalId++;
-	
+
 	html += `<div class="modal-body" id="modal-content-${id}"></div>
 		</div>
 	</div>
@@ -1116,7 +1116,11 @@ function mountInModal(root, element, title = null, hiddenCallback = null){
 
 class Emojis{
 
-	emojis = ['👍', '👎', '☕️', '👏', '🙈'];
+	emojis = [
+		{id: 'thumbs_up', bootstrapId: 'bi-hand-thumbs-up'},
+		{id: 'thumbs_down', bootstrapId: 'bi-hand-thumbs-down'},
+		{id: 'cup', bootstrapId: 'bi-cup'}
+	];
 
 	init(course){
 		this.course = course;
@@ -1132,16 +1136,16 @@ class Emojis{
 		emojisList.ariaLabel='Emojis';
 		emojisList.style.minWidth = '1em';
 
-		this.emojis.forEach((emoji) => {
+		this.emojis.forEach(emoji => {
 			const emojiElement = document.createElement('li');
 
 			const anchor = document.createElement('a');
 			anchor.href='#';
 			anchor.classList.add('dropdown-item');
 			anchor.onclick = () => {
-				this.emojiClicked(emoji);
+				this.emojiClicked(emoji.id);
 			}
-			anchor.innerHTML = emoji;
+			anchor.innerHTML = `<i class="bi ${emoji.bootstrapId}"></i>`;
 
 			emojiElement.appendChild(anchor);
 			emojisList.appendChild(emojiElement);
@@ -1166,16 +1170,27 @@ class Emojis{
 	}
 
 	emojiClicked(emoji){
-		fetch("/course/emoji/" + this.course.courseId, {
+		fetch("/course/emoji/post/" + this.course.courseId, {
 			method: "POST",
-			body: {
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
 				emoji
+			})
+		}).then(response => {
+			if (response.ok) {
+				this.course.showToast("toast-success", "course.emoji.accepted");
+			} else {
+				this.showEmojiRejectedToast();
 			}
-		}).then(() => {
-			this.course.showToast("toast-success", "course.emoji.accepted");
 		}).catch((error) => {
-			this.course.showToast("toast-warn", "course.emoji.rejected");
+			this.showEmojiRejectedToast();
 			console.log(error);
 		});
+	}
+
+	showEmojiRejectedToast() {
+		this.course.showToast("toast-warn", "course.emoji.rejected");
 	}
 }
