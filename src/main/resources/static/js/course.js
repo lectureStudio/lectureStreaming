@@ -1117,9 +1117,9 @@ function mountInModal(root, element, title = null, hiddenCallback = null){
 class Emojis{
 
 	emojis = [
-		{id: 'thumbs_up', bootstrapId: 'bi-hand-thumbs-up'},
-		{id: 'thumbs_down', bootstrapId: 'bi-hand-thumbs-down'},
-		{id: 'cup', bootstrapId: 'bi-cup'}
+		{type: 'THUMBS_UP', bootstrapId: 'bi-hand-thumbs-up'},
+		{type: 'THUMBS_DOWN', bootstrapId: 'bi-hand-thumbs-down'},
+		{type: 'CUP', bootstrapId: 'bi-cup'}
 	];
 
 	init(course){
@@ -1143,7 +1143,7 @@ class Emojis{
 			anchor.href='#';
 			anchor.classList.add('dropdown-item');
 			anchor.onclick = () => {
-				this.emojiClicked(emoji.id);
+				this.emojiClicked(emoji.type);
 			}
 			anchor.innerHTML = `<i class="bi ${emoji.bootstrapId}"></i>`;
 
@@ -1169,14 +1169,14 @@ class Emojis{
 		return dropup;
 	}
 
-	emojiClicked(emoji){
+	emojiClicked(emojiType){
 		fetch("/course/emoji/post/" + this.course.courseId, {
 			method: "POST",
 			headers: {
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				emoji
+				emojiType
 			})
 		}).then(response => {
 			if (response.ok) {
