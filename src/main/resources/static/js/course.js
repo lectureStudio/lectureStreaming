@@ -788,8 +788,9 @@ class Course {
 				});
 		};
 		const onVideoDeviceChange = () => {
+			window.stopVideoTracks(stream);
 			window.stopVideoTracks(video.srcObject);
-	
+
 			const videoSource = cameraSelect.value;
 			const videoConstraints = {};
 	
@@ -897,6 +898,7 @@ class Course {
 			deviceModal.dispose();
 
 			window.stopMediaTracks(stream);
+			window.stopMediaTracks(window.stopVideoTracks(video.srcObject));
 
 			video.srcObject = null;
 
@@ -1173,8 +1175,6 @@ class Course {
 	}
 
 	playerVisible(visible) {
-console.log("playerVisible", visible);
-
 		if (visible) {
 			this.contentContainer.classList.remove("invisible");
 			this.contentContainer.classList.add("flex-grow-1");

@@ -2,9 +2,12 @@ package org.lecturestudio.web.portal.validator;
 
 import static java.util.Objects.isNull;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.lecturestudio.web.api.filter.FilterRule;
+import org.lecturestudio.web.api.filter.InputFieldRule;
 import org.lecturestudio.web.api.model.quiz.Quiz;
 import org.lecturestudio.web.api.model.quiz.QuizAnswer;
 import org.lecturestudio.web.api.stream.model.CourseFeatureResponse;
@@ -78,18 +81,10 @@ public class QuizAnswerValidator {
 
 		// Check for possible blacklisted input.
 		if (feature.getType() == Quiz.QuizType.NUMERIC) {
-			// RegexFilter regexFilter = new RegexFilter();
-			// regexFilter.registerRules(quiz.getRegexRules());
-
 			// int fieldId = 0;
+
 			// for (String optionValue : options) {
-			// 	if (!regexFilter.isAllowedByAll(optionValue)) {
-			// 		String error = "quiz.answer.input.error";
-
-			// 		fieldErrors.put(fieldId, error);
-			// 	}
-
-			// 	for (FilterRule<String> r : quiz.getInputFilter().getRules()) {
+			// 	for (FilterRule<String> r : feature.getInputFilter().getRules()) {
 			// 		InputFieldRule<String> rule = (InputFieldRule<String>) r;
 			// 		if (!rule.isAllowed(optionValue, fieldId)) {
 			// 			String error = "quiz.answer.input.error";

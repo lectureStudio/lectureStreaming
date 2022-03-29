@@ -20,7 +20,7 @@
 					</div>
 					<div class="form-check" th:case="${T(org.lecturestudio.web.api.model.quiz.Quiz$QuizType).NUMERIC}">
 						<label th:text="${option}" th:for="|option-${iter.index}|" class="form-label"></label>
-						<input type="text" class="form-control form-control-sm" th:id="|option-${iter.index}|">
+						<input type="text" class="form-control form-control-sm" name="options" th:id="|option-${iter.index}|">
 					</div>
 				</th:block>
 			</th:block>
