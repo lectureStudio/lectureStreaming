@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout-public}">
+
+<head>
+	<title th:text="#{index.sponsors}"></title>
+</head>
+
+<body>
+
+	<th:block layout:fragment="content">
+		<div class="container col-xxl-8 px-4 py-5">
+			<div>
+				<h2>Sponsoren</h2>
+			</div>
+			<div class="pb-3">
+				Dieses Projekt wird finanziell unterstützt von:
+			</div>
+			<dl>
+				<dt>
+					Sonderforschungsbereich 1053
+					<br>
+					<a href="https://www.maki.tu-darmstadt.de" target="_blank">MAKI – Multi-Mechanismen-Adaption für das künftige
+						Internet</a>
+				</dt>
+				<dd>
+					<img src="/images/logo-maki.png" alt="MAKI Logo" height="70">
+				</dd>
+				<br>
+				<dt>
+					Technische Universität Darmstadt
+					<br>
+					<a href="https://www.etit.tu-darmstadt.de" target="_blank">Fachbereich Elektrotechnik und Informationstechnik
+						(FB18)</a>
+				</dt>
+				<dd>
+					<img src="/images/logo-fb18.png" alt="FB18 Logo" height="70">
+				</dd>
+				<br>
+				<dt>
+					Technische Universität Darmstadt
+					<br>
+					<a href="https://www.informatik.tu-darmstadt.de" target="_blank">Fachbereich Informatik (FB20)</a>
+				</dt>
+				<dd>
+					<img src="/images/logo-fb20.png" alt="FB20 Logo" height="70">
+				</dd>
+			</dl>
+		</div>
+	</th:block>
+
+</body>
+
+</html>

@@ -1,6 +1,7 @@
 package org.lecturestudio.web.portal.websocket;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
 import java.io.IOException;
 import java.io.InvalidObjectException;
@@ -29,7 +30,9 @@ import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStatePage;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.service.UserService;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -38,7 +41,9 @@ import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
-	private final Map<WebSocketSession, Long> sessions = new ConcurrentHashMap<>();
+	private final Map<WebSocketSession, Long> userSockets = new ConcurrentHashMap<>();
+
+	private final Map<String, Long> sessions = new ConcurrentHashMap<>();
 
 	private final Map<WebSocketSession, List<ByteBuffer>> sessionBufferMap = new ConcurrentHashMap<>();
 
@@ -48,10 +53,13 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 	private final ObjectMapper objectMapper;
 
+	private final UserService userService;
 
-	public CourseStateWebSocketHandler(CourseStates courseStates, ObjectMapper objectMapper) {
+
+	public CourseStateWebSocketHandler(CourseStates courseStates, ObjectMapper objectMapper, UserService userService) {
 		this.courseStates = courseStates;
 		this.objectMapper = objectMapper;
+		this.userService = userService;
 	}
 
 	@Override
@@ -65,24 +73,38 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 	}
 
 	@Override
+	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+		
+	}
+
+	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+		final UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) session.getPrincipal();
+		final String userName = auth.getName();
+
 		// Clean-up state.
 		sessionBufferMap.remove(session);
+		userSockets.remove(session);
 
-		Long courseId = sessions.remove(session);
+		Long courseId = sessions.remove(userName);
 
-		initStates.remove(courseId);
-		courseStates.removeCourseState(courseId);
+		if (nonNull(courseId)) {
+			initStates.remove(courseId);
+			courseStates.removeCourseState(courseId);
+		}
 	}
 
 	@Override
 	protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
+		final UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) session.getPrincipal();
+		final String userName = auth.getName();
+
 		ByteBuffer buffer = message.getPayload();
 		List<ByteBuffer> buffers = sessionBufferMap.get(session);
 
 		if (message.isLast()) {
 			if (isNull(buffers)) {
-				parse(session, buffer);
+				parse(session, userName, buffer);
 			}
 			else {
 				buffers.add(buffer);
@@ -102,7 +124,7 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 				wrappedBuffer.clear();
 
 				while (wrappedBuffer.position() < wrappedBuffer.capacity()) {
-					parse(session, wrappedBuffer);
+					parse(session, userName, wrappedBuffer);
 				}
 
 				sessionBufferMap.remove(session);
@@ -118,20 +140,20 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		}
 	}
 
-	private void parse(WebSocketSession session, ByteBuffer buffer) throws IOException {
+	private void parse(WebSocketSession session, String userName, ByteBuffer buffer) throws IOException {
 		StreamAction action = parseActionBuffer(buffer);
 
 		// System.out.println(action.getType());
 		new KeyEvent(0);
 
 		if (action.getType() == StreamActionType.STREAM_INIT) {
-			sessionInit(session, (StreamInitAction) action);
+			sessionInit(session, userName, (StreamInitAction) action);
 		}
 		else if (action.getType() == StreamActionType.STREAM_START) {
 			sessionStart((StreamStartAction) action);
 		}
 		else {
-			Long courseId = sessions.get(session);
+			Long courseId = sessions.get(userName);
 
 			if (isNull(courseId)) {
 				throw new IllegalStateException("Session not bound to a course");
@@ -184,7 +206,7 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 	}
 
 	private void onSpeechMessage(Long courseId, SpeechBaseMessage message) {
-		WebSocketSession session = sessions.entrySet().stream()
+		WebSocketSession session = userSockets.entrySet().stream()
 			.filter(entry -> entry.getValue() == courseId)
 			.findFirst()
 			.map(Map.Entry::getKey)
@@ -203,7 +225,7 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 	}
 
 	private void onParticipantMessage(Long courseId, CourseParticipantMessage message) {
-		WebSocketSession session = sessions.entrySet().stream()
+		WebSocketSession session = userSockets.entrySet().stream()
 			.filter(entry -> entry.getValue() == courseId)
 			.findFirst()
 			.map(Map.Entry::getKey)
@@ -221,21 +243,24 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		}
 	}
 
-	private void sessionInit(WebSocketSession session, StreamInitAction initAction) {
+	private void sessionInit(WebSocketSession session, String userName, StreamInitAction initAction) {
 		long courseId = initAction.getCourseId();
 
 		// Bind session to the course ID.
-		sessions.put(session, courseId);
+		sessions.put(userName, courseId);
+		userSockets.put(session, courseId);
 
 		// Bind course state to the course ID.
-		initStates.put(courseId, new CourseState(courseId, this::onSpeechMessage, this::onParticipantMessage));
+		initStates.put(courseId, new CourseState(userService, courseId, this::onSpeechMessage, this::onParticipantMessage));
 	}
 
 	private void sessionStart(StreamStartAction startAction) {
 		long courseId = startAction.getCourseId();
 		CourseState state = initStates.remove(courseId);
 
-		courseStates.setCourseState(courseId, state);
+		if (nonNull(state)) {
+			courseStates.setCourseState(courseId, state);
+		}
 	}
 
 	private static void updateDocumentState(CourseState courseState, StreamDocumentAction action) {

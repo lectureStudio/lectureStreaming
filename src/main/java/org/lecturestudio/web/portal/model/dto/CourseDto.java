@@ -22,6 +22,8 @@ public class CourseDto {
 
 	Long id;
 
+	String userId;
+
 	String roomId;
 
 	Long createdTimestamp;
@@ -41,6 +43,8 @@ public class CourseDto {
 	boolean isProtected;
 
 	boolean isLive;
+
+	boolean isRecorded;
 
 	boolean canEdit;
 

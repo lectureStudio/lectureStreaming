@@ -7,6 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+
+import org.keycloak.KeycloakSecurityContext;
+import org.keycloak.adapters.KeycloakDeployment;
+import org.keycloak.adapters.RefreshableKeycloakSecurityContext;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
@@ -28,8 +34,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import javax.servlet.http.HttpServletRequest;
-
 @Controller
 public class HomeController {
 
@@ -43,13 +47,6 @@ public class HomeController {
 	@RequestMapping("/")
 	public String index(Principal principal, Authentication authentication, Model model) {
 		return nonNull(principal) ? home(authentication, model) : "index";
-	}
-
-	@GetMapping("/logout")
-	public String logout(HttpServletRequest request) throws Exception {
-		request.logout();
-
-		return "redirect:/";
 	}
 
 	@GetMapping(value = "/auth")
@@ -122,6 +119,7 @@ public class HomeController {
 				.url(uri)
 				.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
 				.isLive(nonNull(state))
+				.isRecorded(nonNull(state) ? state.getRecordedState() : false)
 				.canDelete(canDelete)
 				.canEdit(canEdit)
 				.build());
@@ -137,6 +135,11 @@ public class HomeController {
 		return "contact";
 	}
 
+	@GetMapping(value = "/sponsors")
+	public String sponsors() {
+		return "sponsors";
+	}
+
 	@GetMapping(value = "/imprint")
 	public String manual() {
 		return "imprint";
@@ -145,5 +148,26 @@ public class HomeController {
 	@GetMapping(value = "/privacy")
 	public String privacy() {
 		return "privacy";
+	}
+
+	@GetMapping(path = "/logout")
+	public String logout(HttpServletRequest request) throws ServletException {
+		keycloakSessionLogout(request);
+		tomcatSessionLogout(request);
+		return "redirect:/";
+	}
+
+	private void keycloakSessionLogout(HttpServletRequest request) {
+		RefreshableKeycloakSecurityContext c = getKeycloakSecurityContext(request);
+		KeycloakDeployment d = c.getDeployment();
+		c.logout(d);
+	}
+
+	private void tomcatSessionLogout(HttpServletRequest request) throws ServletException {
+		request.logout();
+	}
+
+	private RefreshableKeycloakSecurityContext getKeycloakSecurityContext(HttpServletRequest request) {
+		return (RefreshableKeycloakSecurityContext) request.getAttribute(KeycloakSecurityContext.class.getName());
 	}
 }

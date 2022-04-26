@@ -71,6 +71,11 @@ public class WebSecurityConfig {
 
 			http
 				.authorizeRequests()
+					.antMatchers("/favicon.ico")
+						.permitAll();
+
+			http
+				.authorizeRequests()
 					.antMatchers("/").permitAll()
 					.antMatchers("/contact").permitAll()
 					.antMatchers("/imprint").permitAll()

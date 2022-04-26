@@ -3,6 +3,7 @@ class PortalApp {
 	constructor() {
 		this.eventSource = null;
 		this.onCourseState = null;
+		this.onCourseRecordedState = null;
 		this.onSpeechState = null;
 		this.onMessengerState = null;
 		this.onQuizState = null;
@@ -12,6 +13,10 @@ class PortalApp {
 
 	addOnCourseState(callback) {
 		this.onCourseState = callback;
+	}
+
+	addOnCourseRecordedState(callback) {
+		this.onCourseRecordedState = callback;
 	}
 
 	addOnSpeechState(callback) {
@@ -32,11 +37,18 @@ class PortalApp {
 		}
 	}
 
-	courseStateChange(type, courseId) {
+	courseStateChange(type, courseId, started) {
 		const element = document.getElementById("course-" + type + "-" + courseId);
 
-		if (element) {
-			element.classList.toggle("d-none");
+		if (!element) {
+			return;
+		}
+
+		if (started) {
+			element.classList.remove("d-none");
+		}
+		else {
+			element.classList.add("d-none");
 		}
 	}
 
@@ -54,8 +66,20 @@ class PortalApp {
 
 			const message = JSON.parse(event.data);
 
-			this.courseStateChange("live", message.courseId);
+			this.courseStateChange("live", message.courseId, message.started);
 			this.execCallback(this.onCourseState, message);
+
+			if (!message.started) {
+				this.courseStateChange("recording", message.courseId, false);
+			}
+		});
+		this.eventSource.addEventListener("recording-state", (event) => {
+			console.log("Recording state", event.data);
+
+			const message = JSON.parse(event.data);
+
+			this.courseStateChange("recording", message.courseId, message.started);
+			this.execCallback(this.onCourseRecordedState, message);
 		});
 		this.eventSource.addEventListener("speech-state", (event) => {
 			console.log("Speech state", event.data);
@@ -69,7 +93,7 @@ class PortalApp {
 
 			const message = JSON.parse(event.data);
 
-			this.courseStateChange("messenger", message.courseId);
+			this.courseStateChange("messenger", message.courseId, message.started);
 			this.execCallback(this.onMessengerState, message);
 		});
 		this.eventSource.addEventListener("quiz-state", (event) => {
@@ -77,12 +101,17 @@ class PortalApp {
 
 			const message = JSON.parse(event.data);
 
-			this.courseStateChange("quiz", message.courseId);
+			this.courseStateChange("quiz", message.courseId, message.started);
 			this.execCallback(this.onQuizState, message);
 		});
 
 		window.addEventListener("beforeunload", () => {
 			this.eventSource.close();
+		});
+
+		const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+		tooltipTriggerList.map(function (tooltipTriggerEl) {
+			return new bootstrap.Tooltip(tooltipTriggerEl)
 		});
 	}
 }
@@ -156,24 +185,37 @@ customElements.define("password-visibility", PasswordVisibilityElement, { extend
 window.portalApp = new PortalApp();
 
 
-function enumerateDevices(useVideo) {
-	const audioSource = localStorage.getItem("audioinput");
-	const videoSource = localStorage.getItem("videoinput");
+function enumerateDevices(useVideo, useSettings) {
+	let constraints;
 
-	const constraints = {
-		audio: {
-			deviceId: audioSource ? { exact: audioSource } : undefined
-		},
-		video: {
-			deviceId: videoSource ? { exact: videoSource } : undefined,
-			width: 1280,
-			height: 720,
-			facingMode: "user"
+	if (useSettings) {
+		const audioSource = localStorage.getItem("audioinput");
+		const videoSource = localStorage.getItem("videoinput");
+	
+		constraints = {
+			audio: {
+				deviceId: audioSource ? { exact: audioSource } : undefined
+			},
+			video: {
+				deviceId: videoSource ? { exact: videoSource } : undefined,
+				width: 1280,
+				height: 720,
+				facingMode: "user"
+			}
+		};
+	
+		if (!useVideo) {
+			delete constraints.video;
 		}
-	};
-
-	if (!useVideo) {
-		delete constraints.video;
+	}
+	else {
+		constraints = {
+			audio: true,
+			video: {
+				width: 1280,
+				height: 720
+			}
+		};
 	}
 
 	return navigator.mediaDevices.getUserMedia(constraints)
@@ -196,6 +238,7 @@ function enumerateDevices(useVideo) {
 
 function clearDeviceChoice() {
 	localStorage.removeItem("audioinput");
+	localStorage.removeItem("audiooutput");
 	localStorage.removeItem("videoinput");
 }
 
@@ -206,6 +249,14 @@ function saveDeviceChoice(devices) {
 		}
 		else {
 			localStorage.setItem("audioinput", devices.audioInput);
+		}
+	}
+	if (devices.audioOutput) {
+		if (devices.audioOutput === "none") {
+			localStorage.removeItem("audioOutput");
+		}
+		else {
+			localStorage.setItem("audiooutput", devices.audioOutput);
 		}
 	}
 	if (devices.videoInput) {
@@ -222,7 +273,8 @@ function getAudioLevel(audioTrack, canvas) {
 	const meterContext = canvas.getContext("2d");
 
 	pollAudioLevel(audioTrack, (level) => {
-		meterContext.clearRect(0, 0, canvas.width, canvas.height);
+		meterContext.fillStyle = "lightgrey";
+		meterContext.fillRect(0, 0, canvas.width, canvas.height);
 		meterContext.fillStyle = "#0d6efd";
 		meterContext.fillRect(0, 0, level * canvas.width, canvas.height);
 	});
@@ -361,6 +413,17 @@ function stopMediaTracks(stream) {
 			track.stop();
 		});
 	}
+}
+
+function setAudioSink(mediaElement, sinkId) {
+	if (!('sinkId' in HTMLMediaElement.prototype)) {
+		return;
+	}
+
+	mediaElement.setSinkId(sinkId)
+		.catch(error => {
+			console.error(error);
+		});
 }
 
 function removeAllChildNodes(parent) {

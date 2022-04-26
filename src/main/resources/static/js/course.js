@@ -2,37 +2,100 @@ class Course {
 
 	constructor() {
 		this.loadingContainer = null;
+		this.connectionInfoContainer = null;
 		this.unavailableContainer = null;
 		this.contentContainer = null;
 		this.messengerContainer = null;
 		this.messengerElement = null;
 		this.quizContainer = null;
 		this.quizElement = null;
+		this.quizModal = null;
 		this.player = null;
+		this.userId = null;
 		this.courseId = null;
 		this.speechRequestId = null;
+		this.speechModal = null;
 		this.startTime = null;
 		this.dict = null;
+		this.devicesSelected = false;
+		this.courseRecordedModal = null;
 	}
 
-	init(courseId, startTime, dict) {
+	init(userId, courseId, startTime, isRecorded, dict) {
+		this.userId = userId;
 		this.courseId = courseId;
 		this.startTime = startTime;
 		this.dict = dict;
 		this.loadingContainer = document.getElementById("course-loading");
+		this.connectionInfoContainer = document.getElementById("connection-info");
 		this.unavailableContainer = document.getElementById("course-unavailable");
 		this.contentContainer = document.getElementById("course-content");
 		this.messengerContainer = document.getElementById("messenger-content");
 		this.quizContainer = document.getElementById("quiz-content");
 
+		const courseRecordeElement = document.getElementById("recordedModal");
+		this.courseRecordedModal = bootstrap.Modal.getOrCreateInstance(courseRecordeElement, {
+			backdrop: "static",
+			keyboard: false
+		});
+
+		window.dict = dict;
+
 		window.portalApp.addOnCourseState((event) => {
+			if (event.courseId !== this.courseId) {
+				return;
+			}
+
+			const mediaProfile = localStorage.getItem("media.profile");
+
+			if (mediaProfile === "classroom") {
+				this.loadingVisible(false);
+				this.showFeatures(true);
+				return;
+			}
+
 			if (event.started) {
 				this.startTime = event.createdTimestamp;
+
+				if (this.messengerElement) {
+					this.messengerContainer.removeChild(this.messengerElement);
+				}
+				if (this.quizElement) {
+					removeAllChildNodes(this.quizContainer);
+					this.quizContainer.classList.add("d-none");
+	
+					const submitButton = this.quizElement.querySelector("#quizSubmit");
+					submitButton.classList.add("d-none");
+				}
 
 				this.initPlayer();
 			}
 			else {
+				if (this.quizModal) {
+					this.quizModal.hide();
+				}
+
+				if (!this.player) {
+					this.connectionInfoVisible(false)
+					this.unavailableVisible(true);
+				}
+				else {
+					this.onPlayerConnectedState(false);
+				}
+
 				this.player = null;
+			}
+		});
+		window.portalApp.addOnCourseRecordedState((event) => {
+			if (event.courseId !== this.courseId) {
+				return;
+			}
+
+			if (event.started) {
+				this.courseRecordedModal.show();
+			}
+			else {
+				this.courseRecordedModal.hide();
 			}
 		});
 		window.portalApp.addOnSpeechState((event) => {
@@ -45,13 +108,23 @@ class Course {
 					this.speechAccepted();
 				}
 				else {
+					this.speechRequestId = null;
+
 					this.player.stopSpeech();
+
+					if (this.speechModal) {
+						this.speechModal.hide();
+					}
 
 					this.showToast("toast-warn", "course.speech.request.rejected");
 				}
 			}
 		});
 		window.portalApp.addOnMessengerState((event) => {
+			if (event.courseId !== this.courseId) {
+				return;
+			}
+
 			if (event.started) {
 				this.loadMessenger();
 			}
@@ -61,6 +134,7 @@ class Course {
 				}
 				else {
 					removeAllChildNodes(this.messengerContainer);
+					this.messengerContainer.classList.add("d-none");
 				}
 
 				this.messengerElement = null;
@@ -68,30 +142,79 @@ class Course {
 			}
 		});
 		window.portalApp.addOnQuizState((event) => {
+			if (event.courseId !== this.courseId) {
+				return;
+			}
+
 			if (event.started) {
 				this.loadQuiz();
 			}
 			else {
+				if (this.quizModal) {
+					this.quizModal.hide();
+				}
+
 				if (this.player) {
 					this.player.setQuizActive(false);
 				}
 
 				removeAllChildNodes(this.quizContainer);
+				this.quizContainer.classList.add("d-none");
 
 				this.quizElement = null;
 				this.unavailableVisible(true);
 			}
 		});
+		window.addEventListener("unload", () => {
+			this.cancelSpeech();
+		});
+		window.onbeforeunload = () => {
+			this.cancelSpeech();
+			return null;
+		}
+
+		if (isRecorded) {
+			this.courseRecordedModal.show();
+		}
+	}
+
+	showFeatures(show) {
+		const featureContainer = document.getElementById("course-feature-container");
+
+		if (show) {
+			featureContainer.classList.remove("d-none");
+		}
+		else {
+			featureContainer.classList.add("d-none");
+		}
 	}
 
 	initPlayer() {
+		const mediaProfile = localStorage.getItem("media.profile");
+
+		if (mediaProfile === "classroom") {
+			this.loadingVisible(false);
+			this.showFeatures(true);
+			return;
+		}
+
 		this.loadingVisible(true);
 		this.unavailableVisible(false);
+		this.connectionInfoVisible(false);
+
+		const deviceConstraints = {
+			audioInput: localStorage.getItem("audioinput"),
+			audioOutput: localStorage.getItem("audiooutput"),
+			videoInput: localStorage.getItem("videoinput")
+		};
 
 		this.player = new lect.LecturePlayer();
+		this.player.setDeviceConstraints(deviceConstraints);
 		this.player.setContainer(this.contentContainer);
+		this.player.setUserId(this.userId);
 		this.player.setRoomId(this.courseId);
 		this.player.setStartTime(this.startTime);
+		this.player.setOnError(this.onPlayerError.bind(this));
 		this.player.setOnConnectedState(this.onPlayerConnectedState.bind(this));
 		this.player.setOnConnectedSpeechState(this.onSpeechConnectedState.bind(this));
 		this.player.setOnSettings(this.onPlayerSettings.bind(this));
@@ -104,55 +227,116 @@ class Course {
 	onPlayerError(error) {
 		console.log(error);
 
+		this.player = null;
+
+		this.detachFeaturesFromPlayer();
+
 		this.playerVisible(false);
 		this.loadingVisible(false);
-		this.unavailableVisible(true);
+		this.unavailableVisible(false);
+		this.connectionInfoVisible(true);
+	}
 
-		this.player = null;
+	attachFeaturesToPlayer() {
+		const playerContainer = document.getElementById("playerContainer");
+		const speechDeviceModal = document.getElementById("speechDeviceModal");
+		const speechAcceptedModal = document.getElementById("speechAcceptedModal");
+		const deviceModal = document.getElementById("deviceModal");
+		const deviceModalInit = document.getElementById("deviceModalInit");
+		const deviceModalPermission = document.getElementById("deviceModalPermission");
+		const quizModal = document.getElementById("quizModal");
+		const recordedModal = document.getElementById("recordedModal");
+		const toastContainer = document.getElementById("toast-container");
+
+		playerContainer.appendChild(speechDeviceModal);
+		playerContainer.appendChild(speechAcceptedModal);
+		playerContainer.appendChild(deviceModal);
+		playerContainer.appendChild(deviceModalInit);
+		playerContainer.appendChild(deviceModalPermission);
+		playerContainer.appendChild(quizModal);
+		playerContainer.appendChild(recordedModal);
+		playerContainer.appendChild(toastContainer);
+
+		if (this.messengerElement) {
+			this.player.setContainerA(this.messengerElement);
+		}
+		if (this.quizElement) {
+			this.player.setQuizActive(true);
+		}
+	}
+
+	detachFeaturesFromPlayer() {
+		const modalsContainer = document.getElementById("modals");
+		const speechDeviceModal = document.getElementById("speechDeviceModal");
+		const speechAcceptedModal = document.getElementById("speechAcceptedModal");
+		const deviceModal = document.getElementById("deviceModal");
+		const deviceModalInit = document.getElementById("deviceModalInit");
+		const deviceModalPermission = document.getElementById("deviceModalPermission");
+		const quizModal = document.getElementById("quizModal");
+		const recordedModal = document.getElementById("recordedModal");
+		const toastContainer = document.getElementById("toast-container");
+
+		modalsContainer.appendChild(speechDeviceModal);
+		modalsContainer.appendChild(speechAcceptedModal);
+		modalsContainer.appendChild(deviceModal);
+		modalsContainer.appendChild(deviceModalInit);
+		modalsContainer.appendChild(deviceModalPermission);
+		modalsContainer.appendChild(quizModal);
+		modalsContainer.appendChild(recordedModal);
+		modalsContainer.appendChild(toastContainer);
+
+		if (this.messengerElement) {
+			this.messengerContainer.appendChild(this.messengerElement);
+			this.messengerContainer.classList.remove("d-none");
+		}
+		if (this.quizElement) {
+			const submitButton = this.quizElement.querySelector("#quizSubmit");
+			submitButton.classList.remove("d-none");
+
+			this.quizContainer.appendChild(this.quizElement);
+			this.quizContainer.classList.remove("d-none");
+		}
 	}
 
 	onPlayerConnectedState(connected) {
-		if (connected) {
-			if (this.messengerElement) {
-				this.player.setContainerA(this.messengerElement);
-			}
-			if (this.quizElement) {
-				removeAllChildNodes(this.quizContainer);
+		console.log("player connected", connected);
 
-				this.player.setQuizActive(true);
-			}
+		if (connected) {
+			this.showFeatures(false);
+
+			this.attachFeaturesToPlayer();
 
 			this.loadingVisible(false);
+			this.connectionInfoVisible(false);
 			this.unavailableVisible(false);
 			this.playerVisible(true);
 		}
 		else {
-			if (this.messengerElement) {
-				this.messengerContainer.appendChild(this.messengerElement);
-			}
-			if (this.quizElement) {
-				this.quizContainer.appendChild(this.quizElement);
-			}
+			this.detachFeaturesFromPlayer();
+			this.showFeatures(true);
+
+			this.player = null;
 
 			this.playerVisible(false);
+			this.connectionInfoVisible(false);
 			this.unavailableVisible(true);
 		}
-
-		window.dispatchEvent(new Event('resize'));
 	}
 
 	onPlayerSettings() {
-		window.enumerateDevices(true)
+		const modalElement = document.getElementById("deviceModal");
+
+		window.enumerateDevices(true, true)
 			.then(result => {
-				this.showDeviceChooserModal(result.devices, result.stream, result.constraints, false);
+				this.showDeviceChooserModal(modalElement, result.devices, result.stream, result.constraints, false);
 			})
 			.catch(error => {
 				console.error(error);
 
 				if (error.name == "NotReadableError") {
-					window.enumerateDevices(false)
+					window.enumerateDevices(false, true)
 						.then(result => {
-							this.showDeviceChooserModal(result.devices, result.stream, result.constraints, true);
+							this.showDeviceChooserModal(modalElement, result.devices, result.stream, result.constraints, true);
 						})
 						.catch(error => {
 							console.error(error);
@@ -160,7 +344,16 @@ class Course {
 				}
 				else if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
 					this.showDevicePermissionDeniedModal();
-				} 
+				}
+				else {
+					window.enumerateDevices(false, false)
+						.then(result => {
+							this.showDeviceChooserModal(modalElement, result.devices, result.stream, result.constraints, false);
+						})
+						.catch(error => {
+							console.error(error);
+						});
+				}
 			});
 	}
 
@@ -195,8 +388,8 @@ class Course {
 	}
 
 	initSpeech() {
-		if (localStorage.getItem("audioinput") === null) {
-			this.showDeviceInitModal();
+		if (!this.devicesSelected) {
+			this.getUserDevices();
 		}
 		else {
 			this.sendSpeechRequest();
@@ -205,7 +398,9 @@ class Course {
 
 	cancelSpeech() {
 		if (!this.speechRequestId) {
-			this.player.setRaiseHand(false);
+			if (this.player) {
+				this.player.setRaiseHand(false);
+			}
 			return;
 		}
 
@@ -232,10 +427,6 @@ class Course {
 		.catch(error => console.error(error));
 	}
 
-	cancelSpeechRequest() {
-		
-	}
-
 	loadMessenger() {
 		fetch("/course/messenger/" + this.courseId, {
 			method: "GET",
@@ -258,6 +449,7 @@ class Course {
 				}
 				else {
 					this.messengerContainer.appendChild(this.messengerElement);
+					this.messengerContainer.classList.remove("d-none");
 				}
 
 				this.initMessenger();
@@ -369,10 +561,14 @@ class Course {
 		});
 
 		if (this.player) {
+			const submitButton = quizForm.querySelector("#quizSubmit");
+			submitButton.classList.add("d-none");
+
 			this.player.setQuizActive(true);
 		}
 		else {
 			this.quizContainer.appendChild(this.quizElement);
+			this.quizContainer.classList.remove("d-none");
 		}
 	}
 
@@ -380,7 +576,7 @@ class Course {
 		const quizModalElement = document.getElementById("quizModal");
 		const quizModalContent = document.getElementById("quizModalContent");
 
-		const quizModal = bootstrap.Modal.getOrCreateInstance(quizModalElement, {
+		this.quizModal = bootstrap.Modal.getOrCreateInstance(quizModalElement, {
 			backdrop: "static",
 			keyboard: false
 		});
@@ -388,17 +584,20 @@ class Course {
 		const hiddenHandler = () => {
 			quizModalElement.removeEventListener("hidden.bs.modal", hiddenHandler);
 
-			this.player.setShowQuiz(false);
+			if (this.player) {
+				this.player.setShowQuiz(false);
+			}
 
 			removeAllChildNodes(quizModalContent);
 
-			quizModal.dispose();
+			this.quizModal.dispose();
+			this.quizModal = null;
 		};
 
 		quizModalElement.addEventListener("hidden.bs.modal", hiddenHandler);
 		quizModalContent.appendChild(this.quizElement);
 
-		quizModal.show();
+		this.quizModal.show();
 	}
 
 	speechAccepted() {
@@ -432,7 +631,7 @@ class Course {
 		const startButton = document.getElementById("speechRequestStart");
 		const cancelButton = document.getElementById("speechRequestCancel");
 
-		const speechModal = bootstrap.Modal.getOrCreateInstance(speechModalElement, {
+		this.speechModal = bootstrap.Modal.getOrCreateInstance(speechModalElement, {
 			backdrop: "static",
 			keyboard: false
 		});
@@ -443,13 +642,13 @@ class Course {
 		const startHandler = () => {
 			this.player.startSpeech(speechConstraints);
 
-			speechModal.hide();
+			this.speechModal.hide();
 		};
 		const hiddenHandler = () => {
 			speechModalElement.removeEventListener("hidden.bs.modal", hiddenHandler);
 			cancelButton.removeEventListener("click", cancelHandler);
 			startButton.removeEventListener("click", startHandler);
-			speechModal.dispose();
+			this.speechModal.dispose();
 
 			window.stopMediaTracks(stream);
 		};
@@ -465,7 +664,15 @@ class Course {
 			cameraBlockedAlert.classList.add("d-none");
 		}
 
-		speechModal.show();
+		if (this.speechRequestId) {
+			this.speechModal.show();
+		}
+		else {
+			// Speech has been aborted by the remote peer.
+			window.stopMediaTracks(stream);
+
+			this.speechModal = null;
+		}
 	}
 
 	showDeviceInitModal() {
@@ -523,21 +730,28 @@ class Course {
 		deviceModal.show();
 	}
 
-	showDeviceChooserModal(devices, stream, constraints, camBlocked) {
+	showDeviceChooserModal(deviceModalElement, devices, stream, constraints, camBlocked) {
 		const audioInputs = devices.filter(device => device.kind === "audioinput");
+		const audioOutputs = devices.filter(device => device.kind === "audiooutput");
 		const videoInputs = devices.filter(device => device.kind === "videoinput");
 
-		const cameraBlockedAlert = document.getElementById("cameraBlockedModalAlert");
-		const cameraSelect = document.getElementById("cameraSelect");
-		const microphoneSelect = document.getElementById("microphoneSelect");
-		const saveButton = document.getElementById("saveDeviceSelection");
-		const cancelButton = document.getElementById("deviceSaveCancel");
-		const meterCanvas = document.getElementById("meter");
-		
-		const video = document.getElementById("cameraPreview");
-		video.srcObject = stream;
+		const settingsElement = document.importNode(document.querySelector("#deviceSettings").content, true);
 
-		const onAudioDeviceChange = () => {
+		const cameraBlockedAlert = settingsElement.querySelector("#cameraBlockedModalAlert");
+		const cameraSelect = settingsElement.querySelector("#cameraSelect");
+		const microphoneSelect = settingsElement.querySelector("#microphoneSelect");
+		const speakerSelect = settingsElement.querySelector("#speakerSelect");
+		const audioInputContainer = settingsElement.querySelector("#settingsAudioInputContainer");
+		const meterCanvas = settingsElement.querySelector("#meter");
+		const deviceForm = settingsElement.querySelector("#deviceSelectForm");
+		const saveButton = deviceModalElement.querySelector("#saveDeviceSelection");
+		const cancelButton = deviceModalElement.querySelector("#deviceSaveCancel");
+		
+		const video = settingsElement.querySelector("#cameraPreview");
+		video.srcObject = stream;
+		video.muted = true;
+
+		const onAudioInputDeviceChange = () => {
 			window.stopAudioTracks(video.srcObject);
 	
 			const audioSource = microphoneSelect.value;
@@ -561,14 +775,28 @@ class Course {
 					}
 				});
 		};
-		const onVideoDeviceChange = () => {
-			window.stopVideoTracks(video.srcObject);
+		const onAudioOutputDeviceChange = () => {
+			if (!('sinkId' in HTMLMediaElement.prototype)) {
+				return;
+			}
 	
+			const audioSink = speakerSelect.value;
+	
+			video.setSinkId(audioSink)
+				.catch(error => {
+					console.error(error);
+				});
+		};
+		const onVideoDeviceChange = () => {
+			window.stopVideoTracks(stream);
+			window.stopVideoTracks(video.srcObject);
+
 			const videoSource = cameraSelect.value;
 			const videoConstraints = {};
 	
 			if (videoSource === "none") {
 				video.style.display = "none";
+				cameraBlockedAlert.classList.add("d-none");
 				return;
 			}
 	
@@ -606,14 +834,26 @@ class Course {
 		cameraSelect.onchange = onVideoDeviceChange;
 		cameraSelect.options.length = 1;
 
-		microphoneSelect.onchange = onAudioDeviceChange;
+		microphoneSelect.onchange = onAudioInputDeviceChange;
 		microphoneSelect.options.length = 0;
+
+		speakerSelect.onchange = onAudioOutputDeviceChange;
+		speakerSelect.options.length = 0;
+
+		const audioSink = localStorage.getItem("audiooutput");
 
 		for (const device of audioInputs) {
 			const index = microphoneSelect.options.length;
 			const selected = constraints.audio.deviceId?.exact == device.deviceId;
 
 			microphoneSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
+		}
+
+		for (const device of audioOutputs) {
+			const index = speakerSelect.options.length;
+			const selected = audioSink == device.deviceId;
+	
+			speakerSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
 		}
 
 		for (const device of videoInputs) {
@@ -629,7 +869,9 @@ class Course {
 
 		video.style.display = (cameraSelect.value === "none") ? "none" : "block";
 
-		const deviceModalElement = document.getElementById("deviceModal");
+		const deviceModalBody = deviceModalElement.querySelector(".modal-body");
+		deviceModalBody.appendChild(settingsElement);
+
 		const deviceModal = bootstrap.Modal.getOrCreateInstance(deviceModalElement, {
 			backdrop: "static",
 			keyboard: false
@@ -639,21 +881,29 @@ class Course {
 			
 		};
 		const saveHandler = () => {
-			const form = document.getElementById("deviceSelectForm");
-			const data = new FormData(form);
+			const data = new FormData(deviceForm);
 			const devices = Object.fromEntries(data.entries());
 
 			window.saveDeviceChoice(devices);
 
+			this.devicesSelected = true;
+
 			deviceModal.hide();
 		};
 		const hiddenHandler = () => {
+			deviceModalBody.innerHTML = "";
 			deviceModalElement.removeEventListener("hidden.bs.modal", hiddenHandler);
 			cancelButton.removeEventListener("click", cancelHandler);
 			saveButton.removeEventListener("click", saveHandler);
 			deviceModal.dispose();
 
-			window.stopMediaTracks(video.srcObject);
+			window.stopMediaTracks(stream);
+			window.stopMediaTracks(window.stopVideoTracks(video.srcObject));
+
+			video.srcObject = null;
+
+			const settingsButton = document.querySelector("#controlContainer #settingsButton");
+			settingsButton.disabled = false;
 		};
 
 		cancelButton.addEventListener("click", cancelHandler);
@@ -665,7 +915,9 @@ class Course {
 			window.getAudioLevel(audioTrack, meterCanvas);
 		});
 
-		if (camBlocked) {
+		audioInputContainer.style.display = audioOutputs.length ? "block" : "none";
+
+		if (camBlocked && constraints.video) {
 			cameraBlockedAlert.classList.remove("d-none");
 		}
 		else {
@@ -684,37 +936,228 @@ class Course {
 		toast.show();
 	}
 
-	getUserDevices(options) {
-		navigator.mediaDevices.getUserMedia({ audio: true, video: (options.video ? true : false) })
-			.then(stream => {
-				const settings = {
-					audioInput: null,
-					videoInput: null
-				};
+	showSpeechDeviceChooserModal(devices, stream, constraints, camBlocked) {
+		const audioInputs = devices.filter(device => device.kind === "audioinput");
+		const audioOutputs = devices.filter(device => device.kind === "audiooutput");
+		const videoInputs = devices.filter(device => device.kind === "videoinput");
 
-				const audioTrack = stream.getAudioTracks()[0];
-				const videoTrack = stream.getVideoTracks()[0];
+		const settingsElement = document.importNode(document.querySelector("#deviceSettings").content, true);
 
-				if (audioTrack) {
-					settings.audioInput = audioTrack.getSettings().deviceId;
+		const cameraBlockedAlert = settingsElement.querySelector("#cameraBlockedModalAlert");
+		const cameraSelect = settingsElement.querySelector("#cameraSelect");
+		const microphoneSelect = settingsElement.querySelector("#microphoneSelect");
+		const speakerSelect = settingsElement.querySelector("#speakerSelect");
+		const audioInputContainer = settingsElement.querySelector("#settingsAudioInputContainer");
+		const meterCanvas = settingsElement.querySelector("#meter");
+		const deviceForm = settingsElement.querySelector("#deviceSelectForm");
+		const saveButton = document.getElementById("saveDeviceSelection");
+		const cancelButton = document.getElementById("deviceSaveCancel");
+		
+		const video = settingsElement.querySelector("#cameraPreview");
+		video.srcObject = stream;
+		video.muted = true;
+
+		const onAudioInputDeviceChange = () => {
+			window.stopAudioTracks(video.srcObject);
+	
+			const audioSource = microphoneSelect.value;
+			const audioConstraints = {
+				audio: {
+					deviceId: audioSource ? { exact: audioSource } : undefined
 				}
-				if (videoTrack) {
-					settings.videoInput = videoTrack.getSettings().deviceId;
-				}
+			};
+	
+			navigator.mediaDevices.getUserMedia(audioConstraints)
+				.then(audioStream => {
+					audioStream.getAudioTracks().forEach(track => video.srcObject.addTrack(track));
+	
+					window.getAudioLevel(audioStream.getAudioTracks()[0], meterCanvas);
+				})
+				.catch(error => {
+					console.error(error);
+	
+					if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
+						this.showDevicePermissionDeniedModal();
+					}
+				});
+		};
+		const onAudioOutputDeviceChange = () => {
+			if (!('sinkId' in HTMLMediaElement.prototype)) {
+				return;
+			}
+	
+			const audioSink = speakerSelect.value;
+	
+			video.setSinkId(audioSink)
+				.catch(error => {
+					console.error(error);
+				});
+		};
+		const onVideoDeviceChange = () => {
+			window.stopVideoTracks(video.srcObject);
+	
+			const videoSource = cameraSelect.value;
+			const videoConstraints = {};
+	
+			if (videoSource === "none") {
+				video.style.display = "none";
+				cameraBlockedAlert.classList.add("d-none");
+				return;
+			}
+	
+			videoConstraints.video = {
+				deviceId: videoSource ? { exact: videoSource } : undefined,
+				width: 1280,
+				height: 720,
+				facingMode: "user"
+			};
+	
+			navigator.mediaDevices.getUserMedia(videoConstraints)
+				.then(videoStream => {
+					const newStream = new MediaStream();
 
-				window.stopMediaTracks(stream);
-				window.saveDeviceChoice(settings);
+					video.srcObject.getAudioTracks().forEach(track => newStream.addTrack(track));
+					videoStream.getVideoTracks().forEach(track => newStream.addTrack(track));
+	
+					video.srcObject = newStream;
+					video.style.display = "block";
 
-				this.sendSpeechRequest();
+					cameraBlockedAlert.classList.add("d-none");
+				})
+				.catch(error => {
+					console.error(error);
+	
+					if (error.name == "NotReadableError") {
+						cameraBlockedAlert.classList.remove("d-none");
+					}
+					else if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
+						this.showDevicePermissionDeniedModal();
+					}
+				});
+		};
+
+		cameraSelect.onchange = onVideoDeviceChange;
+		cameraSelect.options.length = 1;
+
+		microphoneSelect.onchange = onAudioInputDeviceChange;
+		microphoneSelect.options.length = 0;
+
+		speakerSelect.onchange = onAudioOutputDeviceChange;
+		speakerSelect.options.length = 0;
+
+		const audioSink = localStorage.getItem("audiooutput");
+
+		for (const device of audioInputs) {
+			const index = microphoneSelect.options.length;
+			const selected = constraints.audio.deviceId?.exact == device.deviceId;
+
+			microphoneSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
+		}
+
+		for (const device of audioOutputs) {
+			const index = speakerSelect.options.length;
+			const selected = audioSink == device.deviceId;
+	
+			speakerSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
+		}
+
+		for (const device of videoInputs) {
+			const index = cameraSelect.options.length;
+			const selected = constraints.video?.deviceId?.exact == device.deviceId;
+
+			cameraSelect.options[index] = new Option(window.removeHwId(device.label), device.deviceId, false, selected);
+		}
+
+		if (cameraSelect.value === "none") {
+			window.stopVideoTracks(stream);
+		}
+
+		video.style.display = (cameraSelect.value === "none") ? "none" : "block";
+
+		const deviceModalElement = document.getElementById("speechDeviceModal");
+		const deviceModalBody = deviceModalElement.querySelector(".modal-body");
+		deviceModalBody.appendChild(settingsElement);
+
+		const deviceModal = bootstrap.Modal.getOrCreateInstance(deviceModalElement, {
+			backdrop: "static",
+			keyboard: false
+		});
+
+		const cancelHandler = () => {
+			this.cancelSpeech();
+		};
+		const saveHandler = () => {
+			const data = new FormData(deviceForm);
+			const devices = Object.fromEntries(data.entries());
+
+			window.saveDeviceChoice(devices);
+
+			this.devicesSelected = true;
+			this.sendSpeechRequest();
+
+			deviceModal.hide();
+		};
+		const hiddenHandler = () => {
+			deviceModalBody.innerHTML = "";
+			deviceModalElement.removeEventListener("hidden.bs.modal", hiddenHandler);
+			cancelButton.removeEventListener("click", cancelHandler);
+			saveButton.removeEventListener("click", saveHandler);
+			deviceModal.dispose();
+
+			window.stopMediaTracks(stream);
+
+			video.srcObject = null;
+		};
+
+		cancelButton.addEventListener("click", cancelHandler);
+		saveButton.addEventListener("click", saveHandler);
+		deviceModalElement.addEventListener("hidden.bs.modal", hiddenHandler);
+		deviceModalElement.addEventListener("shown.bs.modal", () => {
+			const audioTrack = stream.getAudioTracks()[0];
+
+			window.getAudioLevel(audioTrack, meterCanvas);
+		});
+
+		audioInputContainer.style.display = audioOutputs.length ? "block" : "none";
+
+		if (camBlocked && constraints.video) {
+			cameraBlockedAlert.classList.remove("d-none");
+		}
+		else {
+			cameraBlockedAlert.classList.add("d-none");
+		}
+
+		deviceModal.show();
+	}
+
+	getUserDevices() {
+		window.enumerateDevices(true, true)
+			.then(result => {
+				this.showSpeechDeviceChooserModal(result.devices, result.stream, result.constraints, false);
 			})
 			.catch(error => {
-				console.error(error.name);
+				console.error(error);
 
 				if (error.name == "NotReadableError") {
-					this.showDevicePermissionDeniedModal();
+					window.enumerateDevices(false, true)
+						.then(result => {
+							this.showSpeechDeviceChooserModal(result.devices, result.stream, result.constraints, true);
+						})
+						.catch(error => {
+							console.error(error);
+						});
 				}
 				else if (error.name == "NotAllowedError" || error.name == "PermissionDeniedError") {
 					this.showDevicePermissionDeniedModal();
+				}
+				else {
+					window.enumerateDevices(false, false)
+						.then(result => {
+							this.showSpeechDeviceChooserModal(result.devices, result.stream, result.constraints, false);
+						})
+						.catch(error => {
+							console.error(error);
+						});
 				}
 			});
 	}
@@ -723,8 +1166,12 @@ class Course {
 		this.elementVisible(this.loadingContainer, visible);
 	}
 
+	connectionInfoVisible(visible) {
+		this.elementVisible(this.connectionInfoContainer, visible);
+	}
+
 	unavailableVisible(visible) {
-		this.elementVisible(this.unavailableContainer, visible & !(this.player || this.messengerElement || this.quizElement));
+		this.elementVisible(this.unavailableContainer, visible & !(this.player || this.messengerElement || this.quizElement || !this.connectionInfoContainer.classList.contains("d-none")));
 	}
 
 	playerVisible(visible) {

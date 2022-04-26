@@ -43,7 +43,7 @@ public class CourseStates {
 
 	public void removeSessionId(BigInteger sessionId) {
 		for (CourseState state : states.values()) {
-			state.removeSessionId(sessionId);
+			state.removeParticipantWithSessionId(sessionId);
 		}
 	}
 

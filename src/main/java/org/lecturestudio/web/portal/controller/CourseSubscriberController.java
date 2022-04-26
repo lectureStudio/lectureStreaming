@@ -24,9 +24,9 @@ import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.QuizAnswerMessage;
 import org.lecturestudio.web.api.message.SpeechCancelMessage;
 import org.lecturestudio.web.api.message.SpeechRequestMessage;
-import org.lecturestudio.web.api.model.ClassroomServiceResponse;
 import org.lecturestudio.web.api.model.Message;
 import org.lecturestudio.web.api.model.quiz.QuizAnswer;
+import org.lecturestudio.web.api.stream.model.CourseFeatureResponse;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.DocumentNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
@@ -192,7 +192,7 @@ public class CourseSubscriberController {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		// Validate input.
-		ResponseEntity<ClassroomServiceResponse> response = speechValidator.validate(courseId);
+		ResponseEntity<CourseFeatureResponse> response = speechValidator.validate(courseId);
 
 		if (response.getStatusCode().value() == HttpStatus.OK.value()) {
 			// speechValidator.registerRequest(courseId);
@@ -220,7 +220,7 @@ public class CourseSubscriberController {
 	}
 
 	@DeleteMapping("/speech/{courseId}/{requestId}")
-	public ResponseEntity<ClassroomServiceResponse> cancelSpeech(@PathVariable("courseId") long courseId,
+	public ResponseEntity<CourseFeatureResponse> cancelSpeech(@PathVariable("courseId") long courseId,
 			@PathVariable("requestId") long requestId, Authentication authentication) {
 		CourseState courseState = courseStates.getCourseState(courseId);
 
@@ -231,7 +231,7 @@ public class CourseSubscriberController {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		// Validate input.
-		ResponseEntity<ClassroomServiceResponse> response = speechValidator.validate(courseId);
+		ResponseEntity<CourseFeatureResponse> response = speechValidator.validate(courseId);
 
 		if (response.getStatusCode().value() == HttpStatus.OK.value()) {
 			// speechValidator.registerRequest(courseId);
@@ -261,7 +261,7 @@ public class CourseSubscriberController {
 	}
 
 	@PostMapping("/message/post/{courseId}")
-	public ResponseEntity<ClassroomServiceResponse> postMessage(@PathVariable("courseId") long courseId,
+	public ResponseEntity<CourseFeatureResponse> postMessage(@PathVariable("courseId") long courseId,
 			@RequestBody Message message, Authentication authentication, HttpServletRequest request) {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
@@ -269,7 +269,7 @@ public class CourseSubscriberController {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		// Validate input.
-		ResponseEntity<ClassroomServiceResponse> response = messageValidator.validate(feature, message);
+		ResponseEntity<CourseFeatureResponse> response = messageValidator.validate(feature, message);
 
 		if (response.getStatusCode().value() == HttpStatus.OK.value()) {
 			MessengerMessage mMessage = new MessengerMessage(message, request.getRemoteAddr(), ZonedDateTime.now());
@@ -284,7 +284,7 @@ public class CourseSubscriberController {
 	}
 
 	@PostMapping("/quiz/post/{courseId}")
-	public ResponseEntity<ClassroomServiceResponse> postQuizAnswer(@PathVariable("courseId") long courseId,
+	public ResponseEntity<CourseFeatureResponse> postQuizAnswer(@PathVariable("courseId") long courseId,
 			@RequestBody QuizAnswer quizAnswer, Authentication authentication, HttpServletRequest request) {
 
 		final CourseQuizFeature feature = (CourseQuizFeature) courseFeatureService.findQuizByCourseId(courseId)
@@ -294,7 +294,7 @@ public class CourseSubscriberController {
 		final String userName = details.getUsername();
 
 		// Validate input.
-		ResponseEntity<ClassroomServiceResponse> response = quizAnswerValidator.validate(userName, feature, quizAnswer);
+		ResponseEntity<CourseFeatureResponse> response = quizAnswerValidator.validate(userName, feature, quizAnswer);
 
 		if (response.getStatusCode().value() == HttpStatus.OK.value()) {
 			feature.getUsers().add(userName);

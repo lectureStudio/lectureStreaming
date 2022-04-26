@@ -113,10 +113,12 @@ public class CourseController {
 			}
 		}
 
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 		CourseState state = courseStates.getCourseState(course.getId());
 
 		CourseDto courseDto = CourseDto.builder()
 			.id(course.getId())
+			.userId(details.getUsername())
 			.roomId(course.getRoomId())
 			.createdTimestamp(nonNull(state) ? state.getCreatedTimestamp() : null)
 			.title(course.getTitle())
@@ -125,6 +127,7 @@ public class CourseController {
 			.messageFeature(messageFeature)
 			.quizFeature(quizFeature)
 			.isLive(nonNull(state))
+			.isRecorded(nonNull(state) ? state.getRecordedState() : false)
 			.isProtected(isProtected)
 			.build();
 
