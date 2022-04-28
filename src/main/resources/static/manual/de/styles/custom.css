@@ -1,0 +1,145 @@
+@import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700";
+@import "https://cdn.jsdelivr.net/gh/asciidoctor/asciidoctor@2.0/data/stylesheets/asciidoctor-default.css";
+
+:root {
+	/* colors */
+	--color-white: #fff;
+	--color-smoke-10: #fefefe;
+	--color-smoke-30: #fafafa;
+	--color-smoke-50: #f5f5f5;
+	--color-smoke-70: #f0f0f0;
+	--color-smoke-90: #e1e1e1;
+	--color-gray-10: #c1c1c1;
+	--color-gray-30: #9c9c9c;
+	--color-gray-40: #8e8e8e;
+	--color-gray-50: #808080;
+	--color-gray-70: #5d5d5d;
+	--color-jet-20: #4a4a4a;
+	--color-jet-30: #424242;
+	--color-jet-50: #333;
+	--color-jet-70: #222;
+	--color-jet-80: #191919;
+	--color-black: #000;
+
+	/* base */
+	--panel-background: var(--color-smoke-30);
+	--panel-border-color: var(--color-smoke-90);
+
+	/* admonitions */
+	--admonition-background: var(--panel-background);
+	--caution-color: #a0439c;
+	--important-color: #d32f2f;
+	--note-color: #217ee7;
+	--tip-color: #41af46;
+	--warning-color: #e18114;
+}
+
+body {
+	font-family: "Open Sans","DejaVu Sans",sans-serif;
+}
+
+.admonitionblock {
+	margin: 1.4rem 0 0;
+}
+.admonitionblock > table {
+	table-layout: fixed;
+	position: relative;
+	width: 100%;
+}
+.admonitionblock > table td.content {
+	padding: 1rem 1rem 0.75rem;
+	background: var(--admonition-background);
+	border: 0;
+	color: inherit;
+	width: 100%;
+	word-wrap: anywhere;
+}
+.admonitionblock > table td.icon {
+	text-align: center;
+	width: inherit;
+	color: white;
+	position: absolute;
+	top: 0;
+	left: 0;
+	font-size: 1rem;
+	padding: 0 0.5rem;
+	height: 1.5rem;
+	line-height: 1;
+	text-transform: uppercase;
+	background: linear-gradient(90deg, rgba(0,0,0,.2) 0, rgba(0,0,0,.2)) no-repeat 0/2em 100%;
+	background-color: rgba(0, 0, 0, 0);
+	border-radius: 0.45rem;
+	transform: translate(-0.5rem, -50%);
+}
+.admonitionblock td.icon [class^="fa icon-"] {
+	color: white;
+	font-size: 1em;
+	text-shadow: none;
+}
+.admonitionblock td.icon i::before {
+	content: attr(title);
+	padding: 0;
+	width: 1em;
+}
+.admonitionblock td.icon .icon-note::before {
+	content: "\f05a";
+	color: white;
+}
+.admonitionblock td.icon .icon-tip::before {
+	content: "\f0eb";
+	text-shadow: none;
+	color: white;
+}
+.admonitionblock td.icon .icon-warning::before {
+	content: "\f071";
+	color: white;
+}
+.admonitionblock td.icon .icon-caution::before {
+	content: "\f06d";
+	color: white;
+}
+.admonitionblock td.icon .icon-important::before {
+	content: "\f06a";
+	color: white;
+}
+.admonitionblock.caution .icon {
+	background-color: var(--caution-color);
+	color: white;
+}
+.admonitionblock.important .icon {
+	background-color: var(--important-color);
+	color: white;
+}
+.admonitionblock.note .icon {
+	background-color: var(--note-color);
+	color: white;
+}
+.admonitionblock.tip .icon {
+	background-color: var(--tip-color);
+	color: white;
+}
+.admonitionblock.warning .icon {
+	background-color: var(--warning-color);
+	color: white;
+}
+.admonitionblock .icon i {
+	display: inline-flex;
+	align-items: center;
+	height: 100%;
+}
+.admonitionblock .icon i::after {
+	content: attr(title);
+	font-family: "Open Sans","DejaVu Sans",sans-serif;
+	font-weight: 500;
+	padding: 0 0 0 1em;
+}
+
+.imageblock > .title {
+	font-family: "Open Sans","DejaVu Sans",sans-serif;
+	text-align: center;
+	margin-top: 0.5em;
+}
+
+td.hdlist1 img {
+	max-width: inherit;
+}
