@@ -5,7 +5,7 @@
 	<form id="course-quiz-form" th:action="@{/course/quiz/post/{id}(id=${course.id})}" method="post">
 		<input type="hidden" name="serviceId" th:value="${course.quizFeature.featureId}" />
 		
-		<div th:utext="${course.quizFeature.question}" class="mb-1"></div>
+		<div th:utext="${course.quizFeature.question}" class="mb-1 text-wrap text-break"></div>
 		
 		<div class="py-2">
 			<th:block th:each="option, iter: ${course.quizFeature.options}">
