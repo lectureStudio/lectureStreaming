@@ -302,7 +302,7 @@ public class CourseController {
 
 				quizFeature = new CourseQuizFeature();
 				quizFeature.setFeatureId(qf.getFeatureId());
-				quizFeature.setQuestion(qf.getQuestion());
+				quizFeature.setQuestion(qf.getQuestion().replace("&nbsp;"," "));
 				quizFeature.setType(qf.getType());
 				quizFeature.setOptions(qf.getOptions());
 			}
