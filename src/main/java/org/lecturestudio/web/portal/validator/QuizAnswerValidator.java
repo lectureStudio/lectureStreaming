@@ -79,6 +79,10 @@ public class QuizAnswerValidator {
 			throw new Exception("course.feature.quiz.input.invalid");
 		}
 
+		if (feature.getType() == Quiz.QuizType.SINGLE && options.length == 0) {
+			throw new Exception("course.feature.quiz.input.invalid");
+		}
+
 		// Check for possible blacklisted input.
 		if (feature.getType() == Quiz.QuizType.NUMERIC) {
 			// int fieldId = 0;
