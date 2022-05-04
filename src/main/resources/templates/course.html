@@ -10,7 +10,7 @@
 	<th:block layout:fragment="content">
 		<div class="d-flex flex-column h-100 bg-light">
 			<div class="d-flex flex-column h-100 w-100">
-				<div th:classappend="${course.isLive ? '' : 'd-none'}" class="d-flex flex-column w-100 justify-content-center align-items-center p-2" id="course-loading">
+				<div th:classappend="${course.isLive ? '' : 'd-none'}" class="d-flex flex-column w-100 justify-content-center align-items-center p-2 pt-5" id="course-loading">
 					<div class="spinner-grow text-primary" role="status">
 						<span class="visually-hidden">Loading...</span>
 					</div>
@@ -18,8 +18,13 @@
 				</div>
 
 				<div th:classappend="${course.isLive || course.hasFeatures ? 'd-none' : ''}" class="d-flex flex-column w-100 justify-content-center align-items-center p-2" id="course-unavailable">
-					<i class="h1 bi bi-calendar-x text-primary" ></i>
-					<strong th:text="#{course.unavailable}" class="text-muted py-2"></strong>
+					<div class="container col-md-6 pt-5">
+						<i class="d-flex h1 bi bi-calendar-x text-primary justify-content-center" ></i>
+						<strong th:text="#{course.unavailable}" class="text-muted py-2"></strong>
+						<hr class="bg-danger border-1 border-top border-secondary">
+
+						<small th:utext="${course.description}" class="mb-1"></small>
+					</div>
 				</div>
 
 				<div class="container col-md-6 px-1 alert alert-info mt-4 d-none" id="connection-info" role="alert">
