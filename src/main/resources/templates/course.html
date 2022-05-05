@@ -20,7 +20,9 @@
 				<div th:classappend="${course.isLive || course.hasFeatures ? 'd-none' : ''}" class="d-flex flex-column w-100 justify-content-center align-items-center p-2" id="course-unavailable">
 					<div class="container col-md-6 pt-5">
 						<i class="d-flex h1 bi bi-calendar-x text-primary justify-content-center" ></i>
-						<strong th:text="#{course.unavailable}" class="text-muted py-2"></strong>
+						<div class="d-flex justify-content-center">
+							<strong th:text="#{course.unavailable}" class="text-muted py-2"></strong>
+						</div>
 						<hr class="bg-danger border-1 border-top border-secondary">
 
 						<small th:utext="${course.description}" class="mb-1"></small>
