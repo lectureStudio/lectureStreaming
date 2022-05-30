@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.lecturestudio.core.recording.RecordedPage;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
+import org.lecturestudio.web.portal.service.CourseQuizResourceService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.SubscriberEmitterService;
@@ -34,6 +35,7 @@ import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
+import org.lecturestudio.web.portal.model.CourseQuizResource;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
@@ -60,6 +62,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink.OverflowStrategy;
@@ -82,6 +85,9 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private CourseSpeechRequestService speechRequestService;
+
+	@Autowired
+	private CourseQuizResourceService courseQuizResourceService;
 
 	@Autowired
 	private FileStorageService fileStorageService;
@@ -310,6 +316,16 @@ public class CourseSubscriberController {
 		}
 
 		return response;
+	}
+
+	@GetMapping("/{courseId}/quiz/resource/{fileName:.+}")
+	public ResponseEntity<Resource> getQuizResource(@PathVariable("courseId") long courseId, @PathVariable String fileName) {
+		CourseQuizResource resource = courseQuizResourceService.findByCourseIdAndName(courseId, fileName)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+		return ResponseEntity.ok()
+			.contentType(MediaType.parseMediaType(resource.getType()))
+			.body(new ByteArrayResource(resource.getContent()));
 	}
 
 	@GetMapping("/file/{fileName:.+}")

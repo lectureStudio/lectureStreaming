@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.lecturestudio.web.api.model.quiz.Quiz;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
@@ -18,6 +20,7 @@ import org.lecturestudio.web.portal.model.CourseFeature;
 import org.lecturestudio.web.portal.model.CourseFeatureEvent;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
+import org.lecturestudio.web.portal.model.CourseQuizResource;
 import org.lecturestudio.web.portal.model.CourseSpeechEvent;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
@@ -32,6 +35,7 @@ import org.lecturestudio.web.portal.service.CourseFeatureService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.messaging.support.GenericMessage;
@@ -188,11 +192,47 @@ public class CoursePublisherController {
 	}
 
 	@PostMapping("/quiz/start/{courseId}")
-	public ResponseEntity<String> startQuiz(@PathVariable("courseId") long courseId, @RequestBody Quiz quiz) {
+	public ResponseEntity<String> startQuiz(@PathVariable("courseId") long courseId, @RequestBody Quiz quiz, HttpServletRequest request) {
+		String baseUri = request.getScheme() + "://" + request.getServerName();
+
 		CourseQuizFeature feature = new CourseQuizFeature();
-		feature.setQuestion(StringUtils.cleanHtml(quiz.getQuestion()));
+		feature.setQuestion(StringUtils.cleanHtml(quiz.getQuestion(), baseUri));
 		feature.setType(quiz.getType());
 		feature.setOptions(quiz.getOptions());
+
+		return startFeature(courseId, feature);
+	}
+
+	@PostMapping(
+		value = "/v2/quiz/start/{courseId}",
+		consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE }
+	)
+	public ResponseEntity<String> startQuiz(HttpServletRequest request, @PathVariable("courseId") long courseId,
+			@RequestPart("quiz") Quiz quiz, @RequestPart("files") MultipartFile[] files) {
+		String baseUri = request.getScheme() + "://" + request.getServerName();
+		CourseQuizFeature feature = new CourseQuizFeature();
+		List<CourseQuizResource> resources = new ArrayList<>();
+
+		try {
+			for (MultipartFile file : files) {
+				CourseQuizResource resource = new CourseQuizResource();
+				resource.setName(file.getOriginalFilename());
+				resource.setType(file.getContentType());
+				resource.setContent(file.getBytes());
+				resource.setCourseId(courseId);
+				resource.setFeature(feature);
+
+				resources.add(resource);
+			}
+		}
+		catch (Throwable e) {
+			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Failed to upload files");
+		}
+
+		feature.setQuestion(StringUtils.cleanHtml(quiz.getQuestion(), baseUri));
+		feature.setType(quiz.getType());
+		feature.setOptions(quiz.getOptions());
+		feature.setResources(resources);
 
 		return startFeature(courseId, feature);
 	}

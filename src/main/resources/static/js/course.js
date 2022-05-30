@@ -299,8 +299,6 @@ class Course {
 	}
 
 	onPlayerConnectedState(connected) {
-		console.log("player connected", connected);
-
 		if (connected) {
 			this.showFeatures(false);
 

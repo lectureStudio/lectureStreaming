@@ -9,7 +9,7 @@ import org.owasp.esapi.ESAPI;
 
 public class StringUtils {
 
-	public static final String cleanHtml(String input) {
+	public static final String cleanHtml(String input, String baseUri) {
 		input = ESAPI.encoder().canonicalize(input).replaceAll("\0", "");
 
 		OutputSettings outputSettings = new OutputSettings();
@@ -17,13 +17,14 @@ public class StringUtils {
 		outputSettings.escapeMode(EscapeMode.xhtml);
 
 		Safelist safelist = Safelist.relaxed()
+			.preserveRelativeLinks(true)
 			.addTags("font")
 			.addAttributes("a", "target")
 			.addAttributes("div", "align")
 			.addAttributes("p", "align")
 			.addAttributes("font", "color");
 
-		return Jsoup.clean(input, "", safelist, outputSettings);
+		return Jsoup.clean(input, baseUri, safelist, outputSettings);
 	}
 
 }

@@ -2,9 +2,11 @@ package org.lecturestudio.web.portal.model;
 
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.OneToMany;
 
 import org.lecturestudio.web.api.model.quiz.Quiz.QuizType;
 
@@ -26,6 +28,9 @@ public class CourseQuizFeature extends CourseFeature {
 
 	@ElementCollection
 	List<String> users;
+
+	@OneToMany(mappedBy = "feature", cascade = { CascadeType.ALL })
+	List<CourseQuizResource> resources;
 
 
 	@Override

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -38,7 +39,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -59,9 +59,6 @@ public class CourseController {
 
 	@Autowired
 	private MessageSource messageSource;
-
-	@Autowired
-	private LocaleResolver localeResolver;
 
 	private final Map<String, String> dict = new HashMap<>();
 
@@ -186,7 +183,7 @@ public class CourseController {
 	}
 
 	@PostMapping("/new")
-	public String newCourse(Authentication authentication, @Valid Course course, BindingResult result, Model model) {
+	public String newCourse(Authentication authentication, HttpServletRequest request, @Valid Course course, BindingResult result, Model model) {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		if (result.hasErrors()) {
@@ -195,8 +192,10 @@ public class CourseController {
 			return "course-form";
 		}
 
+		String baseUri = request.getScheme() + "://" + request.getServerName();
+
 		course.setRoomId(RandomStringUtils.randomAlphanumeric(17));
-		course.setDescription(StringUtils.cleanHtml(course.getDescription()));
+		course.setDescription(StringUtils.cleanHtml(course.getDescription(), baseUri));
 
 		User user = userService.findById(details.getUsername())
 			.orElseThrow(() -> new IllegalArgumentException("User is not present"));
@@ -231,7 +230,7 @@ public class CourseController {
 	}
 
 	@PostMapping("/edit/{id}")
-	public String updateCourse(Authentication authentication, @PathVariable("id") long id, @Valid Course course,
+	public String updateCourse(Authentication authentication, HttpServletRequest request, @PathVariable("id") long id, @Valid Course course,
 			BindingResult result, Model model) {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
@@ -243,10 +242,12 @@ public class CourseController {
 			return "course-form";
 		}
 
+		String baseUri = request.getScheme() + "://" + request.getServerName();
+
 		Course dbCourse = courseService.findById(id)
 			.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
 		dbCourse.setTitle(course.getTitle());
-		dbCourse.setDescription(StringUtils.cleanHtml(course.getDescription()));
+		dbCourse.setDescription(StringUtils.cleanHtml(course.getDescription(), baseUri));
 		dbCourse.setPasscode(course.getPasscode());
 
 		courseService.saveCourse(dbCourse);
