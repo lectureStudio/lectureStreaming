@@ -205,28 +205,30 @@ public class CoursePublisherController {
 
 	@PostMapping(
 		value = "/v2/quiz/start/{courseId}",
-		consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE }
+		consumes = { MediaType.MULTIPART_FORM_DATA_VALUE }
 	)
 	public ResponseEntity<String> startQuiz(HttpServletRequest request, @PathVariable("courseId") long courseId,
-			@RequestPart("quiz") Quiz quiz, @RequestPart("files") MultipartFile[] files) {
+			@RequestPart("quiz") Quiz quiz, @RequestPart("files") Optional<MultipartFile[]> files) {
 		String baseUri = request.getScheme() + "://" + request.getServerName();
 		CourseQuizFeature feature = new CourseQuizFeature();
 		List<CourseQuizResource> resources = new ArrayList<>();
 
-		try {
-			for (MultipartFile file : files) {
-				CourseQuizResource resource = new CourseQuizResource();
-				resource.setName(file.getOriginalFilename());
-				resource.setType(file.getContentType());
-				resource.setContent(file.getBytes());
-				resource.setCourseId(courseId);
-				resource.setFeature(feature);
+		if (files.isPresent()) {
+			try {
+				for (MultipartFile file : files.get()) {
+					CourseQuizResource resource = new CourseQuizResource();
+					resource.setName(file.getOriginalFilename());
+					resource.setType(file.getContentType());
+					resource.setContent(file.getBytes());
+					resource.setCourseId(courseId);
+					resource.setFeature(feature);
 
-				resources.add(resource);
+					resources.add(resource);
+				}
 			}
-		}
-		catch (Throwable e) {
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Failed to upload files");
+			catch (Throwable e) {
+				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Failed to upload files");
+			}
 		}
 
 		feature.setQuestion(StringUtils.cleanHtml(quiz.getQuestion(), baseUri));
