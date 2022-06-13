@@ -24,6 +24,7 @@ public class CourseQuizFeature extends CourseFeature {
 	QuizType type;
 
 	@ElementCollection
+	@Column(columnDefinition = "TEXT")
 	List<String> options;
 
 	@ElementCollection
