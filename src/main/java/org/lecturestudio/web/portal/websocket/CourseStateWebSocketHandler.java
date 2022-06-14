@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -289,7 +290,7 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		CourseStateDocument stateDocument = getCourseStateDocument(courseState, action.getDocumentId());
 		CourseStatePage statePage = getCourseStatePage(stateDocument, action.getPageNumber(), true);
 
-		// System.out.println("doc: " + action.getDocumentId() + ", page: " + action.getPageNumber());
+		// System.out.printf("page created: doc (%d), page (%d)%n", action.getDocumentId(), action.getPageNumber());
 	}
 
 	private static void updateDeletedPageState(CourseState courseState, StreamPageAction action) {
@@ -297,14 +298,14 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 		deleteCourseStatePage(stateDocument, action.getPageNumber());
 
-		// System.out.println("doc: " + action.getDocumentId() + ", page: " + action.getPageNumber());
+		// System.out.printf("page deleted: doc (%d), page (%d)%n", action.getDocumentId(), action.getPageNumber());
 	}
 
 	private static void updateActivePageState(CourseState courseState, StreamPageAction action) {
 		CourseStateDocument stateDocument = getCourseStateDocument(courseState, action.getDocumentId());
 		CourseStatePage statePage = getCourseStatePage(stateDocument, action.getPageNumber(), true);
 
-		// System.out.println("doc: " + action.getDocumentId() + ", page: " + action.getPageNumber());
+		// System.out.printf("page selected: doc (%d), page (%d)%n", action.getDocumentId(), action.getPageNumber());
 
 		stateDocument.setActivePage(statePage);
 	}
@@ -356,10 +357,29 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 	}
 
 	private static void deleteCourseStatePage(CourseStateDocument stateDocument, int pageNumber) {
-		CourseStatePage statePage = stateDocument.getPages().remove(pageNumber);
+		var pages = stateDocument.getPages();
 
-		if (isNull(statePage)) {
-			
+		if (nonNull(pages.remove(pageNumber))) {
+			// Get trailing pages.
+			var trail = pages.keySet()
+					.stream()
+					.filter((keyNumber) -> keyNumber > pageNumber)
+					.sorted()
+					.collect(Collectors.toList());
+
+			// Re-align page numbers.
+			for (var number : trail) {
+				// Move trailing pages one position/page number down.
+				CourseStatePage page = pages.remove(number);
+
+				if (nonNull(page)) {
+					int newNumber = number - 1;
+
+					page.setPageNumber(newNumber);
+
+					pages.put(newNumber, page);
+				}
+			}
 		}
 	}
 
