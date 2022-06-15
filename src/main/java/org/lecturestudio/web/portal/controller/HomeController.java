@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
@@ -41,6 +43,13 @@ public class HomeController {
 	@RequestMapping("/")
 	public String index(Principal principal, Authentication authentication, Model model) {
 		return nonNull(principal) ? home(authentication, model) : "index";
+	}
+
+	@GetMapping("/logout")
+	public String logout(HttpServletRequest request) throws Exception {
+		request.logout();
+
+		return "redirect:/";
 	}
 
 	@GetMapping(value = "/auth")
