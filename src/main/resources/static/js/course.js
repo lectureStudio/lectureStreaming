@@ -535,14 +535,21 @@ class Course {
 	appendToMessengerLog(element) {
 		if (this.messengerLogElement) {
 			const ul = this.messengerLogElement.querySelector('#flush-chat-log-list');
-			console.log(this.messengerLogElement);
-			console.log(ul);
+			// console.log(this.messengerLogElement);
+			// console.log(ul);
 			if (ul) {
 				for (const child of element.body.children) {
 					ul.appendChild(child);
 				}
 			}
+
+			this.scrollToLastMessage();
 		}
+	}
+
+	scrollToLastMessage() {
+		const content = this.messengerLogElement.querySelector('.content');
+		content.scrollTop = content.scrollHeight;
 	}
 
 	loadQuiz() {
