@@ -438,6 +438,7 @@ class Course {
 				const doc = new DOMParser().parseFromString(html, "text/html");
 
 				this.messengerElement = document.createElement("div");
+				this.messengerElement.classList.add("log-div-container");
 
 				for (const child of doc.body.children) {
 					this.messengerElement.appendChild(child);
@@ -470,6 +471,7 @@ class Course {
 				const doc = new DOMParser().parseFromString(html, "text/html");
 
 				this.messengerLogElement = document.createElement("div");
+				this.messengerLogElement.classList.add("log-div");
 
 				for (const child of doc.body.children) {
 					this.messengerLogElement.appendChild(child);

@@ -82,6 +82,9 @@ textarea[id=messageTextarea]:focus {
 	max-height: 6em;
 }
 
+.chat-container {
+	height: 100%;
+}
 .chat-container .accordion-button {
 	position: relative;
 	display: flex;
@@ -280,4 +283,47 @@ textarea[id=messageTextarea]:focus {
 
 .chat-container ul {
 	list-style-type: none;
+}
+
+.chat-container .log-div-container {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	overflow-y: hidden;
+	align-items: stretch;
+}
+.chat-container .log-div {
+	height: 100%;
+}
+
+.log-container {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	overflow-y: hidden;
+	align-items: stretch;
+}
+.log-container .container {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+}
+.log-container .body {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: row;
+}
+.log-container .right .content {
+	flex: 1 1 auto;
+	overflow-y: auto;
+	height: 100px;
+}
+.log-container .right {
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 15em;
+	max-width: min-content;
 }
