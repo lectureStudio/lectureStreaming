@@ -2,6 +2,7 @@ package org.lecturestudio.web.portal.controller;
 
 import static java.util.Objects.nonNull;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.lecturestudio.web.api.model.Message;
+import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
 import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseCredentials;
@@ -23,6 +26,8 @@ import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
+import org.lecturestudio.web.portal.service.CourseFeatureService;
+import org.lecturestudio.web.portal.service.CourseMessengerLogger;
 import org.lecturestudio.web.portal.service.CourseRegistrationService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.UserService;
@@ -32,12 +37,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -59,6 +67,12 @@ public class CourseController {
 
 	@Autowired
 	private MessageSource messageSource;
+
+	@Autowired
+	private CourseMessengerLogger courseMessengerLogger;
+
+	@Autowired
+	private CourseFeatureService courseFeatureService;
 
 	private final Map<String, String> dict = new HashMap<>();
 
@@ -288,6 +302,41 @@ public class CourseController {
 		model.addAttribute("course", courseDto);
 
 		return "fragments/messenger :: messenger";
+	}
+
+	@RequestMapping("/messenger/{id}/log")
+	public String getMessengerLog(@PathVariable("id") long id, Model model, Authentication authentication) {
+		Course course = courseService.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		User user = userService.findById(details.getUsername())
+				.orElseThrow(() -> new UsernameNotFoundException("User with username: " + details.getUsername() + " does not exist!"));
+
+		CourseMessageFeature messageFeature = null;
+
+		for (var feature : course.getFeatures()) {
+			if (feature instanceof CourseMessageFeature) {
+				messageFeature = new CourseMessageFeature();
+				messageFeature.setFeatureId(feature.getFeatureId());
+			}
+		}
+
+		model.addAttribute("messageLog", courseMessengerLogger.getMessengerLogOfUser(id, user));
+
+		return "fragments/messenger-log :: messenger-log";
+	}
+
+	@RequestMapping(value = "/message/log/{courseId}/element", method = RequestMethod.POST)
+	public String getMessageLogElement(@PathVariable("courseId") long courseId, @RequestBody Message message, Authentication authentication) {
+			CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
+				.orElseThrow(() -> new FeatureNotFoundException());
+
+			ZonedDateTime date = ZonedDateTime.now();
+
+			return String.format("fragments/messenger-message :: messenger-message(timestamp='%s', text='%s')", 
+				String.format("%02d:%02d", date.getHour(), date.getMinute()), message.getText());
 	}
 
 	@RequestMapping("/quiz/{id}")

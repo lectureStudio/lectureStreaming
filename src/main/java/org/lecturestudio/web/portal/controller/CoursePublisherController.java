@@ -32,7 +32,7 @@ import org.lecturestudio.web.portal.util.StringUtils;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
-
+import org.lecturestudio.web.portal.service.CourseMessengerLogger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -71,6 +71,9 @@ public class CoursePublisherController {
 
 	@Autowired
 	private SubscriberEmitterService subscriberEmmiter;
+
+	@Autowired
+	private CourseMessengerLogger courseMessengerLogger;
 
 
 	@GetMapping("/courses")
@@ -261,6 +264,10 @@ public class CoursePublisherController {
 
 			courseService.saveCourse(course);
 
+			if (feature instanceof CourseMessageFeature) {
+				courseMessengerLogger.addCourseLog(courseId);
+			}
+
 			// Send feature state event.
 			sendFeatureState(course.getId(), feature, true);
 		}
@@ -288,6 +295,10 @@ public class CoursePublisherController {
 
 		// Send feature state event.
 		sendFeatureState(course.getId(), courseFeature, false);
+
+		if (courseFeature instanceof CourseMessageFeature) {
+			courseMessengerLogger.removeCourseLog(courseId);
+		}
 
 		return ResponseEntity.status(HttpStatus.OK).body(courseFeature.getFeatureId());
 	}

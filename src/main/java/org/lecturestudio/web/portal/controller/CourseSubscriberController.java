@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.lecturestudio.core.recording.RecordedPage;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
+import org.lecturestudio.web.portal.service.CourseMessengerLogger;
 import org.lecturestudio.web.portal.service.CourseQuizResourceService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
@@ -63,6 +64,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.ModelAndView;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink.OverflowStrategy;
@@ -101,6 +103,9 @@ public class CourseSubscriberController {
 	@Autowired
 	private QuizAnswerValidator quizAnswerValidator;
 
+
+	@Autowired
+	private CourseMessengerLogger courseMessengerLogger;
 
 	@PostConstruct
 	private void postConstruct() {
@@ -278,12 +283,13 @@ public class CourseSubscriberController {
 		ResponseEntity<CourseFeatureResponse> response = messageValidator.validate(feature, message);
 
 		if (response.getStatusCode().value() == HttpStatus.OK.value()) {
-			MessengerMessage mMessage = new MessengerMessage(message, request.getRemoteAddr(), ZonedDateTime.now());
+			MessengerMessage mMessage = new MessengerMessage(message, details.getUsername(), ZonedDateTime.now());
 			mMessage.setFirstName(details.getFirstName());
 			mMessage.setFamilyName(details.getFamilyName());
 
 			// Notify service provider endpoint.
 			courseFeatureState.postCourseFeatureMessage(courseId, mMessage);
+			courseMessengerLogger.logMessage(courseId, mMessage);
 		}
 
 		return response;

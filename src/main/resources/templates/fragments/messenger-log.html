@@ -1,0 +1,23 @@
+<div th:fragment="messenger-log">
+	<div class="accordion accordion-flush" id="chatLogAccordion">
+		<div class="accordion-item">
+			<h4 class="accordion-header flex-row d-none" id="flush-chat-log-heading">
+				<span class="accordion-indicator" data-bs-toggle="collapse" data-bs-target="#flush-chat-log"></span>
+				<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#flush-chat-log"
+					aria-expanded="true" aria-controls="flush-chat-log">
+					<span class="w-100">Chat-Log</span>
+				</button>
+				<button class="accordion-close-button" id="chat-log-close-button" type="button" data-bs-toggle="collapse" data-bs-target="#flush-chat">
+					&times;
+				</button>
+			</h4>
+			<div id="flush-chat-log" class="accordion-collapse collapse show d-flex flex-column overflow-auto chat-container mt-3"  aria-labelledby="flush-chat-log-heading" data-bs-parent="#chatLogAccordion">
+				<ul id="flush-chat-log-list">
+					<li th:each="message: ${messageLog}">
+						<div th:replace="fragments/messenger-message.html :: messenger-message(${#temporals.format(message.date, 'HH:mm')}, ${message.message.text})"></div>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>

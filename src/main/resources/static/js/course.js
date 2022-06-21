@@ -7,6 +7,7 @@ class Course {
 		this.contentContainer = null;
 		this.messengerContainer = null;
 		this.messengerElement = null;
+		this.messengerLogElement = null;
 		this.quizContainer = null;
 		this.quizElement = null;
 		this.quizModal = null;
@@ -137,7 +138,7 @@ class Course {
 					this.messengerContainer.classList.add("d-none");
 				}
 
-				this.messengerElement = null;
+				this.messengerElement = this.messengerLogElement = null;
 				this.unavailableVisible(true);
 			}
 		});
@@ -450,7 +451,33 @@ class Course {
 					this.messengerContainer.classList.remove("d-none");
 				}
 
+				this.loadMessengerLog();
 				this.initMessenger();
+			}
+		})
+		.catch(error => console.error(error));
+	}
+
+	loadMessengerLog() {
+		fetch("/course/messenger/" + this.courseId + "/log", {
+			method: "GET",
+		})
+		.then((response) => {
+			return response.text();
+		})
+		.then(html => {
+			if (html) {
+				const doc = new DOMParser().parseFromString(html, "text/html");
+
+				this.messengerLogElement = document.createElement("div");
+
+				for (const child of doc.body.children) {
+					this.messengerLogElement.appendChild(child);
+				}
+
+				const firstMessengerElementChild = this.messengerElement.firstChild;
+
+				this.messengerElement.insertBefore(this.messengerLogElement, firstMessengerElementChild);
 			}
 		})
 		.catch(error => console.error(error));
@@ -458,6 +485,8 @@ class Course {
 
 	initMessenger() {
 		const messageForm = this.messengerElement.querySelector("#course-message-form");
+
+		console.log(this.messengerElement.clientHeight);
 
 		if (!messageForm) {
 			return;
@@ -482,9 +511,15 @@ class Course {
 					"Content-Type": "application/json"
 				}
 			})
-			.then(response => {
-				const toastId = (response.status === 200) ? "toast-success" : "toast-warn";
-				const toastMessage = (response.status === 200) ? "course.feature.message.sent" : "course.feature.message.send.error";
+			.then(async response => {
+				const success = response.status === 200;
+				const toastId = success ? "toast-success" : "toast-warn";
+				const toastMessage = success ? "course.feature.message.sent" : "course.feature.message.send.error";
+
+				if (success) {
+					const messengerLogElement = await this.getMessengerLogElement(value);
+					this.appendToMessengerLog(messengerLogElement);
+				}
 
 				this.showToast(toastId, toastMessage);
 
@@ -493,6 +528,19 @@ class Course {
 			})
 			.catch(error => console.error(error));
 		});
+	}
+
+	appendToMessengerLog(element) {
+		if (this.messengerLogElement) {
+			const ul = this.messengerLogElement.querySelector('#flush-chat-log-list');
+			console.log(this.messengerLogElement);
+			console.log(ul);
+			if (ul) {
+				for (const child of element.body.children) {
+					ul.appendChild(child);
+				}
+			}
+		}
 	}
 
 	loadQuiz() {
@@ -1192,6 +1240,25 @@ class Course {
 		else {
 			element.classList.add("d-none");
 		}
+	}
+
+	async getMessengerLogElement(messageContent) {
+		const view = fetch("/course/message/log/" + this.courseId + "/element", {
+			method: "POST",
+			body: JSON.stringify(messageContent),
+			headers: {
+				"Content-Type": "application/json"
+			}
+		})
+		.then(response => {
+			return response.text();
+		})
+		.then(html => {
+			return new DOMParser().parseFromString(html, "text/html");
+		})
+		.catch(error => null)
+
+		return view;
 	}
 }
 
