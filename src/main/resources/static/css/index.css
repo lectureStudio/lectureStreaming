@@ -71,11 +71,17 @@ html, body {
 	background-color: var(--bs-gray-200);
 }
 
-textarea[id=messageTextarea] {
+#course-message-form #messageSubmit:focus {
+	outline: none;
+	box-shadow: none;
+}
+
+#course-message-form textarea {
 	resize: none;
 	border-radius: 0;
+	font-size: 0.9rem;
 }
-textarea[id=messageTextarea]:focus {   
+#course-message-form textarea:focus {   
 	border-color: #86b7fe;
 	outline: 0;
 	box-shadow: 0 0 0 -0.25rem rgba(13, 110, 253, 0.25);
@@ -160,9 +166,12 @@ textarea[id=messageTextarea]:focus {
 	box-shadow: none;
 }
 
-.chat-container div.chat-left,
-.chat-container div.chat-right {
-    margin-bottom: 40px;
+.chat-container ul {
+	margin: 0;
+}
+.chat-container ul > li,
+.chat-container ul > div {
+	margin-bottom: 0.5em;
 }
 
 .chat-container div.chat-content-left,
@@ -199,12 +208,11 @@ textarea[id=messageTextarea]:focus {
     -webkit-border-radius: 4px;
     -moz-border-radius: 4px;
     border-radius: 4px;
-    background: #0d6efd;
-    color: #ffffff;
-    font-weight: 300;
+    background: #e3effd;
+    color: #0F172A;
+    font-weight: 400;
     line-height: 150%;
     position: relative;
-    max-width: 50%;
     overflow-wrap: break-word;
 }
 
@@ -213,11 +221,11 @@ textarea[id=messageTextarea]:focus {
     -webkit-border-radius: 4px;
     -moz-border-radius: 4px;
     border-radius: 4px;
-    background: #ffffff;
-    font-weight: 300;
+    background: #f6f6f6;
+	color: #0F172A;
+    font-weight: 400;
     line-height: 150%;
     position: relative;
-    max-width: 50%;
     overflow-wrap: break-word;
 }
 
@@ -233,6 +241,9 @@ textarea[id=messageTextarea]:focus {
     max-width: 100%;
 }
 
+.chat-container .chat-message-text {
+	font-size: 0.9rem;
+}
 .chat-container .chat-message-text p {
     margin-bottom: 0px;
 }
@@ -260,7 +271,7 @@ textarea[id=messageTextarea]:focus {
 
 .chat-container div.chat-content-right > .chat-message-boxed:before {
     right: -20px;
-    border-color: transparent transparent transparent #0d6efd;
+    border-color: transparent transparent transparent #e3effd;
     left: inherit;
 }
 
@@ -272,7 +283,8 @@ textarea[id=messageTextarea]:focus {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    margin: 0 0 0 15px;
+    margin: 0 0 0 20px;
+	color: #64748B;
 }
 
 .chat-container div .chat-hour > span {
@@ -280,8 +292,10 @@ textarea[id=messageTextarea]:focus {
     color: #9ec94a;
 }
 
-.chat-container div.chat-content-right > .chat-hour {
-    margin: 0 15px 0 0;
+.chat-container div.chat-right > .chat-hour {
+    margin: 0 20px 0 0;
+	align-items: end;
+    justify-content: end;
 }
 
 .chat-container ul {
