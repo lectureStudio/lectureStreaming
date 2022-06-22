@@ -337,6 +337,7 @@ html, body {
 	flex: 1 1 auto;
 	overflow-y: auto;
 	height: 100px;
+	scroll-behavior: smooth;
 }
 .log-container .right {
 	display: flex;
