@@ -59,10 +59,23 @@ html, body {
 	height: 3px;
 }
 
+#messenger-content {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+}
+#messenger-content .log-div-container {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+}
+#messenger-content .log-div {
+	width: inherit;
+	height: 100%;
+}
 #messenger-content #flush-chat-heading {
 	display: none !important;
 }
-
 .playerContainer #flush-chat-heading {
 	display: flex;
 }
@@ -71,11 +84,13 @@ html, body {
 	background-color: var(--bs-gray-200);
 }
 
+#course-message-form {
+	min-width: 15em;
+}
 #course-message-form #messageSubmit:focus {
 	outline: none;
 	box-shadow: none;
 }
-
 #course-message-form textarea {
 	resize: none;
 	border-radius: 0;
@@ -342,6 +357,5 @@ html, body {
 .log-container .right {
 	display: flex;
 	flex-direction: column;
-	flex: 0 0 15em;
-	max-width: min-content;
+	width: 100%;
 }
