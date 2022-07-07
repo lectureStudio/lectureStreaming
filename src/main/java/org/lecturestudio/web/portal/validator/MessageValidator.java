@@ -18,15 +18,14 @@ import org.springframework.stereotype.Component;
 public class MessageValidator {
 	
 	public ResponseEntity<CourseFeatureResponse> validate(CourseMessageFeature feature, Message message) {
+		CourseFeatureResponse serviceResponse = new CourseFeatureResponse();
 		BodyBuilder responseBuilder;
 
 		if (isNull(feature)) {
-			CourseFeatureResponse serviceResponse = new CourseFeatureResponse();
 			serviceResponse.statusCode = 1;
 			serviceResponse.statusMessage = "message.service.absent";
 
 			responseBuilder = ResponseEntity.status(HttpStatus.BAD_REQUEST);
-			responseBuilder.body(serviceResponse);
 		}
 		else {
 			Map<Integer, String> fieldErrors = new HashMap<>();
@@ -35,25 +34,20 @@ public class MessageValidator {
 				validateServiceId(feature, message);
 				validateInputFields(message, fieldErrors);
 
-				CourseFeatureResponse serviceResponse = new CourseFeatureResponse();
 				serviceResponse.statusCode = 0;
-				serviceResponse.statusMessage = "message.sent";
+				serviceResponse.statusMessage = "course.feature.message.sent";
 
 				responseBuilder = ResponseEntity.ok();
-				responseBuilder.body(serviceResponse);
 			}
 			catch (Exception e) {
-				CourseFeatureResponse serviceResponse = new CourseFeatureResponse();
 				serviceResponse.statusCode = 2;
-				serviceResponse.statusMessage = e.getMessage();
-				// serviceResponse.data = fieldErrors;
+				serviceResponse.statusMessage = "course.feature.message.send.error";
 
 				responseBuilder = ResponseEntity.status(HttpStatus.BAD_REQUEST);
-				responseBuilder.body(serviceResponse);
 			}
 		}
 
-		return responseBuilder.build();
+		return responseBuilder.body(serviceResponse);
 	}
 
 	private static void validateServiceId(CourseMessageFeature feature, Message message) throws Exception {
