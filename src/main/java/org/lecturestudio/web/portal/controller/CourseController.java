@@ -60,27 +60,9 @@ public class CourseController {
 	@Autowired
 	private MessageSource messageSource;
 
-	private final Map<String, String> dict = new HashMap<>();
-
-	private final List<String> DICT_KEYS = List.of(
-		"course.feature.message.sent",
-		"course.feature.message.send.error",
-		"course.feature.quiz.sent",
-		"course.feature.quiz.send.error",
-		"course.feature.quiz.count.error",
-		"course.feature.quiz.input.invalid",
-		"course.speech.request.speak",
-		"course.speech.request.ended",
-		"course.speech.request.rejected"
-	);
-
 
 	@RequestMapping("/{id}")
 	public String showCourse(@PathVariable("id") long id, @RequestParam(required = false) String pass, Authentication authentication, Model model) {
-		for (String key : DICT_KEYS) {
-			dict.put(key, messageSource.getMessage(key, null, LocaleContextHolder.getLocale()));
-		}
-
 		Course course = courseService.findById(id)
 				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
 
@@ -128,8 +110,12 @@ public class CourseController {
 			.isProtected(isProtected)
 			.build();
 
+		Map<String, String> mediaProfiles = new HashMap<>();
+		mediaProfiles.put("home", messageSource.getMessage("settings.media.profile.home", null, LocaleContextHolder.getLocale()));
+		mediaProfiles.put("classroom", messageSource.getMessage("settings.media.profile.classroom", null, LocaleContextHolder.getLocale()));
+
 		model.addAttribute("course", courseDto);
-		model.addAttribute("dict", dict);
+		model.addAttribute("profiles", mediaProfiles);
 
 		// Check course credentials.
 		Object credentials = model.getAttribute("credentials");
@@ -264,59 +250,6 @@ public class CourseController {
 		courseService.deleteById(id);
 
 		return "redirect:/";
-	}
-
-	@RequestMapping("/messenger/{id}")
-	public String getMessenger(@PathVariable("id") long id, Model model) {
-		Course course = courseService.findById(id)
-				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
-
-		CourseMessageFeature messageFeature = null;
-
-		for (var feature : course.getFeatures()) {
-			if (feature instanceof CourseMessageFeature) {
-				messageFeature = new CourseMessageFeature();
-				messageFeature.setFeatureId(feature.getFeatureId());
-			}
-		}
-
-		CourseDto courseDto = CourseDto.builder()
-			.id(course.getId())
-			.messageFeature(messageFeature)
-			.build();
-
-		model.addAttribute("course", courseDto);
-
-		return "fragments/messenger :: messenger";
-	}
-
-	@RequestMapping("/quiz/{id}")
-	public String getQuiz(@PathVariable("id") long id, Model model) {
-		Course course = courseService.findById(id)
-				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
-
-		CourseQuizFeature quizFeature = null;
-
-		for (var feature : course.getFeatures()) {
-			if (feature instanceof CourseQuizFeature) {
-				CourseQuizFeature qf = (CourseQuizFeature) feature;
-
-				quizFeature = new CourseQuizFeature();
-				quizFeature.setFeatureId(qf.getFeatureId());
-				quizFeature.setQuestion(qf.getQuestion().replace("&#xa0;"," "));
-				quizFeature.setType(qf.getType());
-				quizFeature.setOptions(qf.getOptions());
-			}
-		}
-
-		CourseDto courseDto = CourseDto.builder()
-			.id(course.getId())
-			.quizFeature(quizFeature)
-			.build();
-
-		model.addAttribute("course", courseDto);
-
-		return "fragments/quiz :: quiz";
 	}
 
 	private void checkAuthorization(Long courseId, LectUserDetails details) {
