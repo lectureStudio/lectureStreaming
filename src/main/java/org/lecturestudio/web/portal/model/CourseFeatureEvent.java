@@ -1,12 +1,24 @@
 package org.lecturestudio.web.portal.model;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.SuperBuilder;
+import org.lecturestudio.web.portal.model.dto.CourseFeatureDto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
-@SuperBuilder
-public class CourseFeatureEvent extends CourseEvent {
+@Builder
+public class CourseFeatureEvent {
+
+	Long courseId;
+
+	Boolean started;
+
+	CourseFeatureDto feature;
 
 }

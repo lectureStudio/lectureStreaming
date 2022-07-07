@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.lecturestudio.core.recording.RecordedPage;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
 import org.lecturestudio.web.portal.service.CourseQuizResourceService;
+import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.SubscriberEmitterService;
@@ -31,6 +32,7 @@ import org.lecturestudio.web.api.stream.model.CourseFeatureResponse;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.DocumentNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
+import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
@@ -73,6 +75,9 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private SubscriberEmitterService subscriberEmmiter;
+
+	@Autowired
+	private CourseService courseService;
 
 	@Autowired
 	private CourseStates courseStates;
@@ -120,14 +125,47 @@ public class CourseSubscriberController {
 	}
 
 	@GetMapping("/state/{id}")
-	public CourseStateDto getCourseState(@PathVariable("id") long id) {
+	public CourseStateDto getCourseState(@PathVariable("id") long id, Authentication authentication) {
+		Course course = courseService.findById(id)
+				.orElseThrow(() -> new CourseNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+		boolean isProtected = nonNull(course.getPasscode()) && !course.getPasscode().isEmpty();
+
+		CourseMessageFeature messageFeature = null;
+		CourseQuizFeature quizFeature = null;
+		
 		CourseState courseState = courseStates.getCourseState(id);
+
+		for (var feature : course.getFeatures()) {
+			if (feature instanceof CourseMessageFeature) {
+				messageFeature = new CourseMessageFeature();
+				messageFeature.setFeatureId(feature.getFeatureId());
+			}
+			else if (feature instanceof CourseQuizFeature) {
+				CourseQuizFeature qFeature = (CourseQuizFeature) feature;
+
+				quizFeature = new CourseQuizFeature();
+				quizFeature.setFeatureId(qFeature.getFeatureId());
+				quizFeature.setType(qFeature.getType());
+				quizFeature.setQuestion(qFeature.getQuestion().replace("&#xa0;"," "));
+				quizFeature.setOptions(qFeature.getOptions());
+			}
+		}
 
 		if (isNull(courseState)) {
 			throw new CourseNotFoundException();
 		}
 
 		return CourseStateDto.builder()
+			.userId(details.getUsername())
+			.timeStarted(nonNull(courseState) ? courseState.getCreatedTimestamp() : null)
+			.title(course.getTitle())
+			.description(course.getDescription())
+			.messageFeature(messageFeature)
+			.quizFeature(quizFeature)
+			.isRecorded(nonNull(courseState) ? courseState.getRecordedState() : false)
+			.isProtected(isProtected)
 			.avtiveDocument(courseState.getActiveDocument())
 			.documentMap(courseState.getAllCourseStateDocuments())
 			.build();

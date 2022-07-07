@@ -26,6 +26,8 @@ import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
+import org.lecturestudio.web.portal.model.dto.CourseFeatureDto;
+import org.lecturestudio.web.portal.model.dto.CourseQuizFeatureDto;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.SubscriberEmitterService;
 import org.lecturestudio.web.portal.util.StringUtils;
@@ -183,7 +185,7 @@ public class CoursePublisherController {
 
 	@PostMapping("/messenger/start/{courseId}")
 	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId) {
-		return startFeature(courseId, new CourseMessageFeature());
+		return startFeature(courseId, new CourseMessageFeature(), new CourseFeatureDto());
 	}
 
 	@PostMapping("/messenger/stop/{courseId}")
@@ -200,7 +202,13 @@ public class CoursePublisherController {
 		feature.setType(quiz.getType());
 		feature.setOptions(quiz.getOptions());
 
-		return startFeature(courseId, feature);
+		CourseFeatureDto dto = CourseQuizFeatureDto.builder()
+				.type(feature.getType())
+				.question(feature.getQuestion().replace("&#xa0;"," "))
+				.options(feature.getOptions())
+				.build();
+
+		return startFeature(courseId, feature, dto);
 	}
 
 	@PostMapping(
@@ -236,7 +244,13 @@ public class CoursePublisherController {
 		feature.setOptions(quiz.getOptions());
 		feature.setResources(resources);
 
-		return startFeature(courseId, feature);
+		CourseFeatureDto dto = CourseQuizFeatureDto.builder()
+				.type(feature.getType())
+				.question(feature.getQuestion().replace("&#xa0;"," "))
+				.options(feature.getOptions())
+				.build();
+
+		return startFeature(courseId, feature, dto);
 	}
 
 	@PostMapping("/quiz/stop/{courseId}")
@@ -244,7 +258,7 @@ public class CoursePublisherController {
 		return stopFeature(courseId, CourseQuizFeature.class);
 	}
 
-	ResponseEntity<String> startFeature(long courseId, CourseFeature feature) {
+	ResponseEntity<String> startFeature(long courseId, CourseFeature feature, CourseFeatureDto dto) {
 		Course course = courseService.findById(courseId)
 				.orElseThrow(() -> new CourseNotFoundException());
 
@@ -257,12 +271,14 @@ public class CoursePublisherController {
 			feature.setCourse(course);
 			feature.setFeatureId(Long.toString(new SecureRandom().nextLong()));
 
+			dto.setFeatureId(feature.getFeatureId());
+
 			course.getFeatures().add(feature);
 
 			courseService.saveCourse(course);
 
 			// Send feature state event.
-			sendFeatureState(course.getId(), feature, true);
+			sendFeatureState(course.getId(), dto, feature.getName(), true);
 		}
 
 		return ResponseEntity.status(HttpStatus.OK).body(feature.getFeatureId());
@@ -287,20 +303,23 @@ public class CoursePublisherController {
 		courseFeatureService.deleteById(courseFeature.getId());
 
 		// Send feature state event.
-		sendFeatureState(course.getId(), courseFeature, false);
+		CourseFeatureDto dto = new CourseFeatureDto();
+		dto.setFeatureId(courseFeature.getFeatureId());
+
+		sendFeatureState(course.getId(), dto, courseFeature.getName(), false);
 
 		return ResponseEntity.status(HttpStatus.OK).body(courseFeature.getFeatureId());
 	}
 
-	void sendFeatureState(long courseId, CourseFeature feature, boolean started) {
+	void sendFeatureState(long courseId, CourseFeatureDto feature, String name, boolean started) {
 		CourseFeatureEvent courseEvent = CourseFeatureEvent.builder()
 			.courseId(courseId)
-			.createdTimestamp(System.currentTimeMillis())
 			.started(started)
+			.feature(feature)
 			.build();
 
-		var sEvent = ServerSentEvent.<CourseEvent>builder()
-			.event(feature.getName() + "-state")
+		var sEvent = ServerSentEvent.<CourseFeatureEvent>builder()
+			.event(name + "-state")
 			.data(courseEvent)
 			.build();
 
