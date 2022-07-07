@@ -28,11 +28,16 @@
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<ul class="navbar-nav">
+					<li>
+						<span class="navbar-text badge bg-secondary text-light" id="media-profile-badge"></span>
+					</li>
+				</ul>
 				<ul class="navbar-nav ms-auto mb-2 mb-sm-0">
 					<li class="nav-item d-inline-flex align-items-center">
 						<i class="bi bi-record-circle text-danger" th:classappend="${course.isRecorded ? '' : 'd-none'}"
 							th:id="|course-recording-${course.id}|" data-bs-toggle="tooltip" data-bs-placement="bottom" th:title="#{course.recorded}"></i>
-						<span class="nav-link" th:text="${course.title}"></span>
+						<span class="navbar-text" th:text="${course.title}"></span>
 					</li>
 				</ul>
 				<ul class="navbar-nav ms-auto mb-2 mb-sm-0">
@@ -73,6 +78,14 @@
 	</div>
 
 	<th:block layout:fragment="optional" />
+
+	<script th:inline="javascript">
+		const storedMediaProfile = localStorage.getItem("media.profile");
+		const profiles = [[${profiles}]];
+
+		const badge = document.getElementById("media-profile-badge");
+		badge.innerText = profiles[storedMediaProfile];
+	</script>
 </body>
 
 </html>
