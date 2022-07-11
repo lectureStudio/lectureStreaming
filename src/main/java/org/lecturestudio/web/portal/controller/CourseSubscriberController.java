@@ -153,22 +153,24 @@ public class CourseSubscriberController {
 			}
 		}
 
-		if (isNull(courseState)) {
-			throw new CourseNotFoundException();
+		var builder = CourseStateDto.builder()
+				.courseId(id)
+				.userId(details.getUsername())
+				.title(course.getTitle())
+				.description(course.getDescription())
+				.messageFeature(messageFeature)
+				.quizFeature(quizFeature)
+				.isProtected(isProtected);
+
+		if (nonNull(courseState)) {
+			builder
+				.timeStarted(nonNull(courseState) ? courseState.getCreatedTimestamp() : null)
+				.isRecorded(nonNull(courseState) ? courseState.getRecordedState() : false)
+				.activeDocument(courseState.getActiveDocument())
+				.documentMap(courseState.getAllCourseStateDocuments());
 		}
 
-		return CourseStateDto.builder()
-			.userId(details.getUsername())
-			.timeStarted(nonNull(courseState) ? courseState.getCreatedTimestamp() : null)
-			.title(course.getTitle())
-			.description(course.getDescription())
-			.messageFeature(messageFeature)
-			.quizFeature(quizFeature)
-			.isRecorded(nonNull(courseState) ? courseState.getRecordedState() : false)
-			.isProtected(isProtected)
-			.avtiveDocument(courseState.getActiveDocument())
-			.documentMap(courseState.getAllCourseStateDocuments())
-			.build();
+		return builder.build();
 	}
 
 	@GetMapping("/state/{id}/pages/{docId}")

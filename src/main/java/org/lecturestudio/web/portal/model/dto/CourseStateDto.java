@@ -19,6 +19,8 @@ import org.lecturestudio.web.portal.model.CourseStateDocument;
 @Builder
 public class CourseStateDto {
 
+	Long courseId;
+
 	String userId;
 
 	Long timeStarted;
@@ -37,6 +39,6 @@ public class CourseStateDto {
 
 	Map<Long, CourseStateDocument> documentMap;
 
-	CourseStateDocument avtiveDocument;
+	CourseStateDocument activeDocument;
 
 }
