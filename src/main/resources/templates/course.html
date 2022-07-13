@@ -5,17 +5,16 @@
 <head>
 	<title th:text="${course.title}"></title>
 
+	<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@5.0.0/bundles/stomp.umd.min.js" crossorigin="anonymous"></script>
+	<script src="/js/portal.js"></script>
+
 	<script src="/js/pdf.worker.js"></script>
 	<script src="/js/main.js"></script>
 </head>
 
 <body>
 	<th:block layout:fragment="content">
-		<lecture-player th:courseId="${course.id}" th:description="${course.description}" th:state="${course.isLive ? 0 : 3}"></lecture-player>
-	</th:block>
-
-	<th:block layout:fragment="optional">
-		
+		<lecture-player th:courseId="${course.id}" th:description="${course.description}" th:isLive="${course.isLive}"></lecture-player>
 	</th:block>
 </body>
 

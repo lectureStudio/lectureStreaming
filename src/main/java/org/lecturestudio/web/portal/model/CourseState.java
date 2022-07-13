@@ -76,18 +76,18 @@ public class CourseState {
 
 		participantMap.put(participantId, sessionId);
 
-		Optional<User> user = userService.findById(participantId);
+		// Optional<User> user = userService.findById(participantId);
 
-		if (!user.isPresent()) {
-			// TODO: kick participant from course?
-			return;
-		}
+		// if (!user.isPresent()) {
+		// 	// TODO: kick participant from course?
+		// 	return;
+		// }
 
 		// Send notification of arrival.
 		CourseParticipantMessage participantMessage = new CourseParticipantMessage();
 		participantMessage.setConnected(true);
-		participantMessage.setFirstName(user.get().getFirstName());
-		participantMessage.setFamilyName(user.get().getFamilyName());
+		// participantMessage.setFirstName(user.get().getFirstName());
+		// participantMessage.setFamilyName(user.get().getFamilyName());
 
 		postParticipantMessage(courseId, participantMessage);
 	}

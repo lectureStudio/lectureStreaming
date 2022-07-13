@@ -1,40 +1,7 @@
 class PortalApp {
 
 	constructor() {
-		this.eventSource = null;
-		this.onCourseState = null;
-		this.onCourseRecordedState = null;
-		this.onSpeechState = null;
-		this.onMessengerState = null;
-		this.onQuizState = null;
-
 		this.initialize();
-	}
-
-	addOnCourseState(callback) {
-		this.onCourseState = callback;
-	}
-
-	addOnCourseRecordedState(callback) {
-		this.onCourseRecordedState = callback;
-	}
-
-	addOnSpeechState(callback) {
-		this.onSpeechState = callback;
-	}
-
-	addOnMessengerState(callback) {
-		this.onMessengerState = callback;
-	}
-
-	addOnQuizState(callback) {
-		this.onQuizState = callback;
-	}
-
-	execCallback(callback, message) {
-		if (callback) {
-			callback(message);
-		}
 	}
 
 	courseStateChange(type, courseId, started) {
@@ -43,7 +10,6 @@ class PortalApp {
 		if (!element) {
 			return;
 		}
-
 		if (started) {
 			element.classList.remove("d-none");
 		}
@@ -53,65 +19,42 @@ class PortalApp {
 	}
 
 	initialize() {
-		this.eventSource = new EventSource("/course/events");
-		this.eventSource.onerror = (event) => {
-			if (event.readyState != EventSource.CLOSED) {
-				console.error("EventSource error occured", event);
-			}
-
-			//event.target.close();
-		}
-		this.eventSource.addEventListener("stream-state", (event) => {
-			console.log("Stream state", event.data);
-
-			const message = JSON.parse(event.data);
-
-			this.courseStateChange("live", message.courseId, message.started);
-			this.execCallback(this.onCourseState, message);
-
-			if (!message.started) {
-				this.courseStateChange("recording", message.courseId, false);
-			}
+		const client = new StompJs.Client({
+			brokerURL: "wss://" + window.location.host + "/ws-state",
+			reconnectDelay: 1000,
+			heartbeatIncoming: 1000,
+			heartbeatOutgoing: 1000,
 		});
-		this.eventSource.addEventListener("recording-state", (event) => {
-			console.log("Recording state", event.data);
+		client.onConnect = () => {
+			client.subscribe("/topic/course-state/all/stream", (message) => {
+				const state = JSON.parse(message.body);
 
-			const message = JSON.parse(event.data);
+				this.courseStateChange("live", state.courseId, state.started);
 
-			this.courseStateChange("recording", message.courseId, message.started);
-			this.execCallback(this.onCourseRecordedState, message);
-		});
-		this.eventSource.addEventListener("speech-state", (event) => {
-			console.log("Speech state", event.data);
+				if (!state.started) {
+					this.courseStateChange("recording", state.courseId, false);
+				}
+			});
+			client.subscribe("/topic/course-state/all/recording", (message) => {
+				const state = JSON.parse(message.body);
 
-			const message = JSON.parse(event.data);
+				this.courseStateChange("recording", state.courseId, state.started);
+			});
+			client.subscribe("/topic/course-state/all/messenger", (message) => {
+				const state = JSON.parse(message.body);
 
-			this.execCallback(this.onSpeechState, message);
-		});
-		this.eventSource.addEventListener("messenger-state", (event) => {
-			console.log("Messenger state", event.data);
+				this.courseStateChange("messenger", state.courseId, state.started);
+			});
+			client.subscribe("/topic/course-state/all/quiz", (message) => {
+				const state = JSON.parse(message.body);
 
-			const message = JSON.parse(event.data);
-
-			this.courseStateChange("messenger", message.courseId, message.started);
-			this.execCallback(this.onMessengerState, message);
-		});
-		this.eventSource.addEventListener("quiz-state", (event) => {
-			console.log("Quiz state", event.data);
-
-			const message = JSON.parse(event.data);
-
-			this.courseStateChange("quiz", message.courseId, message.started);
-			this.execCallback(this.onQuizState, message);
-		});
+				this.courseStateChange("quiz", state.courseId, state.started);
+			});
+		};
+		client.activate();
 
 		window.addEventListener("beforeunload", () => {
-			this.eventSource.close();
-		});
-
-		const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-		tooltipTriggerList.map(function (tooltipTriggerEl) {
-			return new bootstrap.Tooltip(tooltipTriggerEl)
+			client.deactivate();
 		});
 	}
 }

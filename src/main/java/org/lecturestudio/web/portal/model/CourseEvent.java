@@ -17,8 +17,6 @@ public class CourseEvent {
 
 	Long createdTimestamp;
 
-	Boolean hasFeatures;
-
 	Boolean started;
 
 }

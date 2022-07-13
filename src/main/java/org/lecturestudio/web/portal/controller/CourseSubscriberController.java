@@ -18,7 +18,6 @@ import org.lecturestudio.web.portal.service.CourseQuizResourceService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
-import org.lecturestudio.web.portal.service.SubscriberEmitterService;
 import org.lecturestudio.web.portal.validator.MessageValidator;
 import org.lecturestudio.web.portal.validator.QuizAnswerValidator;
 import org.lecturestudio.web.portal.validator.SpeechValidator;
@@ -53,9 +52,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.messaging.MessageHandler;
-import org.springframework.messaging.support.GenericMessage;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -66,15 +63,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink.OverflowStrategy;
-
 @RestController
 @RequestMapping("/course")
 public class CourseSubscriberController {
 
 	@Autowired
-	private SubscriberEmitterService subscriberEmmiter;
+	private SimpMessagingTemplate simpMessagingTemplate;
 
 	@Autowired
 	private CourseService courseService;
@@ -210,22 +204,6 @@ public class CourseSubscriberController {
 			.body(resource);
 	}
 
-	@GetMapping(path = "/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-	public Flux<ServerSentEvent<CourseEvent>> getEvents(Authentication authentication) {
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		final String userId = details.getUsername();
-
-		return Flux.create(sink -> {
-			MessageHandler handler = message -> sink.next(ServerSentEvent.class.cast(message.getPayload()));
-			sink.onCancel(() -> {
-				subscriberEmmiter.unsubscribe(userId, handler);
-			});
-
-			subscriberEmmiter.subscribe(userId, handler);
-		}, OverflowStrategy.LATEST);
-	}
-
 	@PostMapping(value = "/speech/{courseId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Long> postSpeech(@PathVariable("courseId") long courseId,
 			Authentication authentication) {
@@ -244,6 +222,7 @@ public class CourseSubscriberController {
 			// speechValidator.registerRequest(courseId);
 
 			CourseSpeechRequest speechRequest = CourseSpeechRequest.builder()
+				.courseId(courseId)
 				.requestId(new SecureRandom().nextLong())
 				.userId(details.getUsername())
 				.build();
@@ -396,11 +375,7 @@ public class CourseSubscriberController {
 			.started(started)
 			.build();
 
-		var sEvent = ServerSentEvent.<CourseEvent>builder()
-			.event("stream-state")
-			.data(courseEvent)
-			.build();
-
-		subscriberEmmiter.send(new GenericMessage<>(sEvent));
+		simpMessagingTemplate.convertAndSend("/topic/course-state/all/stream", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/stream", courseEvent);
 	}
 }

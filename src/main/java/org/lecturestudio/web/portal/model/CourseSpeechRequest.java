@@ -30,4 +30,7 @@ public class CourseSpeechRequest {
 	@Column(nullable = false)
 	Long requestId;
 
+	@Column(nullable = false)
+	Long courseId;
+
 }

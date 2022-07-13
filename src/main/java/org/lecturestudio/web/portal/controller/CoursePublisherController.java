@@ -29,7 +29,6 @@ import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.CourseFeatureDto;
 import org.lecturestudio.web.portal.model.dto.CourseQuizFeatureDto;
 import org.lecturestudio.web.portal.service.FileStorageService;
-import org.lecturestudio.web.portal.service.SubscriberEmitterService;
 import org.lecturestudio.web.portal.util.StringUtils;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
@@ -39,8 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.messaging.support.GenericMessage;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -72,7 +70,7 @@ public class CoursePublisherController {
 	private FileStorageService fileStorageService;
 
 	@Autowired
-	private SubscriberEmitterService subscriberEmmiter;
+	private SimpMessagingTemplate simpMessagingTemplate;
 
 
 	@GetMapping("/courses")
@@ -113,20 +111,16 @@ public class CoursePublisherController {
 		}
 
 		CourseSpeechRequest speechRequest = speechRequestOpt.get();
-
-		// speechRequestService.deleteById(speechRequest.getId());
+		long courseId = speechRequest.getCourseId();
 
 		CourseSpeechEvent courseEvent = CourseSpeechEvent.builder()
+			.courseId(courseId)
 			.requestId(BigInteger.valueOf(speechRequest.getRequestId()))
 			.accepted(true)
 			.build();
 
-		var sEvent = ServerSentEvent.<CourseSpeechEvent>builder()
-			.event("speech-state")
-			.data(courseEvent)
-			.build();
-
-		subscriberEmmiter.send(speechRequest.getUserId(), new GenericMessage<>(sEvent));
+		simpMessagingTemplate.convertAndSend("/topic/course-state/all/speech", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/speech", courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -140,20 +134,18 @@ public class CoursePublisherController {
 		}
 
 		CourseSpeechRequest speechRequest = speechRequestOpt.get();
+		long courseId = speechRequest.getCourseId();
 
 		speechRequestService.deleteById(speechRequest.getId());
 
 		CourseSpeechEvent courseEvent = CourseSpeechEvent.builder()
+			.courseId(courseId)
 			.requestId(BigInteger.valueOf(speechRequest.getRequestId()))
 			.accepted(false)
 			.build();
 
-		var sEvent = ServerSentEvent.<CourseSpeechEvent>builder()
-			.event("speech-state")
-			.data(courseEvent)
-			.build();
-
-		subscriberEmmiter.send(speechRequest.getUserId(), new GenericMessage<>(sEvent));
+		simpMessagingTemplate.convertAndSend("/topic/course-state/all/speech", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/speech", courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -173,12 +165,8 @@ public class CoursePublisherController {
 				.started(isRecorded)
 				.build();
 
-		var sEvent = ServerSentEvent.<CourseEvent>builder()
-				.event("recording-state")
-				.data(courseEvent)
-				.build();
-
-		subscriberEmmiter.send(new GenericMessage<>(sEvent));
+		simpMessagingTemplate.convertAndSend("/topic/course-state/all/recording", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/recording", courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -318,11 +306,7 @@ public class CoursePublisherController {
 			.feature(feature)
 			.build();
 
-		var sEvent = ServerSentEvent.<CourseFeatureEvent>builder()
-			.event(name + "-state")
-			.data(courseEvent)
-			.build();
-
-		subscriberEmmiter.send(new GenericMessage<>(sEvent));
+		simpMessagingTemplate.convertAndSend("/topic/course-state/all/" + name, courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/" + name, courseEvent);
 	}
 }
