@@ -1,4 +1,4 @@
-package org.lecturestudio.web.portal.config;
+/*package org.lecturestudio.web.portal.config;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -285,3 +285,4 @@ public class SamlSecurityConfig implements InitializingBean, DisposableBean {
 		return new SAMLProcessorImpl(bindings);
 	}
 }
+*/

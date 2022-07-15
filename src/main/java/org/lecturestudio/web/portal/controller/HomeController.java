@@ -28,6 +28,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import javax.servlet.http.HttpServletRequest;
+
 @Controller
 public class HomeController {
 
@@ -41,6 +43,13 @@ public class HomeController {
 	@RequestMapping("/")
 	public String index(Principal principal, Authentication authentication, Model model) {
 		return nonNull(principal) ? home(authentication, model) : "index";
+	}
+
+	@GetMapping("/logout")
+	public String logout(HttpServletRequest request) throws Exception {
+		request.logout();
+
+		return "redirect:/";
 	}
 
 	@GetMapping(value = "/auth")
@@ -80,9 +89,9 @@ public class HomeController {
 				}
 
 				authors.add(UserDto.builder()
-					.familyName(user.getFamilyName())
-					.firstName(user.getFirstName())
-					.build());
+						.familyName(user.getFamilyName())
+						.firstName(user.getFirstName())
+						.build());
 			}
 
 			for (var feature : course.getFeatures()) {
@@ -95,29 +104,27 @@ public class HomeController {
 			}
 
 			String uri = WebMvcLinkBuilder.linkTo(CourseController.class)
-				.slash(course.getId())
-				.toUriComponentsBuilder()
-				.queryParamIfPresent("pass", Optional.ofNullable(courseService.getHashedPasscode(course)))
-				.build().encode().toUri().toString();
+					.slash(course.getId())
+					.toUriComponentsBuilder()
+					.queryParamIfPresent("pass", Optional.ofNullable(courseService.getHashedPasscode(course)))
+					.build().encode().toUri().toString();
 
 			CourseState state = courseStates.getCourseState(course.getId());
 
 			courses.add(CourseDto.builder()
-				.id(course.getId())
-				.createdTimestamp(nonNull(state) ? state.getCreatedTimestamp() : null)
-				.title(course.getTitle())
-				.description(course.getDescription())
-				.authors(authors)
-				.messageFeature(messageFeature)
-				.quizFeature(quizFeature)
-				.url(uri)
-				.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
-				.isLive(nonNull(state))
-				.isRecorded(nonNull(state) ? state.getRecordedState() : false)
-				.isConference(course.isConference())
-				.canDelete(canDelete)
-				.canEdit(canEdit)
-				.build());
+					.id(course.getId())
+					.createdTimestamp(nonNull(state) ? state.getCreatedTimestamp() : null)
+					.title(course.getTitle())
+					.description(course.getDescription())
+					.authors(authors)
+					.messageFeature(messageFeature)
+					.quizFeature(quizFeature)
+					.url(uri)
+					.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
+					.isLive(nonNull(state))
+					.canDelete(canDelete)
+					.canEdit(canEdit)
+					.build());
 		});
 
 		model.addAttribute("courses", courses);
@@ -128,11 +135,6 @@ public class HomeController {
 	@GetMapping(value = "/contact")
 	public String contact() {
 		return "contact";
-	}
-
-	@GetMapping(value = "/sponsors")
-	public String sponsors() {
-		return "sponsors";
 	}
 
 	@GetMapping(value = "/imprint")
