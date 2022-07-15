@@ -107,6 +107,7 @@ public class CourseController {
 			.quizFeature(quizFeature)
 			.isLive(nonNull(state))
 			.isRecorded(nonNull(state) ? state.getRecordedState() : false)
+			.isConference(course.isConference())
 			.isProtected(isProtected)
 			.build();
 

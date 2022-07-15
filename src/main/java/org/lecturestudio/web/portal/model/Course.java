@@ -47,6 +47,9 @@ public class Course {
 	@Column
 	String passcode;
 
+	@Column
+	boolean isConference;
+
 	@OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
 	Set<CourseRegistration> registrations = new HashSet<>();
 

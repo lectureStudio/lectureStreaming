@@ -114,6 +114,7 @@ public class HomeController {
 				.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
 				.isLive(nonNull(state))
 				.isRecorded(nonNull(state) ? state.getRecordedState() : false)
+				.isConference(course.isConference())
 				.canDelete(canDelete)
 				.canEdit(canEdit)
 				.build());

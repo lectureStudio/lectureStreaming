@@ -9,7 +9,7 @@
 	<script src="/js/portal.js"></script>
 
 	<script src="/js/pdf.worker.js"></script>
-	<script src="/js/main.js"></script>
+	<script th:src="${course.isConference() ? '...' : '/js/main.js'}"></script>
 </head>
 
 <body>

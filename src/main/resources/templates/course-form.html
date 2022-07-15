@@ -38,6 +38,9 @@
 					</div>
 					<div th:text="#{course.form.passcode.description}" id="pinHelpBlock" class="form-text"></div>
 				</div>
+				<div class="mb-3">
+					<input type="checkbox" for="conference" id="conference" th:field="*{conference}" th:text="#{course.form.conference.description}">
+				</div>
 				<div class="col-12">
 					<button th:text="${edit} ? #{course.form.update} : #{course.form.create}" type="submit" class="btn btn-outline-primary btn-sm"></button>
 				</div>
