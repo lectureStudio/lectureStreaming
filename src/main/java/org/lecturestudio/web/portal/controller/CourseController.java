@@ -118,6 +118,8 @@ public class CourseController {
 		model.addAttribute("course", courseDto);
 		model.addAttribute("profiles", mediaProfiles);
 
+		model.addAttribute("userFirstAndLastName", details.getFirstName() +  " " + details.getFamilyName());
+
 		// Check course credentials.
 		Object credentials = model.getAttribute("credentials");
 		boolean needsInput = isProtected;

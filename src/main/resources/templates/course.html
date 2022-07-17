@@ -24,7 +24,7 @@
 	</th:block>
 
 	<th:block th:if="${course.isConference()}" layout:fragment="content">
-		<app-root></app-root>
+		<app-root th:userdisplayname="${userFirstAndLastName}"></app-root>
 	</th:block>
 </body>
 
