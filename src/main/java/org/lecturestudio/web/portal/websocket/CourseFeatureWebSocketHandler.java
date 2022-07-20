@@ -12,13 +12,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.lecturestudio.web.api.message.CourseFeatureMessengerParticipantMessage;
 import org.lecturestudio.web.api.message.WebMessage;
 import org.lecturestudio.web.api.stream.action.StreamAction;
 import org.lecturestudio.web.api.stream.action.StreamActionFactory;
 import org.lecturestudio.web.api.stream.action.StreamActionType;
 import org.lecturestudio.web.api.stream.action.StreamStartAction;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
-
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -33,14 +34,18 @@ public class CourseFeatureWebSocketHandler extends BinaryWebSocketHandler {
 
 	private final CourseFeatureState courseFeatureState;
 
+	private final CourseMessengerFeatureSaveFeature messengerSaveFeature;
+
 	private final ObjectMapper objectMapper;
 
 
-	public CourseFeatureWebSocketHandler(CourseFeatureState featureState, ObjectMapper objectMapper) {
+	public CourseFeatureWebSocketHandler(CourseFeatureState featureState, ObjectMapper objectMapper, CourseMessengerFeatureSaveFeature messengerSaveFeature) {
 		this.courseFeatureState = featureState;
 		this.objectMapper = objectMapper;
+		this.messengerSaveFeature = messengerSaveFeature;
 
-		courseFeatureState.addCourseFeatureListener(this::sendMessage);
+		courseFeatureState.addCourseFeatureListener(this::sendCourseFeatureMessengerParticipantMessage);
+		courseFeatureState.addCourseFeatureListener(this.messengerSaveFeature);
 	}
 
 	@Override
@@ -98,19 +103,21 @@ public class CourseFeatureWebSocketHandler extends BinaryWebSocketHandler {
 		}
 	}
 
-	private void sendMessage(long courseId, WebMessage message) {
-		WebSocketSession session = sessions.entrySet().stream()
-			.filter(entry -> entry.getValue() == courseId)
-			.findFirst()
-			.map(Map.Entry::getKey)
-			.orElse(null);
+	private void sendCourseFeatureMessengerParticipantMessage(long courseId, WebMessage message) {
+		if (message instanceof CourseFeatureMessengerParticipantMessage) {
+			WebSocketSession session = sessions.entrySet().stream()
+				.filter(entry -> entry.getValue() == courseId)
+				.findFirst()
+				.map(Map.Entry::getKey)
+				.orElse(null);
 
-		if (nonNull(session)) {
-			try {
-				session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
-			}
-			catch (Exception e) {
-				e.printStackTrace();
+			if (nonNull(session)) {
+				try {
+					session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}

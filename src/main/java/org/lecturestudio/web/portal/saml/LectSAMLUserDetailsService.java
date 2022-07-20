@@ -2,13 +2,17 @@ package org.lecturestudio.web.portal.saml;
 
 import static java.util.Objects.isNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.lecturestudio.web.portal.config.WebSecurityConfig;
+import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
+import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -21,9 +25,12 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 
 	private final UserService userService;
 
+	private final RoleService roleService;
 
-	public LectSAMLUserDetailsService(UserService userService) {
+
+	public LectSAMLUserDetailsService(UserService userService, RoleService roleService) {
 		this.userService = userService;
+		this.roleService = roleService;
 	}
 
 	@Override
@@ -31,7 +38,7 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 		String firstName = null;
 		String familyName = null;
 		String username = null;
-		List<GrantedAuthority> authorities = new ArrayList<>();
+		Set<GrantedAuthority> authorities = new HashSet<>();
 		Map<String, String> attributeMap = WebSecurityConfig.SSO_REQUESTED_ATTRIBUTES;
 
 		for (var attr : credential.getAttributes()) {
@@ -61,6 +68,9 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 					else if (affiliation.equals("affiliate")) {
 						authorities.add(new SimpleGrantedAuthority("ROLE_AFFILIATE"));
 					}
+					else if (affiliation.equals("student")) {
+						authorities.add(new SimpleGrantedAuthority("ROLE_STUDENT"));
+					}
 				}
 			}
 		}
@@ -71,11 +81,28 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 
 		Optional<User> userOpt = userService.findById(username);
 
+		Set<Role> userRoles = authorities.stream()
+			.filter((s) -> {
+				return roleService.existsByName(s.getAuthority());
+			})
+			.map((s) -> {
+				return roleService.findRoleByName(s.getAuthority()).get();
+			})
+			.collect(Collectors.toSet());
+
 		if (userOpt.isEmpty()) {
+			UUID uuid = UUID.randomUUID();
+
+			while (userService.hasUser(uuid)) {
+				uuid = UUID.randomUUID();
+			}
+
 			userService.saveUser(User.builder()
 				.userId(username)
+				.anonymousUserId(uuid)
 				.firstName(firstName)
 				.familyName(familyName)
+				.roles(userRoles)
 				.build());
 		}
 

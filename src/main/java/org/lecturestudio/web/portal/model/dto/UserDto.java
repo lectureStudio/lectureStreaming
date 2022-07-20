@@ -13,6 +13,8 @@ import lombok.Setter;
 @Builder
 public class UserDto {
 
+	String username;
+
 	String firstName;
 
 	String familyName;

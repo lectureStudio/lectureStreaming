@@ -7,7 +7,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -18,23 +27,32 @@ import org.lecturestudio.web.portal.service.CourseQuizResourceService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
+import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry;
+import org.lecturestudio.web.portal.service.RoleService;
+import org.lecturestudio.web.portal.service.UserService;
+import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry.MessengerFeatureUser;
 import org.lecturestudio.web.portal.validator.MessageValidator;
 import org.lecturestudio.web.portal.validator.QuizAnswerValidator;
 import org.lecturestudio.web.portal.validator.SpeechValidator;
+import org.lecturestudio.web.api.message.MessengerDirectMessage;
 import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.QuizAnswerMessage;
 import org.lecturestudio.web.api.message.SpeechCancelMessage;
 import org.lecturestudio.web.api.message.SpeechRequestMessage;
+import org.lecturestudio.web.api.message.WebMessage;
 import org.lecturestudio.web.api.model.Message;
 import org.lecturestudio.web.api.model.quiz.QuizAnswer;
 import org.lecturestudio.web.api.stream.model.CourseFeatureResponse;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
+import org.lecturestudio.web.portal.exception.CoursePrivilegeNotFoundException;
 import org.lecturestudio.web.portal.exception.DocumentNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
+import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseQuizResource;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
@@ -42,7 +60,12 @@ import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStateListener;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.model.User;
+import org.lecturestudio.web.portal.model.dto.CourseMessengerConnectedUsersDto;
+import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.CourseStateDto;
+import org.lecturestudio.web.portal.model.dto.UserDto;
+import org.lecturestudio.web.portal.peer.Node;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +75,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,6 +101,9 @@ public class CourseSubscriberController {
 	private SimpMessagingTemplate simpMessagingTemplate;
 
 	@Autowired
+	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
+
+	@Autowired
 	private CourseService courseService;
 
 	@Autowired
@@ -87,6 +120,15 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private CourseQuizResourceService courseQuizResourceService;
+
+	@Autowired
+	private UserService userService;
+
+	@Autowired
+	private RoleService roleService;
+
+	@Autowired
+	private MessengerFeatureUserRegistry messengerFeatureUserRegistry;
 
 	@Autowired
 	private FileStorageService fileStorageService;
@@ -116,6 +158,35 @@ public class CourseSubscriberController {
 			}
 
 		});
+	}
+
+	@GetMapping("/privileges/{id}/check/{privilege}")
+	public ResponseEntity<String> isAuthorized(@PathVariable("id") long courseId, @PathVariable("privilege") String privilege, Authentication authentication) {
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		Course course = courseService.findById(courseId)
+			.orElseThrow(() -> new CourseNotFoundException());
+
+		CoursePrivilege coursePrivilege = roleService.findByPrivilegeName(privilege)
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		return roleService.isAuthorized(course, details, coursePrivilege) ? ResponseEntity.status(HttpStatus.OK).build() : ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+	}
+
+	@GetMapping(value = "/nodes/{count}")
+	public List<Node> getNodes(@PathVariable("count") Integer count) {
+		List<Node> nodes = new ArrayList<>(count);
+
+		for (int i = 0; i < count; i++) {
+			Node node = new Node();
+			node.id = UUID.randomUUID().toString();
+			node.cost = Math.random();
+			node.bandwidth = new Random().nextInt(1000);
+
+			nodes.add(node);
+		}
+
+		return nodes;
 	}
 
 	@GetMapping("/state/{id}")
@@ -207,13 +278,20 @@ public class CourseSubscriberController {
 	@PostMapping(value = "/speech/{courseId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Long> postSpeech(@PathVariable("courseId") long courseId,
 			Authentication authentication) {
+		CoursePrivilege requiredPrivilege = roleService.findByPrivilegeName("COURSE_RAISE_HAND_PRIVILEGE")
+				.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		Course course = courseService.findById(courseId)
+				.orElseThrow(() -> new CourseNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+		roleService.checkAuthorization(course, details, requiredPrivilege);
+
 		CourseState courseState = courseStates.getCourseState(courseId);
 
 		if (isNull(courseState)) {
 			throw new CourseNotFoundException();
 		}
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		// Validate input.
 		ResponseEntity<CourseFeatureResponse> response = speechValidator.validate(courseId);
@@ -235,6 +313,7 @@ public class CourseSubscriberController {
 			message.setDate(ZonedDateTime.now());
 			message.setFirstName(details.getFirstName());
 			message.setFamilyName(details.getFamilyName());
+			message.setRemoteAddress(details.getUsername());
 
 			courseState.postSpeechMessage(courseId, message);
 
@@ -247,13 +326,20 @@ public class CourseSubscriberController {
 	@DeleteMapping("/speech/{courseId}/{requestId}")
 	public ResponseEntity<CourseFeatureResponse> cancelSpeech(@PathVariable("courseId") long courseId,
 			@PathVariable("requestId") long requestId, Authentication authentication) {
+		CoursePrivilege requiredPrivilege = roleService.findByPrivilegeName("COURSE_RAISE_HAND_PRIVILEGE")
+				.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		Course course = courseService.findById(courseId)
+				.orElseThrow(() -> new CourseNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+		roleService.checkAuthorization(course, details, requiredPrivilege);
+
 		CourseState courseState = courseStates.getCourseState(courseId);
 
 		if (isNull(courseState)) {
 			throw new CourseNotFoundException();
 		}
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		// Validate input.
 		ResponseEntity<CourseFeatureResponse> response = speechValidator.validate(courseId);
@@ -278,6 +364,7 @@ public class CourseSubscriberController {
 			message.setDate(ZonedDateTime.now());
 			message.setFirstName(details.getFirstName());
 			message.setFamilyName(details.getFamilyName());
+			message.setRemoteAddress(details.getUsername());
 
 			courseState.postSpeechMessage(courseId, message);
 		}
@@ -308,15 +395,172 @@ public class CourseSubscriberController {
 		return response;
 	}
 
+	@GetMapping("/messenger/history/{courseId}")
+	public CourseMessengerHistoryDto getMessengerHistoryOfCourse(@PathVariable("courseId") long courseId, Authentication authentication) {
+		Course course = courseService.findById(courseId)
+			.orElseThrow(() -> new CourseNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CoursePrivilege requiredToReadPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_READ_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		roleService.checkAuthorization(course, details, requiredToReadPrivilege);
+
+		User user = userService.findById(details.getUsername()).get();
+
+		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId, user));
+	}
+
+	@GetMapping("/messenger/users/{courseId}")
+	public CourseMessengerConnectedUsersDto getConnectedMessengerUsers(@PathVariable("courseId") long courseId, Authentication authentication) {
+		courseFeatureService.findMessageByCourseId(courseId).orElseThrow(() -> new FeatureNotFoundException());
+
+		Course course = courseService.findById(courseId)
+			.orElseThrow(() -> new CourseNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CoursePrivilege requiredPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		roleService.checkAuthorization(course, details, requiredPrivilege);
+
+		CourseMessengerConnectedUsersDto connectedUsersDto = new CourseMessengerConnectedUsersDto();
+
+		Set<MessengerFeatureUser> connectedUsers = messengerFeatureUserRegistry.getUsers(courseId);
+
+		Comparator<UserDto> userComparator = new Comparator<UserDto>() {
+			@Override
+			public int compare(UserDto arg0, UserDto arg1) {
+				return arg0.getUsername().compareTo(arg1.getUsername());
+			};
+		};
+
+		TreeSet<UserDto> sortedConnectedUsers = new TreeSet<>(userComparator);
+
+		connectedUsers.forEach((user) -> {
+			if (!user.getUsername().equals(details.getUsername())) {
+				User u = userService.findById(user.getUsername()).get();
+				UserDto userDto = new UserDto(u.getFirstName(), u.getFamilyName(), u.getAnonymousUserId().toString());
+				sortedConnectedUsers.add(userDto);
+			}
+		});
+
+		connectedUsersDto.setConnectedUsers(sortedConnectedUsers);
+
+		return connectedUsersDto;
+	}
+
+	@MessageMapping("/message/{courseId}")
+    @SendTo("/topic/chat/{courseId}")
+    public void sendMessage(@Payload org.springframework.messaging.Message<Message> message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
+		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
+				.orElseThrow(() -> new FeatureNotFoundException());
+
+		Course course = courseService.findById(courseId)
+			.orElseThrow(() -> new CourseNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CoursePrivilege requiredToSendPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		roleService.checkAuthorization(course, details, requiredToSendPrivilege);
+
+		Message payload = message.getPayload();
+
+		// Validate input.
+		ResponseEntity<CourseFeatureResponse> response = messageValidator.validate(feature, payload);
+
+		if (! (response.getStatusCode().value() == HttpStatus.OK.value())) {
+			throw new Exception(response.toString());
+		}
+
+		StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+		String messageType = accessor.getNativeHeader("messageType").get(0);
+
+		WebMessage forwardMessage = null;
+
+		switch(messageType) {
+			case "user":
+			case "lecturer":
+				String messageDestinationUsername = "";
+				if (messageType.equals("user")) {
+					CoursePrivilege requiredToSendToUserPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE")
+						.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+					roleService.checkAuthorization(course, details, requiredToSendToUserPrivilege);
+
+					String anonymousMessageDestinationUsername = accessor.getNativeHeader("username").get(0);
+					Optional<User> optDestinationUser = userService.findByAnonymousId(UUID.fromString(anonymousMessageDestinationUsername));
+					if (optDestinationUser.isPresent()) {
+						User destinationUser = optDestinationUser.get();
+						messageDestinationUsername = destinationUser.getUserId();
+					}
+				}
+				else {
+					CoursePrivilege requiredToSendToLecturerPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_LECTURER_PRIVILEGE")
+						.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+					roleService.checkAuthorization(course, details, requiredToSendToLecturerPrivilege);
+					messageDestinationUsername = feature.getInitiator().getUserId();
+				}
+
+				forwardMessage = new MessengerDirectMessage(messageDestinationUsername, payload, details.getUsername(), ZonedDateTime.now());
+				forwardMessage.setFirstName(details.getFirstName());
+				forwardMessage.setFamilyName(details.getFamilyName());
+
+				courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
+
+				MessengerFeatureUser user = messengerFeatureUserRegistry.getUser(details.getUsername());
+				MessengerFeatureUser destinationUser = messengerFeatureUserRegistry.getUser(messageDestinationUsername);
+
+				ArrayList<Set<String>> sets = new ArrayList<>();
+
+				if (nonNull(destinationUser)) {
+					sets.add(destinationUser.getAddressesInUse());
+				}
+				if (nonNull(user)) {
+					sets.add(user.getAddressesInUse());
+				}
+				if (messageType.equals("lecturer")) {
+					sets.add(Collections.singleton(messageDestinationUsername));
+				}
+				for (Set<String> set : sets) {
+					for (String userDestination : set) {
+						simpMessagingTemplate.convertAndSendToUser(userDestination,"/queue/chat/" + courseId, forwardMessage, Map.of("payloadType", "MessengerDirectMessage"));
+					}
+				}
+				break;
+			case "public":
+				forwardMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
+				forwardMessage.setFirstName(details.getFirstName());
+				forwardMessage.setFamilyName(details.getFamilyName());
+
+				courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
+
+				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, forwardMessage, Map.of("payloadType", "MessengerMessage"));
+				break;
+		}
+    }
+
 	@PostMapping("/quiz/post/{courseId}")
 	public ResponseEntity<CourseFeatureResponse> postQuizAnswer(@PathVariable("courseId") long courseId,
 			@RequestBody QuizAnswer quizAnswer, Authentication authentication, HttpServletRequest request) {
+		Course course = courseService.findById(courseId)
+				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + courseId));
 
 		final CourseQuizFeature feature = (CourseQuizFeature) courseFeatureService.findQuizByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
 		final LectUserDetails details = (LectUserDetails) authentication.getDetails();
 		final String userName = details.getUsername();
+
+		CoursePrivilege requiredPrivilege = roleService.findByPrivilegeName("COURSE_QUIZ_PRIVILEGE")
+				.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		roleService.checkAuthorization(course, details, requiredPrivilege);
 
 		// Validate input.
 		ResponseEntity<CourseFeatureResponse> response = quizAnswerValidator.validate(userName, feature, quizAnswer);
@@ -366,6 +610,11 @@ public class CourseSubscriberController {
 			.contentType(MediaType.parseMediaType(contentType))
 			.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
 			.body(file);
+	}
+
+	@MessageExceptionHandler
+	public void messengerMessageError(Exception exc) {
+		System.out.println(exc.getMessage());
 	}
 
 	private void sendCourseEvent(CourseState state, long courseId, boolean started) {
