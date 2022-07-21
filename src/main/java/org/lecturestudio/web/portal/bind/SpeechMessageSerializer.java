@@ -21,6 +21,7 @@ public class SpeechMessageSerializer extends JsonSerializer<SpeechBaseMessage> {
 		generator.writeObjectField("time", message.getDate());
 		generator.writeStringField("firstName", message.getFirstName());
 		generator.writeStringField("familyName", message.getFamilyName());
+		generator.writeStringField("username", message.getRemoteAddress());
 		generator.writeEndObject();
 	}
 }

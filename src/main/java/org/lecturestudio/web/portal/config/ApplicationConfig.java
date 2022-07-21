@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.Locale;
 
 import org.lecturestudio.web.portal.model.CourseFeatureState;
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseStates;
 
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,11 @@ public class ApplicationConfig {
 	}
 
 
+
+	@Bean
+	public CourseMessengerFeatureSaveFeature courseMessengerFeatureSaveFeature() {
+		return new CourseMessengerFeatureSaveFeature();
+	}
 
 	@Bean
 	public CourseStates courseStates() {

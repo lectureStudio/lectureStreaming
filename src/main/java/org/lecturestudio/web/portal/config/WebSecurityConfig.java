@@ -246,6 +246,9 @@ public class WebSecurityConfig {
 					.antMatchers("/js/**").permitAll()
 					.antMatchers("/manual/**").permitAll()
 					.antMatchers("/api/publisher/**").permitAll()	// Will be handled by the personal token authentification.
+					.antMatchers("/messenger/**").permitAll()
+					.antMatchers("/app/**").permitAll()
+					.antMatchers("/message/**").permitAll()
 					.antMatchers("/saml/**").permitAll()
 					.anyRequest().authenticated();
 

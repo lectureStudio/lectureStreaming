@@ -4,16 +4,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.messaging.MessageSecurityMetadataSourceRegistry;
 import org.springframework.security.config.annotation.web.socket.AbstractSecurityWebSocketMessageBrokerConfigurer;
 
-@Configuration
+// @Configuration
 public class WebSocketBrokerSecurityConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
 
 	@Override
 	protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
 		messages
 				.nullDestMatcher().authenticated()
-				.simpMessageDestMatchers("**").denyAll()
-				.simpSubscribeDestMatchers("/topic/**").permitAll()
-				.simpDestMatchers("/app/**").hasAnyRole("FACULTY", "EMPLOYEE", "MEMBER", "AFFILIATE")
+				// .simpMessageDestMatchers("**").denyAll()
+				.simpSubscribeDestMatchers("/topic/**", "/queue/**", "/user/**").permitAll()
+				.simpDestMatchers("/app/**").permitAll()
 				.anyMessage().denyAll();
 	}
 

@@ -11,6 +11,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 
 import org.lecturestudio.web.portal.saml.LectSAMLUserDetailsService;
+import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
 
 import org.opensaml.saml2.metadata.provider.AbstractReloadingMetadataProvider;
@@ -68,6 +69,9 @@ public class SamlSecurityConfig implements InitializingBean, DisposableBean {
 	@Autowired
 	private UserService userService;
 
+	@Autowired
+	private RoleService roleService;
+
 	private Timer backgroundTaskTimer;
 
 	private MultiThreadedHttpConnectionManager httpConnectionManager;
@@ -108,7 +112,7 @@ public class SamlSecurityConfig implements InitializingBean, DisposableBean {
 
 	@Bean
 	public SAMLUserDetailsService samlUserDetailsService() {
-		return new LectSAMLUserDetailsService(userService);
+		return new LectSAMLUserDetailsService(userService, roleService);
 	}
 
 	@Bean

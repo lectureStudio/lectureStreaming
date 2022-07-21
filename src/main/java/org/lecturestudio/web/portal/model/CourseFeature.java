@@ -33,6 +33,10 @@ public abstract class CourseFeature {
 	@JoinColumn(name = "course_id", nullable = false)
 	Course course;
 
+	@ManyToOne
+	@JoinColumn(name = "user_id", nullable = false)
+	User initiator;
+
 
 	abstract public String getName();
 

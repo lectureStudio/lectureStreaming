@@ -27,6 +27,7 @@ import org.lecturestudio.web.api.stream.action.StreamPageAction;
 import org.lecturestudio.web.api.stream.action.StreamPageActionsAction;
 import org.lecturestudio.web.api.stream.action.StreamPagePlaybackAction;
 import org.lecturestudio.web.api.stream.action.StreamStartAction;
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStatePage;
@@ -56,11 +57,14 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 	private final UserService userService;
 
+	private final CourseMessengerFeatureSaveFeature courseMessengerFeatureSaveFeature;
 
-	public CourseStateWebSocketHandler(CourseStates courseStates, ObjectMapper objectMapper, UserService userService) {
+
+	public CourseStateWebSocketHandler(CourseStates courseStates, ObjectMapper objectMapper, UserService userService, CourseMessengerFeatureSaveFeature courseMessengerFeatureSaveFeature) {
 		this.courseStates = courseStates;
 		this.objectMapper = objectMapper;
 		this.userService = userService;
+		this.courseMessengerFeatureSaveFeature = courseMessengerFeatureSaveFeature;
 	}
 
 	@Override
@@ -252,7 +256,7 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		userSockets.put(session, courseId);
 
 		// Bind course state to the course ID.
-		initStates.put(courseId, new CourseState(userService, courseId, this::onSpeechMessage, this::onParticipantMessage));
+		initStates.put(courseId, new CourseState(userService, courseId, List.of(this::onSpeechMessage, this.courseMessengerFeatureSaveFeature::onFeatureMessage), this::onParticipantMessage));
 	}
 
 	private void sessionStart(StreamStartAction startAction) {
