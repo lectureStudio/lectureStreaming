@@ -10,10 +10,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -65,7 +63,6 @@ import org.lecturestudio.web.portal.model.dto.CourseMessengerConnectedUsersDto;
 import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.CourseStateDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
-import org.lecturestudio.web.portal.peer.Node;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -171,22 +168,6 @@ public class CourseSubscriberController {
 			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
 
 		return roleService.isAuthorized(course, details, coursePrivilege) ? ResponseEntity.status(HttpStatus.OK).build() : ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-	}
-
-	@GetMapping(value = "/nodes/{count}")
-	public List<Node> getNodes(@PathVariable("count") Integer count) {
-		List<Node> nodes = new ArrayList<>(count);
-
-		for (int i = 0; i < count; i++) {
-			Node node = new Node();
-			node.id = UUID.randomUUID().toString();
-			node.cost = Math.random();
-			node.bandwidth = new Random().nextInt(1000);
-
-			nodes.add(node);
-		}
-
-		return nodes;
 	}
 
 	@GetMapping("/state/{id}")
@@ -472,6 +453,9 @@ public class CourseSubscriberController {
 
 		// Validate input.
 		ResponseEntity<CourseFeatureResponse> response = messageValidator.validate(feature, payload);
+
+		System.out.println(payload.getServiceId() + ": " + payload.getText());
+		System.out.println(response.getBody().statusCode + ": " + response.getBody().statusMessage);
 
 		if (! (response.getStatusCode().value() == HttpStatus.OK.value())) {
 			throw new Exception(response.toString());

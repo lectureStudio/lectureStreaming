@@ -16,6 +16,6 @@ import lombok.Setter;
 @Builder
 public class CourseMessengerHistoryDto {
 
-    private List<WebMessage> messengerHistory;
+    private List<WebMessage> messages;
 
 }

@@ -198,8 +198,6 @@ public class CourseController {
 			})
 			.toList();
 
-		courseForm.getCourseRoles().forEach(System.out::println);
-
 		model.addAttribute("courseForm", courseForm);
 		model.addAttribute("edit", false);
 		model.addAttribute("users", users);

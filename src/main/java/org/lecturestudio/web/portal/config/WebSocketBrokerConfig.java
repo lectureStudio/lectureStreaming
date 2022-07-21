@@ -12,14 +12,32 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
 
 	@Override
 	public void configureMessageBroker(MessageBrokerRegistry config) {
-		config.enableSimpleBroker("/topic");
+		// 	registry.enableSimpleBroker("/queue", "/topic").setTaskScheduler(heartBeatScheduler());
+		config.enableSimpleBroker("/queue", "/topic");
 		config.setApplicationDestinationPrefixes("/app");
+		// 	registry.setUserDestinationPrefix("/user");
 	}
 
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
+		registry.addEndpoint("/api/publisher/messenger").setAllowedOriginPatterns("*");
+		registry.addEndpoint("/api/subscriber/messenger").setAllowedOriginPatterns("*");
+
 		registry.addEndpoint("/ws-state");
-		registry.addEndpoint("/ws-peer-state");
 	}
 
+	// @Bean
+	// public StompInboundChannelInterceptor stompChannelInterceptor() {
+	// 	return new StompInboundChannelInterceptor();
+	// }
+
+	// @Override
+	// public void configureClientInboundChannel(ChannelRegistration registration) {
+	// 	registration.interceptors(stompChannelInterceptor());
+	// }
+
+	// @Bean
+	// public TaskScheduler heartBeatScheduler() {
+	// 	return new ThreadPoolTaskScheduler();
+	// }
 }
