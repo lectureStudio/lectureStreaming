@@ -20,7 +20,7 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
 
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
-		registry.addEndpoint("/api/publisher/messenger").setAllowedOriginPatterns("*");
+		registry.addEndpoint("/api/publisher/messages").setAllowedOriginPatterns("*");
 		registry.addEndpoint("/api/subscriber/messenger").setAllowedOriginPatterns("*");
 
 		registry.addEndpoint("/ws-state");

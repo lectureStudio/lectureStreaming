@@ -495,8 +495,6 @@ public class CourseSubscriberController {
 				forwardMessage.setFirstName(details.getFirstName());
 				forwardMessage.setFamilyName(details.getFamilyName());
 
-				courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
-
 				MessengerFeatureUser user = messengerFeatureUserRegistry.getUser(details.getUsername());
 				MessengerFeatureUser destinationUser = messengerFeatureUserRegistry.getUser(messageDestinationUsername);
 
@@ -513,7 +511,7 @@ public class CourseSubscriberController {
 				}
 				for (Set<String> set : sets) {
 					for (String userDestination : set) {
-						simpMessagingTemplate.convertAndSendToUser(userDestination,"/queue/chat/" + courseId, forwardMessage, Map.of("payloadType", "MessengerDirectMessage"));
+						simpMessagingTemplate.convertAndSendToUser(userDestination,"/queue/chat/" + courseId, forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
 					}
 				}
 				break;
@@ -522,9 +520,7 @@ public class CourseSubscriberController {
 				forwardMessage.setFirstName(details.getFirstName());
 				forwardMessage.setFamilyName(details.getFamilyName());
 
-				courseFeatureState.postCourseFeatureMessage(courseId, forwardMessage);
-
-				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, forwardMessage, Map.of("payloadType", "MessengerMessage"));
+				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
 				break;
 		}
     }
@@ -555,11 +551,8 @@ public class CourseSubscriberController {
 			courseFeatureService.save(feature);
 
 			QuizAnswerMessage qMessage = new QuizAnswerMessage(quizAnswer, request.getRemoteAddr(), ZonedDateTime.now());
-			qMessage.setFirstName(details.getFirstName());
-			qMessage.setFamilyName(details.getFamilyName());
 
-			// Notify service provider endpoint.
-			courseFeatureState.postCourseFeatureMessage(courseId, qMessage);
+			simpMessagingTemplate.convertAndSend("/topic/quiz/" + courseId, qMessage, Map.of("payloadType", qMessage.getClass().getSimpleName()));
 		}
 
 		return response;

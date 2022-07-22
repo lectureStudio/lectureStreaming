@@ -32,7 +32,6 @@ import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeature;
 import org.lecturestudio.web.portal.model.CourseFeatureEvent;
-import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CoursePrivilege;
@@ -93,9 +92,6 @@ public class CoursePublisherController {
 	private CourseFeatureService courseFeatureService;
 
 	@Autowired
-	private CourseFeatureState courseFeatureState;
-
-	@Autowired
 	private CourseSpeechRequestService speechRequestService;
 
 	@Autowired
@@ -135,7 +131,8 @@ public class CoursePublisherController {
 					connectedMessage.setFamilyName(user.getFamilyName());
 					connectedMessage.setRemoteAddress(user.getUserId());
 					connectedMessage.setFirstName(user.getFirstName());
-					courseFeatureState.postCourseFeatureMessage(courseId, connectedMessage);
+
+					simpMessagingTemplate.convertAndSend("/topic/participant/" + courseId, connectedMessage, Map.of("payloadType", connectedMessage.getClass().getSimpleName()));
 				}
 			}
 
@@ -150,7 +147,8 @@ public class CoursePublisherController {
 					connectedMessage.setFamilyName(user.getFamilyName());
 					connectedMessage.setRemoteAddress(user.getUserId());
 					connectedMessage.setFirstName(user.getFirstName());
-					courseFeatureState.postCourseFeatureMessage(courseId, connectedMessage);
+
+					simpMessagingTemplate.convertAndSend("/topic/participant/" + courseId, connectedMessage, Map.of("payloadType", connectedMessage.getClass().getSimpleName()));
 				}
 			}
 		});
