@@ -6,22 +6,22 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
-import org.lecturestudio.web.api.message.CourseParticipantMessage;
+import org.lecturestudio.web.api.message.CoursePresenceMessage;
 
 import org.springframework.boot.jackson.JsonComponent;
 
 @JsonComponent
-public class CourseParticipantMessageSerializer extends JsonSerializer<CourseParticipantMessage> {
+public class CoursePresenceMessageSerializer extends JsonSerializer<CoursePresenceMessage> {
 
 	@Override
-	public void serialize(CourseParticipantMessage message, JsonGenerator generator, SerializerProvider provider)
+	public void serialize(CoursePresenceMessage message, JsonGenerator generator, SerializerProvider provider)
 			throws IOException {
 		generator.writeStartObject();
 		generator.writeStringField("type", message.getClass().getSimpleName());
 		generator.writeStringField("firstName", message.getFirstName());
 		generator.writeStringField("familyName", message.getFamilyName());
-		generator.writeStringField("username", message.getUserName());
-		generator.writeBooleanField("connected", message.getConnected());
+		generator.writeStringField("userId", message.getUserId());
+		generator.writeStringField("presence", message.getCoursePresence().toString());
 		generator.writeEndObject();
 	}
 }

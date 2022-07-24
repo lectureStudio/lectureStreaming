@@ -4,7 +4,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Locale;
 
-import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseStates;
 
@@ -30,11 +29,6 @@ public class ApplicationConfig {
 	@Bean
 	public CourseStates courseStates() {
 		return new CourseStates();
-	}
-
-	@Bean
-	public CourseFeatureState courseFeatureState() {
-		return new CourseFeatureState();
 	}
 
 	@Bean

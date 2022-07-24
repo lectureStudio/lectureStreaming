@@ -36,8 +36,8 @@ public class MessengerDirectMessageDeserializer extends JsonDeserializer<Messeng
                     message.setFamilyName(treeNode.get("familyName").textValue());
                 }
 
-                if (treeNode.hasNonNull("remoteAddress")) {
-                    message.setRemoteAddress(treeNode.get("remoteAddress").textValue());
+                if (treeNode.hasNonNull("userId")) {
+                    message.setUserId(treeNode.get("userId").textValue());
                 }
 
                 if (treeNode.hasNonNull("date")) {

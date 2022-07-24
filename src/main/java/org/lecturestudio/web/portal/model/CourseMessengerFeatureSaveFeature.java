@@ -99,7 +99,7 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
                     }
                     else if (message instanceof MessengerDirectMessage) {
                         MessengerDirectMessage directMessage = (MessengerDirectMessage) message;
-                        return user.getUserId().equals(directMessage.getRemoteAddress()) || user.getUserId().equals(directMessage.getMessageDestinationUsername());
+                        return user.getUserId().equals(directMessage.getUserId()) || user.getUserId().equals(directMessage.getMessageDestinationUsername());
                     }
                     else {
                         return false;

@@ -38,7 +38,7 @@ public class User {
 	String userId;
 
 	@Column(name = "anonymousId", unique = true, updatable = false, nullable = false)
-	@Type(type = "org.hibernate.type.UUIDCharType")
+	// @Type(type = "org.hibernate.type.UUIDCharType")
 	UUID anonymousUserId;
 
 	@Column(name = "first_name", updatable = false, nullable = false)

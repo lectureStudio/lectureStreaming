@@ -17,10 +17,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
-import org.lecturestudio.web.api.message.CourseFeatureMessengerParticipantMessage;
 import org.lecturestudio.web.api.message.MessengerDirectMessage;
 import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.MessengerReplyMessage;
@@ -41,7 +39,6 @@ import org.lecturestudio.web.portal.model.CourseSpeechEvent;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStates;
-import org.lecturestudio.web.portal.model.MessengerFeatureUserConnectionListener;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.CourseFeatureDto;
@@ -116,44 +113,6 @@ public class CoursePublisherController {
 	private ObjectMapper objectMapper;
 
 
-	@PostConstruct
-	private void postConstruct() {
-		messengerFeatureUserRegistry.addUserConnectionListener(new MessengerFeatureUserConnectionListener() {
-
-			@Override
-			public void onMessengerFeatureUserConnected(long courseId, String username) {	
-				Optional<User> optUser = userService.findById(username);
-				User user = optUser.get();
-
-				if (nonNull(user)) {
-					CourseFeatureMessengerParticipantMessage connectedMessage = new CourseFeatureMessengerParticipantMessage();
-					connectedMessage.setConnected(true);
-					connectedMessage.setFamilyName(user.getFamilyName());
-					connectedMessage.setRemoteAddress(user.getUserId());
-					connectedMessage.setFirstName(user.getFirstName());
-
-					simpMessagingTemplate.convertAndSend("/topic/participant/" + courseId, connectedMessage, Map.of("payloadType", connectedMessage.getClass().getSimpleName()));
-				}
-			}
-
-			@Override
-			public void onMessengerFeatureUserDisconnected(long courseId, String username) {
-				Optional<User> optUser = userService.findById(username);
-				User user = optUser.get();
-
-				if (nonNull(user)) {
-					CourseFeatureMessengerParticipantMessage connectedMessage = new CourseFeatureMessengerParticipantMessage();
-					connectedMessage.setConnected(false);
-					connectedMessage.setFamilyName(user.getFamilyName());
-					connectedMessage.setRemoteAddress(user.getUserId());
-					connectedMessage.setFirstName(user.getFirstName());
-
-					simpMessagingTemplate.convertAndSend("/topic/participant/" + courseId, connectedMessage, Map.of("payloadType", connectedMessage.getClass().getSimpleName()));
-				}
-			}
-		});
-	}
-
 	@GetMapping("/user")
 	public UserDto getUser(Authentication authentication) {
 		Optional<User> userOpt = userService.findById(authentication.getName());
@@ -216,8 +175,8 @@ public class CoursePublisherController {
 			.accepted(true)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course-state/all/speech", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/speech", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/all/speech", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/speech", courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -241,8 +200,8 @@ public class CoursePublisherController {
 			.accepted(false)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course-state/all/speech", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/speech", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/all/speech", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/speech", courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -262,8 +221,8 @@ public class CoursePublisherController {
 				.started(isRecorded)
 				.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course-state/all/recording", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/recording", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/all/recording", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/recording", courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -320,6 +279,22 @@ public class CoursePublisherController {
 		switch (type) {
 			case "MessengerMessage":
 				message = this.objectMapper.readValue(messageString, MessengerMessage.class);
+
+				String userId = message.getUserId();
+
+				if (isNull(userId)) {
+					return;
+				}
+
+				User user = userService.findById(userId).orElse(null);
+
+				if (isNull(user)) {
+					return;
+				}
+
+				message.setFamilyName(user.getFamilyName());
+				message.setFirstName(user.getFirstName());
+
 				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
 				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, message,
 						Map.of("payloadType", "MessengerMessage"));
@@ -337,15 +312,15 @@ public class CoursePublisherController {
 
 				MessengerFeatureUser destinationUser = messengerFeatureUserRegistry
 						.getUser(mdm.getMessageDestinationUsername());
-				MessengerFeatureUser user = messengerFeatureUserRegistry.getUser(authentication.getName());
+				MessengerFeatureUser featureUser = messengerFeatureUserRegistry.getUser(authentication.getName());
 
 				ArrayList<Set<String>> sets = new ArrayList<>();
 
 				if (nonNull(destinationUser)) {
 					sets.add(destinationUser.getAddressesInUse());
 				}
-				if (nonNull(user)) {
-					sets.add(user.getAddressesInUse());
+				if (nonNull(featureUser)) {
+					sets.add(featureUser.getAddressesInUse());
 				}
 				sets.add(Collections.singleton(lecturer.getUserId()));
 				for (Set<String> set : sets) {
@@ -498,7 +473,7 @@ public class CoursePublisherController {
 			.feature(feature)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course-state/all/" + name, courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/" + name, courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/all/" + name, courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/" + name, courseEvent);
 	}
 }

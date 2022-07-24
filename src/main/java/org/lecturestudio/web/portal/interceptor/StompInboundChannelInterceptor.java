@@ -6,7 +6,6 @@ import java.util.Objects;
 
 import org.lecturestudio.web.portal.exception.MessageInterceptedException;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
-import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,11 +18,7 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.messaging.support.MessageBuilder;
 
-
 public class StompInboundChannelInterceptor implements ChannelInterceptor {
-
-    @Autowired
-    private MessengerFeatureUserRegistry messengerFeatureUserRegistry;
 
     @Autowired
     @Qualifier("clientOutboundChannel")
@@ -39,13 +34,6 @@ public class StompInboundChannelInterceptor implements ChannelInterceptor {
         } catch(MessageInterceptedException exc) {
             this.sendBackErrorFrame(exc.getMessage(), exc.getSessionId());
             return null;
-        }
-
-        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-
-        Principal user = accessor.getUser();
-        if (! (user instanceof UsernamePasswordAuthenticationToken)) {
-            messengerFeatureUserRegistry.onMessage(message);
         }
 
         return message;

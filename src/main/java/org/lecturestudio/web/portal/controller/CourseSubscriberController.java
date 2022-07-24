@@ -47,7 +47,6 @@ import org.lecturestudio.web.portal.exception.DocumentNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
-import org.lecturestudio.web.portal.model.CourseFeatureState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CoursePrivilege;
@@ -105,9 +104,6 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private CourseStates courseStates;
-
-	@Autowired
-	private CourseFeatureState courseFeatureState;
 
 	@Autowired
 	private CourseFeatureService courseFeatureService;
@@ -294,9 +290,9 @@ public class CourseSubscriberController {
 			message.setDate(ZonedDateTime.now());
 			message.setFirstName(details.getFirstName());
 			message.setFamilyName(details.getFamilyName());
-			message.setRemoteAddress(details.getUsername());
+			message.setUserId(details.getUsername());
 
-			courseState.postSpeechMessage(courseId, message);
+			simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/speech", message, Map.of("payloadType", message.getClass().getSimpleName()));
 
 			return ResponseEntity.ok().body(speechRequest.getRequestId());
 		}
@@ -345,32 +341,9 @@ public class CourseSubscriberController {
 			message.setDate(ZonedDateTime.now());
 			message.setFirstName(details.getFirstName());
 			message.setFamilyName(details.getFamilyName());
-			message.setRemoteAddress(details.getUsername());
+			message.setUserId(details.getUsername());
 
-			courseState.postSpeechMessage(courseId, message);
-		}
-
-		return response;
-	}
-
-	@PostMapping("/message/post/{courseId}")
-	public ResponseEntity<CourseFeatureResponse> postMessage(@PathVariable("courseId") long courseId,
-			@RequestBody Message message, Authentication authentication, HttpServletRequest request) {
-		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
-				.orElseThrow(() -> new FeatureNotFoundException());
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		// Validate input.
-		ResponseEntity<CourseFeatureResponse> response = messageValidator.validate(feature, message);
-
-		if (response.getStatusCode().value() == HttpStatus.OK.value()) {
-			MessengerMessage mMessage = new MessengerMessage(message, request.getRemoteAddr(), ZonedDateTime.now());
-			mMessage.setFirstName(details.getFirstName());
-			mMessage.setFamilyName(details.getFamilyName());
-
-			// Notify service provider endpoint.
-			courseFeatureState.postCourseFeatureMessage(courseId, mMessage);
+			simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/speech", message, Map.of("payloadType", message.getClass().getSimpleName()));
 		}
 
 		return response;
@@ -601,7 +574,7 @@ public class CourseSubscriberController {
 			.started(started)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course-state/all/stream", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/stream", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/all/stream", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/stream", courseEvent);
 	}
 }

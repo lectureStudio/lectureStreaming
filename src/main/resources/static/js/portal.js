@@ -26,7 +26,7 @@ class PortalApp {
 			heartbeatOutgoing: 1000,
 		});
 		client.onConnect = () => {
-			client.subscribe("/topic/course-state/all/stream", (message) => {
+			client.subscribe("/topic/course/all/stream", (message) => {
 				const state = JSON.parse(message.body);
 
 				this.courseStateChange("live", state.courseId, state.started);
@@ -35,17 +35,17 @@ class PortalApp {
 					this.courseStateChange("recording", state.courseId, false);
 				}
 			});
-			client.subscribe("/topic/course-state/all/recording", (message) => {
+			client.subscribe("/topic/course/all/recording", (message) => {
 				const state = JSON.parse(message.body);
 
 				this.courseStateChange("recording", state.courseId, state.started);
 			});
-			client.subscribe("/topic/course-state/all/messenger", (message) => {
+			client.subscribe("/topic/course/all/messenger", (message) => {
 				const state = JSON.parse(message.body);
 
 				this.courseStateChange("messenger", state.courseId, state.started);
 			});
-			client.subscribe("/topic/course-state/all/quiz", (message) => {
+			client.subscribe("/topic/course/all/quiz", (message) => {
 				const state = JSON.parse(message.body);
 
 				this.courseStateChange("quiz", state.courseId, state.started);

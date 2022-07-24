@@ -11,6 +11,7 @@ public class WebSocketBrokerSecurityConfig extends AbstractSecurityWebSocketMess
 	protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
 		messages
 				.nullDestMatcher().authenticated()
+				// users cannot send to these broker destinations, only the application can
 				// .simpMessageDestMatchers("**").denyAll()
 				.simpSubscribeDestMatchers("/topic/**", "/queue/**", "/user/**").permitAll()
 				.simpDestMatchers("/app/**").permitAll()

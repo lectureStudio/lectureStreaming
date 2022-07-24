@@ -4,15 +4,10 @@ import static java.util.Objects.isNull;
 
 import java.math.BigInteger;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 
-import org.lecturestudio.web.api.message.CourseParticipantMessage;
-import org.lecturestudio.web.api.message.SpeechBaseMessage;
 import org.lecturestudio.web.portal.service.UserService;
 
 public class CourseState {
@@ -20,10 +15,6 @@ public class CourseState {
 	private final UserService userService;
 
 	private final long courseId;
-
-	private final List<BiConsumer<Long, SpeechBaseMessage>> speechListeners;
-
-	private final BiConsumer<Long, CourseParticipantMessage> connectedListener;
 
 	private final long timestamp;
 
@@ -36,18 +27,10 @@ public class CourseState {
 	private boolean isRecorded;
 
 
-	public CourseState(UserService userService, long courseId, List<BiConsumer<Long, SpeechBaseMessage>> speechListeners, BiConsumer<Long, CourseParticipantMessage> connectedListener) {
+	public CourseState(UserService userService, long courseId) {
 		this.userService = userService;
 		this.courseId = courseId;
-		this.speechListeners = speechListeners;
-		this.connectedListener = connectedListener;
 		timestamp = System.currentTimeMillis();
-	}
-
-	public void postSpeechMessage(Long courseId, SpeechBaseMessage message) {
-		for (BiConsumer<Long, SpeechBaseMessage> listener : speechListeners) {
-			listener.accept(courseId, message);
-		}
 	}
 
 	public long getCreatedTimestamp() {
@@ -80,19 +63,19 @@ public class CourseState {
 		}
 
 		if (openSessions.isEmpty()) {
-			Optional<User> user = userService.findById(participantId);
+			// Optional<User> user = userService.findById(participantId);
 
 			// Send notification of arrival.
-			CourseParticipantMessage participantMessage = new CourseParticipantMessage();
-			participantMessage.setConnected(true);
+			// CourseParticipantMessage participantMessage = new CourseParticipantMessage();
+			// participantMessage.setConnected(true);
 
-			if (user.isPresent()) {
-				participantMessage.setFirstName(user.get().getFirstName());
-				participantMessage.setFamilyName(user.get().getFamilyName());
-				participantMessage.setUserName(user.get().getUserId());
-			}
+			// if (user.isPresent()) {
+			// 	participantMessage.setFirstName(user.get().getFirstName());
+			// 	participantMessage.setFamilyName(user.get().getFamilyName());
+			// 	participantMessage.setUserName(user.get().getUserId());
+			// }
 
-			postParticipantMessage(courseId, participantMessage);
+			// postParticipantMessage(courseId, participantMessage);
 		}
 
 		openSessions.add(sessionId);
@@ -111,19 +94,19 @@ public class CourseState {
 				entry.getValue().remove(sessionId);
 
 				if (entry.getValue().isEmpty()) {
-					Optional<User> user = userService.findById(participantId);
+					// Optional<User> user = userService.findById(participantId);
 
-					// Send notification of departure.
-					CourseParticipantMessage participantMessage = new CourseParticipantMessage();
-					participantMessage.setConnected(false);
+					// // Send notification of departure.
+					// CourseParticipantMessage participantMessage = new CourseParticipantMessage();
+					// participantMessage.setConnected(false);
 
-					if (user.isPresent()) {
-						participantMessage.setFirstName(user.get().getFirstName());
-						participantMessage.setFamilyName(user.get().getFamilyName());
-						participantMessage.setUserName(user.get().getUserId());
-					}
+					// if (user.isPresent()) {
+					// 	participantMessage.setFirstName(user.get().getFirstName());
+					// 	participantMessage.setFamilyName(user.get().getFamilyName());
+					// 	participantMessage.setUserName(user.get().getUserId());
+					// }
 
-					postParticipantMessage(courseId, participantMessage);
+					// postParticipantMessage(courseId, participantMessage);
 				}
 
 				break;
@@ -153,9 +136,5 @@ public class CourseState {
 
 	public void removeCourseStateDocument(CourseStateDocument stateDoc) {
 		documentMap.remove(stateDoc.getDocumentId());
-	}
-
-	private void postParticipantMessage(Long courseId, CourseParticipantMessage message) {
-		connectedListener.accept(courseId, message);
 	}
 }

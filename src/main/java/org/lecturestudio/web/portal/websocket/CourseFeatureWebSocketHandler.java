@@ -1,7 +1,6 @@
 package org.lecturestudio.web.portal.websocket;
 
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,19 +9,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.lecturestudio.web.api.message.CourseFeatureMessengerParticipantMessage;
-import org.lecturestudio.web.api.message.WebMessage;
 import org.lecturestudio.web.api.stream.action.StreamAction;
 import org.lecturestudio.web.api.stream.action.StreamActionFactory;
 import org.lecturestudio.web.api.stream.action.StreamActionType;
 import org.lecturestudio.web.api.stream.action.StreamStartAction;
-import org.lecturestudio.web.portal.model.CourseFeatureState;
-import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
+
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
@@ -32,20 +25,9 @@ public class CourseFeatureWebSocketHandler extends BinaryWebSocketHandler {
 
 	private final Map<WebSocketSession, List<ByteBuffer>> sessionBufferMap = new ConcurrentHashMap<>();
 
-	private final CourseFeatureState courseFeatureState;
 
-	private final CourseMessengerFeatureSaveFeature messengerSaveFeature;
+	public CourseFeatureWebSocketHandler() {
 
-	private final ObjectMapper objectMapper;
-
-
-	public CourseFeatureWebSocketHandler(CourseFeatureState featureState, ObjectMapper objectMapper, CourseMessengerFeatureSaveFeature messengerSaveFeature) {
-		this.courseFeatureState = featureState;
-		this.objectMapper = objectMapper;
-		this.messengerSaveFeature = messengerSaveFeature;
-
-		courseFeatureState.addCourseFeatureListener(this::sendCourseFeatureMessengerParticipantMessage);
-		courseFeatureState.addCourseFeatureListener(this.messengerSaveFeature);
 	}
 
 	@Override
@@ -100,25 +82,6 @@ public class CourseFeatureWebSocketHandler extends BinaryWebSocketHandler {
 			}
 
 			buffers.add(buffer);
-		}
-	}
-
-	private void sendCourseFeatureMessengerParticipantMessage(long courseId, WebMessage message) {
-		if (message instanceof CourseFeatureMessengerParticipantMessage) {
-			WebSocketSession session = sessions.entrySet().stream()
-				.filter(entry -> entry.getValue() == courseId)
-				.findFirst()
-				.map(Map.Entry::getKey)
-				.orElse(null);
-
-			if (nonNull(session)) {
-				try {
-					session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
-				}
-				catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
 		}
 	}
 

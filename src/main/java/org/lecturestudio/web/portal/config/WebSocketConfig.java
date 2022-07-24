@@ -1,9 +1,5 @@
 package org.lecturestudio.web.portal.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.lecturestudio.web.portal.model.CourseFeatureState;
-import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.websocket.CourseFeatureWebSocketHandler;
@@ -27,25 +23,16 @@ public class WebSocketConfig implements WebSocketConfigurer {
 	private CourseStates courseStates;
 
 	@Autowired
-	private CourseFeatureState courseFeatureState;
-
-	@Autowired
-	private CourseMessengerFeatureSaveFeature messengerSaveFeature;
-
-	@Autowired
 	private UserService userService;
-
-	@Autowired
-	private ObjectMapper objectMapper;
 
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		registry
-			.addHandler(new CourseStateWebSocketHandler(courseStates, objectMapper, userService, messengerSaveFeature), "/api/publisher/course-state")
-				.setAllowedOrigins("*")
-			.addHandler(new CourseFeatureWebSocketHandler(courseFeatureState, objectMapper, messengerSaveFeature), "/api/publisher/messages")
+			.addHandler(new CourseStateWebSocketHandler(courseStates, userService), "/api/publisher/course-state")
 				.setAllowedOrigins("*");
+			// .addHandler(new CourseFeatureWebSocketHandler(), "/api/publisher/messages")
+			// 	.setAllowedOrigins("*");
 	}
 
 	@Bean

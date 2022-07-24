@@ -20,13 +20,13 @@ public class StompCourseWebMessageIdProvider implements CourseWebMessageIdProvid
     @Override
     public void setMessageId(WebMessage webMessage) {
 
-        if (!Objects.isNull(webMessage.getRemoteAddress())) {
+        if (!Objects.isNull(webMessage.getUserId())) {
             StringBuilder sb = new StringBuilder();
             sb.append(courseId);
             sb.append("-");
-            sb.append(webMessage.getRemoteAddress());
+            sb.append(webMessage.getUserId());
             sb.append("-");
-            sb.append(this.getNextUserMessageIdPostfix(webMessage.getRemoteAddress()));
+            sb.append(this.getNextUserMessageIdPostfix(webMessage.getUserId()));
 
             webMessage.setMessageId(sb.toString());
         }

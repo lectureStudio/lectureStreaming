@@ -23,7 +23,7 @@ public class MessengerDirectMessageSerializer extends JsonSerializer<MessengerDi
                 generator.writeObjectField("time", message.getDate());
                 generator.writeStringField("firstName", message.getFirstName());
                 generator.writeStringField("familyName", message.getFamilyName());
-                generator.writeStringField("username", message.getRemoteAddress());
+                generator.writeStringField("userId", message.getUserId());
                 generator.writeStringField("messageId", message.getMessageId());
                 generator.writeBooleanField("reply", message.isReply());
                 generator.writeEndObject();

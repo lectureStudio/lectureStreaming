@@ -22,7 +22,7 @@ public class MessengerReplyMessageSerializer extends JsonSerializer<MessengerRep
 		generator.writeObjectField("time", message.getDate());
 		generator.writeStringField("firstName", message.getFirstName());
 		generator.writeStringField("familyName", message.getFamilyName());
-		generator.writeStringField("username", message.getRemoteAddress());
+		generator.writeStringField("userId", message.getUserId());
 		generator.writeStringField("messageId", message.getMessageId());
         generator.writeStringField("repliedMessageId", message.getRepliedMessageId());
 		generator.writeEndObject();
