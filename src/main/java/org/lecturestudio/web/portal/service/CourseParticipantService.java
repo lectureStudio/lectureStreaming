@@ -5,6 +5,7 @@ import java.util.Optional;
 import javax.transaction.Transactional;
 
 import org.lecturestudio.web.portal.model.CourseParticipant;
+import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.repository.CourseParticipantRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,23 +19,19 @@ public class CourseParticipantService {
 
 
 	public void saveParticipant(CourseParticipant participant) {
-		System.out.println("+: " + participant.getSessionId() + " " + participant.getUserId());
-
-		featureRepository.deleteAll();
-
 		featureRepository.save(participant);
 	}
 
 	@Transactional
 	public void deleteParticipantBySessionId(String sessionId) {
-		System.out.println("-: " + sessionId);
-
 		featureRepository.deleteBySessionId(sessionId);
 	}
 
-	public Optional<CourseParticipant> getParticipantBySessionId(String sessionId) {
-		System.out.println("#: " + sessionId + " " + featureRepository.findBySessionId(sessionId));
+	public Iterable<User> findAllUsersByCourseId(Long courseId) {
+		return featureRepository.findAllUsersByCourseId(courseId);
+	}
 
+	public Optional<CourseParticipant> getParticipantBySessionId(String sessionId) {
 		return featureRepository.findBySessionId(sessionId);
 	}
 }

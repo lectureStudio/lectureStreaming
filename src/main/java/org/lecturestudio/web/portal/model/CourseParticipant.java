@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -19,16 +20,17 @@ import lombok.Setter;
 @Setter
 @Builder
 @Table(name = "course_participants")
-@IdClass(CourseUserId.class)
+@IdClass(CourseParticipantId.class)
 public class CourseParticipant {
 
 	@Id
-	Long courseId;
+	@ManyToOne
+	User user;
 
 	@Id
-	String userId;
-
-	@Column(name = "sessionId", updatable = false, nullable = false)
 	String sessionId;
+
+	@Column(nullable = false)
+	Long courseId;
 
 }

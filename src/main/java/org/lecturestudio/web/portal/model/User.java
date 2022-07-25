@@ -21,7 +21,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
@@ -38,7 +37,6 @@ public class User {
 	String userId;
 
 	@Column(name = "anonymousId", unique = true, updatable = false, nullable = false)
-	// @Type(type = "org.hibernate.type.UUIDCharType")
 	UUID anonymousUserId;
 
 	@Column(name = "first_name", updatable = false, nullable = false)

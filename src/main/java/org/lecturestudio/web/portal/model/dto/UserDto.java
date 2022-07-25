@@ -13,7 +13,7 @@ import lombok.Setter;
 @Builder
 public class UserDto {
 
-	String username;
+	String userId;
 
 	String firstName;
 

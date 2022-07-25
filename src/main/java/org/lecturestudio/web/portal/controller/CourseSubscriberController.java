@@ -387,7 +387,7 @@ public class CourseSubscriberController {
 		Comparator<UserDto> userComparator = new Comparator<UserDto>() {
 			@Override
 			public int compare(UserDto arg0, UserDto arg1) {
-				return arg0.getUsername().compareTo(arg1.getUsername());
+				return arg0.getUserId().compareTo(arg1.getUserId());
 			};
 		};
 

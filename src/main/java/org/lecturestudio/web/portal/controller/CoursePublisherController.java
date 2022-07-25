@@ -118,7 +118,7 @@ public class CoursePublisherController {
 		Optional<User> userOpt = userService.findById(authentication.getName());
 		User user = userOpt.get();
 		UserDto userDto = UserDto.builder()
-			.username(authentication.getName())
+			.userId(authentication.getName())
 			.familyName(user.getFamilyName())
 			.firstName(user.getFirstName()).build();
 
@@ -247,7 +247,7 @@ public class CoursePublisherController {
 		Comparator<UserDto> userComparator = new Comparator<UserDto>() {
 			@Override
 			public int compare(UserDto user1, UserDto user2) {
-				return user1.getUsername().compareTo(user2.getUsername());
+				return user1.getUserId().compareTo(user2.getUserId());
 			};
 		};
 

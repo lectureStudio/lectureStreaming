@@ -5,7 +5,6 @@ import static java.util.Objects.nonNull;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.transaction.Transactional;
 
@@ -61,7 +60,7 @@ public class ParticipantPresenceListener {
 
 				CourseParticipant participant = CourseParticipant.builder()
 					.courseId(Long.parseLong(courseId))
-					.userId(userName)
+					.user(user)
 					.sessionId(headers.getSessionId())
 					.build();
 
@@ -99,13 +98,6 @@ public class ParticipantPresenceListener {
 
 			participantService.deleteParticipantBySessionId(headers.getSessionId());
 		}
-		
-
-		// Optional.ofNullable(participantRepository.getParticipant(event.getSessionId()))
-		// 		.ifPresent(login -> {
-		// 			messagingTemplate.convertAndSend(logoutDestination, new LogoutEvent(login.getUsername()));
-		// 			participantRepository.removeParticipant(event.getSessionId());
-		// 		});
 	}
 
 	public static boolean isNumeric(String strNum) {
