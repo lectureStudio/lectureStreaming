@@ -10,12 +10,10 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -237,33 +235,6 @@ public class CoursePublisherController {
 		return stopFeature(courseId, CourseMessageFeature.class);
 	}
 
-	@GetMapping("/messenger/users/{courseId}")
-	public Set<UserDto> getConnectedMessengerUsers(@PathVariable("courseId") long courseId, Authentication authentication) {
-		courseFeatureService.findMessageByCourseId(courseId).orElseThrow(() -> new FeatureNotFoundException());
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-		Set<MessengerFeatureUser> connectedUsers = messengerFeatureUserRegistry.getUsers(courseId);
-
-		Comparator<UserDto> userComparator = new Comparator<UserDto>() {
-			@Override
-			public int compare(UserDto user1, UserDto user2) {
-				return user1.getUserId().compareTo(user2.getUserId());
-			};
-		};
-
-		TreeSet<UserDto> sortedConnectedUsers = new TreeSet<>(userComparator);
-
-		connectedUsers.forEach((user) -> {
-			if (!user.getUsername().equals(details.getUsername())) {
-				User u = userService.findById(user.getUsername()).get();
-				UserDto userDto = new UserDto(u.getFirstName(), u.getFamilyName(), u.getUserId());
-				sortedConnectedUsers.add(userDto);
-			}
-		});
-
-		return sortedConnectedUsers;
-	}
-
 	@MessageMapping("/message/publisher/{courseId}")
 	@SendTo("/topic/chat/{courseId}")
 	public void sendMessage(@Payload String messageString, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
@@ -275,7 +246,7 @@ public class CoursePublisherController {
 		JsonNode jsonNode = this.objectMapper.readTree(messageString);
 		String type = jsonNode.get("type").asText();
 		WebMessage message;
-		
+
 		switch (type) {
 			case "MessengerMessage":
 				message = this.objectMapper.readValue(messageString, MessengerMessage.class);
@@ -296,6 +267,7 @@ public class CoursePublisherController {
 				message.setFirstName(user.getFirstName());
 
 				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
+				
 				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, message,
 						Map.of("payloadType", "MessengerMessage"));
 				break;
@@ -310,8 +282,7 @@ public class CoursePublisherController {
 				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
 				MessengerDirectMessage mdm = (MessengerDirectMessage) message;
 
-				MessengerFeatureUser destinationUser = messengerFeatureUserRegistry
-						.getUser(mdm.getMessageDestinationUsername());
+				MessengerFeatureUser destinationUser = messengerFeatureUserRegistry.getUser(mdm.getRecipient());
 				MessengerFeatureUser featureUser = messengerFeatureUserRegistry.getUser(authentication.getName());
 
 				ArrayList<Set<String>> sets = new ArrayList<>();

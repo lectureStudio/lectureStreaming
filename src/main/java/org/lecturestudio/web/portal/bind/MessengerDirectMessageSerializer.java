@@ -18,7 +18,7 @@ public class MessengerDirectMessageSerializer extends JsonSerializer<MessengerDi
             throws IOException {
                 generator.writeStartObject();
                 generator.writeStringField("_type", message.getClass().getSimpleName());
-                generator.writeStringField("messageDestinationUsername", message.getMessageDestinationUsername());
+                generator.writeStringField("recipient", message.getRecipient());
                 generator.writeStringField("text", message.getMessage().getText());
                 generator.writeObjectField("time", message.getDate());
                 generator.writeStringField("firstName", message.getFirstName());

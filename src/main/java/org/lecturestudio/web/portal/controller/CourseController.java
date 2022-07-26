@@ -21,11 +21,13 @@ import javax.validation.Valid;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
+import org.lecturestudio.web.portal.exception.CoursePrivilegeNotFoundException;
 import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseCredentials;
 import org.lecturestudio.web.portal.model.CourseForm;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseRegistration;
@@ -36,6 +38,7 @@ import org.lecturestudio.web.portal.model.PrivilegeFormDataSink;
 import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
+import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 import org.lecturestudio.web.portal.service.CourseParticipantService;
@@ -80,6 +83,9 @@ public class CourseController {
 
 	@Autowired
 	private CourseParticipantService participantService;
+
+	@Autowired
+	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
 
 	@Autowired
 	private CourseStates courseStates;
@@ -448,6 +454,23 @@ public class CourseController {
 		});
 
 		return participants;
+	}
+
+	@SubscribeMapping("/course/chat/history/{courseId}")
+	public CourseMessengerHistoryDto getChatHistory(@DestinationVariable Long courseId, Authentication authentication) {
+		Course course = courseService.findById(courseId)
+			.orElseThrow(() -> new CourseNotFoundException());
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		CoursePrivilege requiredToReadPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_READ_PRIVILEGE")
+			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+
+		roleService.checkAuthorization(course, details, requiredToReadPrivilege);
+
+		User user = userService.findById(details.getUsername()).get();
+
+		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId, user));
 	}
 
 	private void checkAuthorization(Long courseId, LectUserDetails details) {

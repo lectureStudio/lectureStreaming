@@ -7,14 +7,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -25,10 +19,8 @@ import org.lecturestudio.web.portal.service.CourseQuizResourceService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
-import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry;
 import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
-import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry.MessengerFeatureUser;
 import org.lecturestudio.web.portal.validator.MessageValidator;
 import org.lecturestudio.web.portal.validator.QuizAnswerValidator;
 import org.lecturestudio.web.portal.validator.SpeechValidator;
@@ -58,10 +50,7 @@ import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStateListener;
 import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.model.User;
-import org.lecturestudio.web.portal.model.dto.CourseMessengerConnectedUsersDto;
-import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.CourseStateDto;
-import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,9 +86,6 @@ public class CourseSubscriberController {
 	private SimpMessagingTemplate simpMessagingTemplate;
 
 	@Autowired
-	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
-
-	@Autowired
 	private CourseService courseService;
 
 	@Autowired
@@ -115,13 +101,13 @@ public class CourseSubscriberController {
 	private CourseQuizResourceService courseQuizResourceService;
 
 	@Autowired
+	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
+
+	@Autowired
 	private UserService userService;
 
 	@Autowired
 	private RoleService roleService;
-
-	@Autowired
-	private MessengerFeatureUserRegistry messengerFeatureUserRegistry;
 
 	@Autowired
 	private FileStorageService fileStorageService;
@@ -349,63 +335,6 @@ public class CourseSubscriberController {
 		return response;
 	}
 
-	@GetMapping("/messenger/history/{courseId}")
-	public CourseMessengerHistoryDto getMessengerHistoryOfCourse(@PathVariable("courseId") long courseId, Authentication authentication) {
-		Course course = courseService.findById(courseId)
-			.orElseThrow(() -> new CourseNotFoundException());
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		CoursePrivilege requiredToReadPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_READ_PRIVILEGE")
-			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
-
-		roleService.checkAuthorization(course, details, requiredToReadPrivilege);
-
-		User user = userService.findById(details.getUsername()).get();
-
-		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId, user));
-	}
-
-	@GetMapping("/messenger/users/{courseId}")
-	public CourseMessengerConnectedUsersDto getConnectedMessengerUsers(@PathVariable("courseId") long courseId, Authentication authentication) {
-		courseFeatureService.findMessageByCourseId(courseId).orElseThrow(() -> new FeatureNotFoundException());
-
-		Course course = courseService.findById(courseId)
-			.orElseThrow(() -> new CourseNotFoundException());
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		CoursePrivilege requiredPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE")
-			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
-
-		roleService.checkAuthorization(course, details, requiredPrivilege);
-
-		CourseMessengerConnectedUsersDto connectedUsersDto = new CourseMessengerConnectedUsersDto();
-
-		Set<MessengerFeatureUser> connectedUsers = messengerFeatureUserRegistry.getUsers(courseId);
-
-		Comparator<UserDto> userComparator = new Comparator<UserDto>() {
-			@Override
-			public int compare(UserDto arg0, UserDto arg1) {
-				return arg0.getUserId().compareTo(arg1.getUserId());
-			};
-		};
-
-		TreeSet<UserDto> sortedConnectedUsers = new TreeSet<>(userComparator);
-
-		connectedUsers.forEach((user) -> {
-			if (!user.getUsername().equals(details.getUsername())) {
-				User u = userService.findById(user.getUsername()).get();
-				UserDto userDto = new UserDto(u.getFirstName(), u.getFamilyName(), u.getAnonymousUserId().toString());
-				sortedConnectedUsers.add(userDto);
-			}
-		});
-
-		connectedUsersDto.setConnectedUsers(sortedConnectedUsers);
-
-		return connectedUsersDto;
-	}
-
 	@MessageMapping("/message/{courseId}")
     @SendTo("/topic/chat/{courseId}")
     public void sendMessage(@Payload org.springframework.messaging.Message<Message> message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
@@ -427,74 +356,50 @@ public class CourseSubscriberController {
 		// Validate input.
 		ResponseEntity<CourseFeatureResponse> response = messageValidator.validate(feature, payload);
 
-		System.out.println(payload.getServiceId() + ": " + payload.getText());
-		System.out.println(response.getBody().statusCode + ": " + response.getBody().statusMessage);
-
 		if (! (response.getStatusCode().value() == HttpStatus.OK.value())) {
 			throw new Exception(response.toString());
 		}
 
 		StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-		String messageType = accessor.getNativeHeader("messageType").get(0);
+		String recipient = accessor.getFirstNativeHeader("recipient");
 
-		WebMessage forwardMessage = null;
+		if (recipient.equals("public")) {
+			WebMessage forwardMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
+			forwardMessage.setFirstName(details.getFirstName());
+			forwardMessage.setFamilyName(details.getFamilyName());
 
-		switch(messageType) {
-			case "user":
-			case "lecturer":
-				String messageDestinationUsername = "";
-				if (messageType.equals("user")) {
-					CoursePrivilege requiredToSendToUserPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE")
-						.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+			messengerFeatureSaveFeature.onFeatureMessage(courseId, forwardMessage);
 
-					roleService.checkAuthorization(course, details, requiredToSendToUserPrivilege);
+			simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
+		}
+		else {
+			CoursePrivilege requiredToSendToUserPrivilege = roleService
+					.findByPrivilegeName("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE")
+					.orElseThrow(() -> new CoursePrivilegeNotFoundException());
 
-					String anonymousMessageDestinationUsername = accessor.getNativeHeader("username").get(0);
-					Optional<User> optDestinationUser = userService.findByAnonymousId(UUID.fromString(anonymousMessageDestinationUsername));
-					if (optDestinationUser.isPresent()) {
-						User destinationUser = optDestinationUser.get();
-						messageDestinationUsername = destinationUser.getUserId();
-					}
-				}
-				else {
-					CoursePrivilege requiredToSendToLecturerPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_LECTURER_PRIVILEGE")
-						.orElseThrow(() -> new CoursePrivilegeNotFoundException());
+			roleService.checkAuthorization(course, details, requiredToSendToUserPrivilege);
 
-					roleService.checkAuthorization(course, details, requiredToSendToLecturerPrivilege);
-					messageDestinationUsername = feature.getInitiator().getUserId();
-				}
+			User destUser = userService.findById(recipient).orElse(null);
 
-				forwardMessage = new MessengerDirectMessage(messageDestinationUsername, payload, details.getUsername(), ZonedDateTime.now());
-				forwardMessage.setFirstName(details.getFirstName());
-				forwardMessage.setFamilyName(details.getFamilyName());
+			if (isNull(destUser)) {
+				// User not found, abort.
+				return;
+			}
 
-				MessengerFeatureUser user = messengerFeatureUserRegistry.getUser(details.getUsername());
-				MessengerFeatureUser destinationUser = messengerFeatureUserRegistry.getUser(messageDestinationUsername);
+			MessengerDirectMessage forwardMessage = new MessengerDirectMessage(recipient, payload, details.getUsername(), ZonedDateTime.now());
+			forwardMessage.setFirstName(details.getFirstName());
+			forwardMessage.setFamilyName(details.getFamilyName());
+			forwardMessage.setReply(false);
 
-				ArrayList<Set<String>> sets = new ArrayList<>();
+			messengerFeatureSaveFeature.onFeatureMessage(courseId, forwardMessage);
 
-				if (nonNull(destinationUser)) {
-					sets.add(destinationUser.getAddressesInUse());
-				}
-				if (nonNull(user)) {
-					sets.add(user.getAddressesInUse());
-				}
-				if (messageType.equals("lecturer")) {
-					sets.add(Collections.singleton(messageDestinationUsername));
-				}
-				for (Set<String> set : sets) {
-					for (String userDestination : set) {
-						simpMessagingTemplate.convertAndSendToUser(userDestination,"/queue/chat/" + courseId, forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
-					}
-				}
-				break;
-			case "public":
-				forwardMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
-				forwardMessage.setFirstName(details.getFirstName());
-				forwardMessage.setFamilyName(details.getFamilyName());
+			// Send back to the sender.
+			simpMessagingTemplate.convertAndSendToUser(details.getUsername(), "/queue/chat/" + courseId,
+					forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
 
-				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
-				break;
+			// Send to the recipient.
+			simpMessagingTemplate.convertAndSendToUser(recipient, "/queue/chat/" + courseId,
+					forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
 		}
     }
 
