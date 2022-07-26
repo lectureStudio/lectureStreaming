@@ -480,11 +480,11 @@ public class RoleService implements CourseStateListener, InitializingBean {
     }
 
     public Set<CoursePrivilege> getCoursePrivilegesOfUser(Course course, User user) {
-        CourseUserId courseUserId = CourseUserId.getIdFrom(course, user);
-        if (hasCourseUser(courseUserId)) {
-            CourseUser courseUser = findCourseUserById(courseUserId).get();
-            return courseUser.getPrivileges();
-        }
+        // CourseUserId courseUserId = CourseUserId.getIdFrom(course, user);
+        // if (hasCourseUser(courseUserId)) {
+        //     CourseUser courseUser = findCourseUserById(courseUserId).get();
+        //     return courseUser.getPrivileges();
+        // }
         Set<CoursePrivilege> userPrivileges;
         Set<Role> userRoles = user.getRoles();
         userPrivileges = userRoles.stream()

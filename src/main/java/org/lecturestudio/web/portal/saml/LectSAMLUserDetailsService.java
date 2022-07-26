@@ -39,6 +39,7 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 		String familyName = null;
 		String username = null;
 		Set<GrantedAuthority> authorities = new HashSet<>();
+		Set<String> roles = new HashSet<>();
 		Map<String, String> attributeMap = WebSecurityConfig.SSO_REQUESTED_ATTRIBUTES;
 
 		for (var attr : credential.getAttributes()) {
@@ -58,18 +59,23 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 					// Map person affiliations to roles. Higher roles go first.
 					if (affiliation.equals("faculty")) {
 						authorities.add(new SimpleGrantedAuthority("ROLE_FACULTY"));
+						roles.add("lecturer");
 					}
 					else if (affiliation.equals("employee")) {
 						authorities.add(new SimpleGrantedAuthority("ROLE_EMPLOYEE"));
+						roles.add("lecturer");
 					}
 					else if (affiliation.equals("member")) {
 						authorities.add(new SimpleGrantedAuthority("ROLE_MEMBER"));
+						roles.add("lecturer");
 					}
 					else if (affiliation.equals("affiliate")) {
 						authorities.add(new SimpleGrantedAuthority("ROLE_AFFILIATE"));
+						roles.add("assistant");
 					}
 					else if (affiliation.equals("student")) {
 						authorities.add(new SimpleGrantedAuthority("ROLE_STUDENT"));
+						roles.add("student");
 					}
 				}
 			}
@@ -81,12 +87,12 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 
 		Optional<User> userOpt = userService.findById(username);
 
-		Set<Role> userRoles = authorities.stream()
-			.filter((s) -> {
-				return roleService.existsByName(s.getAuthority());
+		Set<Role> userRoles = roles.stream()
+			.filter((r) -> {
+				return roleService.existsByName(r);
 			})
-			.map((s) -> {
-				return roleService.findRoleByName(s.getAuthority()).get();
+			.map((r) -> {
+				return roleService.findRoleByName(r).get();
 			})
 			.collect(Collectors.toSet());
 
@@ -104,6 +110,12 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 				.familyName(familyName)
 				.roles(userRoles)
 				.build());
+		}
+		else {
+			User user = userOpt.get();
+			user.setRoles(userRoles);
+
+			userService.saveUser(user);
 		}
 
 		return new LectUserDetails(username, firstName, familyName, authorities);

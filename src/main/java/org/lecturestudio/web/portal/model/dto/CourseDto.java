@@ -50,8 +50,6 @@ public class CourseDto {
 
 	boolean canDelete;
 
-	List<CoursePrivilegeDto> userPrivileges;
-
 
 	public boolean hasMessenger() {
 		return nonNull(messageFeature);

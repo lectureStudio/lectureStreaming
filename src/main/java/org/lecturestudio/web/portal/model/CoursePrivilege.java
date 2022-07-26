@@ -1,6 +1,5 @@
 package org.lecturestudio.web.portal.model;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 

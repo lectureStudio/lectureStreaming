@@ -1,6 +1,7 @@
 package org.lecturestudio.web.portal.model.dto;
 
 import java.util.Map;
+import java.util.Set;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,5 +41,7 @@ public class CourseStateDto {
 	Map<Long, CourseStateDocument> documentMap;
 
 	CourseStateDocument activeDocument;
+
+	Set<CoursePrivilegeDto> userPrivileges;
 
 }

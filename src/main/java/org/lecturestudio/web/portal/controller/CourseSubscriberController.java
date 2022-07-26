@@ -7,8 +7,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -49,7 +51,9 @@ import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStateListener;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.model.CourseUserId;
 import org.lecturestudio.web.portal.model.User;
+import org.lecturestudio.web.portal.model.dto.CoursePrivilegeDto;
 import org.lecturestudio.web.portal.model.dto.CourseStateDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 
@@ -69,6 +73,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -139,19 +144,6 @@ public class CourseSubscriberController {
 		});
 	}
 
-	@GetMapping("/privileges/{id}/check/{privilege}")
-	public ResponseEntity<String> isAuthorized(@PathVariable("id") long courseId, @PathVariable("privilege") String privilege, Authentication authentication) {
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		Course course = courseService.findById(courseId)
-			.orElseThrow(() -> new CourseNotFoundException());
-
-		CoursePrivilege coursePrivilege = roleService.findByPrivilegeName(privilege)
-			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
-
-		return roleService.isAuthorized(course, details, coursePrivilege) ? ResponseEntity.status(HttpStatus.OK).build() : ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-	}
-
 	@GetMapping("/state/{id}")
 	public CourseStateDto getCourseState(@PathVariable("id") long id, Authentication authentication) {
 		Course course = courseService.findById(id)
@@ -164,6 +156,30 @@ public class CourseSubscriberController {
 		CourseQuizFeature quizFeature = null;
 		
 		CourseState courseState = courseStates.getCourseState(id);
+
+		User user = userService.findById(details.getUsername())
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
+
+		CourseUserId courseUserId = CourseUserId.getIdFrom(course, user);
+
+		Set<CoursePrivilegeDto> userPrivileges = new HashSet<>();
+
+		if (roleService.hasCourseUser(courseUserId)) {
+			// user.getRoles().forEach(r -> {
+			// 	System.out.println(r.getName());
+			// });
+
+			// roleService.getCoursePrivilegesOfUser(course, user).forEach(r -> {
+			// 	System.out.println(r.getName());
+			// });
+
+			for (var priv : roleService.getCoursePrivilegesOfUser(course, user)) {
+				userPrivileges.add(CoursePrivilegeDto.builder()
+					.name(priv.getName())
+					.descriptionKey(priv.getDescriptionKey())
+					.build());
+			}
+		}
 
 		for (var feature : course.getFeatures()) {
 			if (feature instanceof CourseMessageFeature) {
@@ -182,13 +198,14 @@ public class CourseSubscriberController {
 		}
 
 		var builder = CourseStateDto.builder()
-				.courseId(id)
-				.userId(details.getUsername())
-				.title(course.getTitle())
-				.description(course.getDescription())
-				.messageFeature(messageFeature)
-				.quizFeature(quizFeature)
-				.isProtected(isProtected);
+			.courseId(id)
+			.userId(details.getUsername())
+			.title(course.getTitle())
+			.description(course.getDescription())
+			.messageFeature(messageFeature)
+			.quizFeature(quizFeature)
+			.isProtected(isProtected)
+			.userPrivileges(userPrivileges);
 
 		if (nonNull(courseState)) {
 			builder
