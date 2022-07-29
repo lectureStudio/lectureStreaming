@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -21,7 +22,6 @@ import org.lecturestudio.web.portal.service.CourseQuizResourceService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
-import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.validator.MessageValidator;
 import org.lecturestudio.web.portal.validator.QuizAnswerValidator;
@@ -36,7 +36,6 @@ import org.lecturestudio.web.api.model.Message;
 import org.lecturestudio.web.api.model.quiz.QuizAnswer;
 import org.lecturestudio.web.api.stream.model.CourseFeatureResponse;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
-import org.lecturestudio.web.portal.exception.CoursePrivilegeNotFoundException;
 import org.lecturestudio.web.portal.exception.DocumentNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
 import org.lecturestudio.web.portal.model.Course;
@@ -46,12 +45,15 @@ import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseQuizResource;
+import org.lecturestudio.web.portal.model.CourseRegistration;
+import org.lecturestudio.web.portal.model.CourseRole;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStateListener;
 import org.lecturestudio.web.portal.model.CourseStates;
-import org.lecturestudio.web.portal.model.CourseUserId;
+import org.lecturestudio.web.portal.model.Privilege;
+import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.dto.CoursePrivilegeDto;
 import org.lecturestudio.web.portal.model.dto.CourseStateDto;
@@ -112,9 +114,6 @@ public class CourseSubscriberController {
 	private UserService userService;
 
 	@Autowired
-	private RoleService roleService;
-
-	@Autowired
 	private FileStorageService fileStorageService;
 
 	@Autowired
@@ -146,38 +145,54 @@ public class CourseSubscriberController {
 
 	@GetMapping("/state/{id}")
 	public CourseStateDto getCourseState(@PathVariable("id") long id, Authentication authentication) {
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
 		Course course = courseService.findById(id)
 				.orElseThrow(() -> new CourseNotFoundException());
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-		boolean isProtected = nonNull(course.getPasscode()) && !course.getPasscode().isEmpty();
-
-		CourseMessageFeature messageFeature = null;
-		CourseQuizFeature quizFeature = null;
-		
-		CourseState courseState = courseStates.getCourseState(id);
 
 		User user = userService.findById(details.getUsername())
 				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
 
-		CourseUserId courseUserId = CourseUserId.getIdFrom(course, user);
+		boolean isProtected = nonNull(course.getPasscode()) && !course.getPasscode().isEmpty();
+
+		CourseMessageFeature messageFeature = null;
+		CourseQuizFeature quizFeature = null;
+
+		CourseState courseState = courseStates.getCourseState(id);
 
 		Set<CoursePrivilegeDto> userPrivileges = new HashSet<>();
 
-		if (roleService.hasCourseUser(courseUserId)) {
-			// user.getRoles().forEach(r -> {
-			// 	System.out.println(r.getName());
-			// });
+		for (CourseRegistration registration : course.getRegistrations()) {
+			if (registration.getUser().equals(user)) {
+				// User is the owner of the course and thereby has all privileges.
+				List<Privilege> privileges = courseService.getAllPossiblePrivileges();
 
-			// roleService.getCoursePrivilegesOfUser(course, user).forEach(r -> {
-			// 	System.out.println(r.getName());
-			// });
+				for (Privilege privilege : privileges) {
+					userPrivileges.add(CoursePrivilegeDto.builder()
+							.name(privilege.getName())
+							.descriptionKey(privilege.getDescriptionKey())
+							.build());
+				}
+				break;
+			}
+		}
 
-			for (var priv : roleService.getCoursePrivilegesOfUser(course, user)) {
-				userPrivileges.add(CoursePrivilegeDto.builder()
-					.name(priv.getName())
-					.descriptionKey(priv.getDescriptionKey())
-					.build());
+		if (userPrivileges.isEmpty()) {
+			// No privileges found, i.e. user is not the owner of the course.
+			Set<CourseRole> courseRoles = course.getRoles();
+			Set<Role> userRoles = user.getRoles();
+
+			for (CourseRole courseRole : courseRoles) {
+				if (userRoles.contains(courseRole.getRole())) {
+					for (CoursePrivilege coursePrivilege : courseRole.getPrivileges()) {
+						Privilege privilege = coursePrivilege.getPrivilege();
+
+						userPrivileges.add(CoursePrivilegeDto.builder()
+								.name(privilege.getName())
+								.descriptionKey(privilege.getDescriptionKey())
+								.build());
+					}
+				}
 			}
 		}
 
@@ -258,25 +273,14 @@ public class CourseSubscriberController {
 	@PostMapping(value = "/speech/{courseId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Long> postSpeech(@PathVariable("courseId") long courseId,
 			Authentication authentication) {
-		CoursePrivilege requiredPrivilege = roleService.findByPrivilegeName("COURSE_RAISE_HAND_PRIVILEGE")
-				.orElseThrow(() -> new CoursePrivilegeNotFoundException());
-
-		Course course = courseService.findById(courseId)
-				.orElseThrow(() -> new CourseNotFoundException());
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-		roleService.checkAuthorization(course, details, requiredPrivilege);
-
-		CourseState courseState = courseStates.getCourseState(courseId);
-
-		if (isNull(courseState)) {
-			throw new CourseNotFoundException();
-		}
+		courseService.isAuthorized(courseId, authentication, "SPEECH");
 
 		// Validate input.
 		ResponseEntity<CourseFeatureResponse> response = speechValidator.validate(courseId);
 
 		if (response.getStatusCode().value() == HttpStatus.OK.value()) {
+			LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
 			// speechValidator.registerRequest(courseId);
 
 			CourseSpeechRequest speechRequest = CourseSpeechRequest.builder()
@@ -306,14 +310,7 @@ public class CourseSubscriberController {
 	@DeleteMapping("/speech/{courseId}/{requestId}")
 	public ResponseEntity<CourseFeatureResponse> cancelSpeech(@PathVariable("courseId") long courseId,
 			@PathVariable("requestId") long requestId, Authentication authentication) {
-		CoursePrivilege requiredPrivilege = roleService.findByPrivilegeName("COURSE_RAISE_HAND_PRIVILEGE")
-				.orElseThrow(() -> new CoursePrivilegeNotFoundException());
-
-		Course course = courseService.findById(courseId)
-				.orElseThrow(() -> new CourseNotFoundException());
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-		roleService.checkAuthorization(course, details, requiredPrivilege);
+		courseService.isAuthorized(courseId, authentication, "SPEECH");
 
 		CourseState courseState = courseStates.getCourseState(courseId);
 
@@ -333,6 +330,8 @@ public class CourseSubscriberController {
 			if (speechRequestOpt.isEmpty()) {
 				return response;
 			}
+
+			LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 			CourseSpeechRequest speechRequest = speechRequestOpt.get();
 
@@ -355,27 +354,21 @@ public class CourseSubscriberController {
 	@MessageMapping("/message/{courseId}")
     @SendTo("/topic/chat/{courseId}")
     public void sendMessage(@Payload org.springframework.messaging.Message<Message> message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
+		courseService.isAuthorized(courseId, authentication, "CHAT_WRITE");
+
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
-
-		Course course = courseService.findById(courseId)
-			.orElseThrow(() -> new CourseNotFoundException());
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		CoursePrivilege requiredToSendPrivilege = roleService.findByPrivilegeName("COURSE_MESSENGER_WRITE_PRIVILEGE")
-			.orElseThrow(() -> new CoursePrivilegeNotFoundException());
-
-		roleService.checkAuthorization(course, details, requiredToSendPrivilege);
 
 		Message payload = message.getPayload();
 
 		// Validate input.
 		ResponseEntity<CourseFeatureResponse> response = messageValidator.validate(feature, payload);
 
-		if (! (response.getStatusCode().value() == HttpStatus.OK.value())) {
+		if (!(response.getStatusCode().value() == HttpStatus.OK.value())) {
 			throw new Exception(response.toString());
 		}
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 		String recipient = accessor.getFirstNativeHeader("recipient");
@@ -390,11 +383,7 @@ public class CourseSubscriberController {
 			simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
 		}
 		else {
-			CoursePrivilege requiredToSendToUserPrivilege = roleService
-					.findByPrivilegeName("COURSE_MESSENGER_WRITE_DIRECT_PRIVILEGE")
-					.orElseThrow(() -> new CoursePrivilegeNotFoundException());
-
-			roleService.checkAuthorization(course, details, requiredToSendToUserPrivilege);
+			courseService.isAuthorized(courseId, authentication, "CHAT_WRITE_PRIVATELY");
 
 			User destUser = userService.findById(recipient).orElse(null);
 
@@ -423,19 +412,13 @@ public class CourseSubscriberController {
 	@PostMapping("/quiz/post/{courseId}")
 	public ResponseEntity<CourseFeatureResponse> postQuizAnswer(@PathVariable("courseId") long courseId,
 			@RequestBody QuizAnswer quizAnswer, Authentication authentication, HttpServletRequest request) {
-		Course course = courseService.findById(courseId)
-				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + courseId));
+		courseService.isAuthorized(courseId, authentication, "QUIZ_PARTICIPATION");
 
 		final CourseQuizFeature feature = (CourseQuizFeature) courseFeatureService.findQuizByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
 		final LectUserDetails details = (LectUserDetails) authentication.getDetails();
 		final String userName = details.getUsername();
-
-		CoursePrivilege requiredPrivilege = roleService.findByPrivilegeName("COURSE_QUIZ_PRIVILEGE")
-				.orElseThrow(() -> new CoursePrivilegeNotFoundException());
-
-		roleService.checkAuthorization(course, details, requiredPrivilege);
 
 		// Validate input.
 		ResponseEntity<CourseFeatureResponse> response = quizAnswerValidator.validate(userName, feature, quizAnswer);

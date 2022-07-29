@@ -2,34 +2,56 @@ package org.lecturestudio.web.portal.model;
 
 import java.util.List;
 
-import javax.persistence.Entity;
-import javax.persistence.Transient;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CourseForm extends Course {
+public class CourseForm {
 
-    @Transient
-    private List<Role> courseRoles;
+	private Long id;
 
-    @Transient
-    private List<PrivilegeFormDataSink> privilegeSinks;
+	private String roomId;
 
-    @Transient
-    private int numOfPrivileges;
+	private String title;
 
-    @Transient
-    private List<User> personallyPrivilegedUsers;
+	private String description;
 
-    @Transient
-    private String username;
+	private String passcode;
 
+	private List<CourseFormRole> roles;
+
+	private List<User> personallyPrivilegedUsers;
+
+	private String username;
+
+
+
+	@Getter
+	@Setter
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class CourseFormRole {
+
+		private Role role;
+
+		private List<CourseFormPrivilege> privileges;
+
+	}
+
+	@Getter
+	@Setter
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class CourseFormPrivilege {
+
+		private Privilege privilege;
+
+		private boolean selected;
+
+	}
 }

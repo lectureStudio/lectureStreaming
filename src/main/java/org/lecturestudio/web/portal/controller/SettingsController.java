@@ -6,6 +6,7 @@ import org.lecturestudio.web.portal.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +23,7 @@ public class SettingsController {
 	public String settingsIndex(Authentication authentication, Model model) {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 		User user = userService.findById(details.getUsername())
-				.orElseThrow(() -> new IllegalArgumentException("User is not present"));
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
 
 		model.addAttribute("token", user.getToken());
 

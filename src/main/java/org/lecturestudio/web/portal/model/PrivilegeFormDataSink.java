@@ -13,8 +13,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PrivilegeFormDataSink {
 
-    private CoursePrivilege privilege;
+	private Privilege privilege;
 
-    private boolean expressed;
+	private boolean expressed;
 
 }

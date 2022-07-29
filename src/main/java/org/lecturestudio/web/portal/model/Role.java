@@ -1,13 +1,12 @@
 package org.lecturestudio.web.portal.model;
 
-import java.util.Set;
+import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -25,18 +24,39 @@ import lombok.Setter;
 @Table(name = "roles")
 public class Role {
 
-    @Id
+	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id", updatable = false, nullable = false)
 	Long id;
 
-    @Column(name = "name", updatable = true, nullable = false)
-    String name;
+	@Column(name = "name", nullable = false)
+	String name;
 
-    @Column(name ="name_link")
-    String nameLink;
+	@Column(name = "description_key")
+	String descriptionKey;
 
-    @ManyToMany(mappedBy = "roles")
-    Set<User> users;
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof Role)) {
+			return false;
+		}
+
+		Role that = (Role) o;
+
+		return Objects.equals(name, that.name);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(name);
+	}
+
+	@Override
+	public String toString() {
+		return "Role [name=" + name + "]";
+	}
 }

@@ -30,7 +30,6 @@ import org.lecturestudio.web.portal.model.CourseFeature;
 import org.lecturestudio.web.portal.model.CourseFeatureEvent;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
-import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseQuizResource;
 import org.lecturestudio.web.portal.model.CourseSpeechEvent;
@@ -42,10 +41,8 @@ import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.CourseFeatureDto;
 import org.lecturestudio.web.portal.model.dto.CourseQuizFeatureDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
-import org.lecturestudio.web.portal.saml.LectUserDetails;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry;
-import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.service.MessengerFeatureUserRegistry.MessengerFeatureUser;
 import org.lecturestudio.web.portal.util.StringUtils;
@@ -63,6 +60,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -99,9 +97,6 @@ public class CoursePublisherController {
 	private UserService userService;
 
 	@Autowired
-	private RoleService roleService;
-
-	@Autowired
 	private FileStorageService fileStorageService;
 
 	@Autowired
@@ -113,12 +108,13 @@ public class CoursePublisherController {
 
 	@GetMapping("/user")
 	public UserDto getUser(Authentication authentication) {
-		Optional<User> userOpt = userService.findById(authentication.getName());
-		User user = userOpt.get();
+		User user = userService.findById(authentication.getName())
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
+
 		UserDto userDto = UserDto.builder()
-			.userId(authentication.getName())
-			.familyName(user.getFamilyName())
-			.firstName(user.getFirstName()).build();
+				.userId(authentication.getName())
+				.familyName(user.getFamilyName())
+				.firstName(user.getFirstName()).build();
 
 		return userDto;
 	}
@@ -126,19 +122,15 @@ public class CoursePublisherController {
 	@GetMapping("/courses")
 	public List<CourseDto> getCourses(Authentication authentication) {
 		List<CourseDto> courses = new ArrayList<>();
-		Optional<CoursePrivilege> requiredPrivilege = roleService.findByPrivilegeName("COURSE_PRESENTER_ACTIONS_PRIVILEGE");
-		LectUserDetails details = (LectUserDetails) authentication.getPrincipal();
 
 		courseService.getAllCourses().forEach(course -> {
-			if (requiredPrivilege.isPresent() && roleService.isAuthorized(course, details, requiredPrivilege.get())) {
-				courses.add(CourseDto.builder()
+			courses.add(CourseDto.builder()
 					.id(course.getId())
 					.roomId(course.getRoomId())
 					.title(course.getTitle())
 					.description(course.getDescription())
 					.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
 					.build());
-			}
 		});
 
 		return courses;
@@ -381,7 +373,8 @@ public class CoursePublisherController {
 				.findFirst().orElse(null);
 
 		if (isNull(courseFeature)) {
-			User initiator = userService.findById(authentication.getName()).get();
+			User initiator = userService.findById(authentication.getName())
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
 
 			feature.setInitiator(initiator);
 			feature.setCourse(course);

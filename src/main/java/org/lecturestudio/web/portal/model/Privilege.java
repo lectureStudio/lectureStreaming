@@ -1,18 +1,12 @@
 package org.lecturestudio.web.portal.model;
 
 import java.util.Objects;
-import java.util.Set;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -27,20 +21,19 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-@Table(name = "course_privileges")
-public class CoursePrivilege {
+@Table(name = "privileges")
+public class Privilege {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id", updatable = false, nullable = false)
 	Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "privilege_id")
-	Privilege privilege;
+	@Column(name = "name", nullable = false)
+	String name;
 
-	@ManyToMany(mappedBy = "privileges", cascade = { CascadeType.REFRESH, CascadeType.MERGE, CascadeType.PERSIST })
-	Set<CourseRole> roles;
+	@Column(name = "description_key")
+	String descriptionKey;
 
 
 	@Override
@@ -48,22 +41,22 @@ public class CoursePrivilege {
 		if (this == o) {
 			return true;
 		}
-		if (!(o instanceof CoursePrivilege)) {
+		if (!(o instanceof Privilege)) {
 			return false;
 		}
 
-		CoursePrivilege that = (CoursePrivilege) o;
+		Privilege that = (Privilege) o;
 
-		return Objects.equals(privilege, that.privilege);
+		return Objects.equals(name, that.name);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(privilege);
+		return Objects.hash(name);
 	}
 
 	@Override
 	public String toString() {
-		return "CoursePrivilege [name=" + privilege.name + "]";
+		return "Privilege [name=" + name + "]";
 	}
 }

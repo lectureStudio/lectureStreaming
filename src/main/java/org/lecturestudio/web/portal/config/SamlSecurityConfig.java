@@ -104,10 +104,9 @@ public class SamlSecurityConfig implements InitializingBean, DisposableBean {
 	@Bean
 	public SAMLAuthenticationProvider samlAuthenticationProvider() {
 		SAMLAuthenticationProvider samlAuthenticationProvider = new SAMLAuthenticationProvider();
-        // samlAuthenticationProvider.setUserDetails(samlUserDetailsServiceImpl);
         samlAuthenticationProvider.setForcePrincipalAsString(false);
+
         return samlAuthenticationProvider;
-		// return new SAMLAuthenticationProvider();
 	}
 
 	@Bean

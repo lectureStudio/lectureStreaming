@@ -30,7 +30,7 @@ public class CourseRegistration {
 	@Column(name = "id")
 	Long id;
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne
 	@JoinColumn(name = "user_id")
 	User user;
 
