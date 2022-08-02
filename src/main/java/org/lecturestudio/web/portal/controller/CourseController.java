@@ -15,12 +15,10 @@ import javax.validation.Valid;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
-import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseCredentials;
 import org.lecturestudio.web.portal.model.CourseForm;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
-import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseRegistration;
@@ -31,10 +29,8 @@ import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.CourseForm.CourseFormPrivilege;
 import org.lecturestudio.web.portal.model.CourseForm.CourseFormRole;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
-import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
-import org.lecturestudio.web.portal.service.CourseParticipantService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.util.StringUtils;
@@ -43,8 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.util.Streamable;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
@@ -65,12 +59,6 @@ public class CourseController {
 
 	@Autowired
 	private CourseService courseService;
-
-	@Autowired
-	private CourseParticipantService participantService;
-
-	@Autowired
-	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
 
 	@Autowired
 	private CourseStates courseStates;
@@ -417,36 +405,4 @@ public class CourseController {
 
 	// 	return "course-form";
 	// }
-
-	@SubscribeMapping("/course/participants/{courseId}")
-	public Set<UserDto> getParticipants(@DestinationVariable Long courseId) {
-		Set<UserDto> participants = new HashSet<>();
-
-		participantService.findAllUsersByCourseId(courseId).forEach(user -> {
-			participants.add(UserDto.builder()
-				.userId(user.getUserId())
-				.familyName(user.getFamilyName())
-				.firstName(user.getFirstName())
-				.build());
-		});
-
-		return participants;
-	}
-
-	@SubscribeMapping("/course/chat/history/{courseId}")
-	public CourseMessengerHistoryDto getChatHistory(@DestinationVariable Long courseId, Authentication authentication) {
-		try {
-			courseService.isAuthorized(courseId, authentication, "CHAT_READ");
-		}
-		catch (UnauthorizedException e) {
-			return null;
-		}
-
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		User user = userService.findById(details.getUsername())
-				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
-
-		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId, user));
-	}
 }

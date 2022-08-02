@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.lecturestudio.core.recording.RecordedPage;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
+import org.lecturestudio.web.portal.service.CourseParticipantService;
 import org.lecturestudio.web.portal.service.CourseQuizResourceService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
@@ -38,6 +40,7 @@ import org.lecturestudio.web.api.stream.model.CourseFeatureResponse;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.DocumentNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
+import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
@@ -55,8 +58,10 @@ import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.model.Privilege;
 import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
+import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.CoursePrivilegeDto;
 import org.lecturestudio.web.portal.model.dto.CourseStateDto;
+import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,6 +114,9 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
+
+	@Autowired
+	private CourseParticipantService participantService;
 
 	@Autowired
 	private UserService userService;
@@ -270,6 +278,45 @@ public class CourseSubscriberController {
 			.body(resource);
 	}
 
+	@GetMapping("/participants/{courseId}")
+	public List<UserDto> getParticipants(@PathVariable("courseId") Long courseId, Authentication authentication) {
+		List<UserDto> participants = new ArrayList<>();
+
+		try {
+			courseService.isAuthorized(courseId, authentication, "PARTICIPANTS_VIEW");
+		}
+		catch (UnauthorizedException e) {
+			return participants;
+		}
+
+		participantService.findAllUsersByCourseId(courseId).forEach(user -> {
+			participants.add(UserDto.builder()
+				.userId(user.getUserId())
+				.familyName(user.getFamilyName())
+				.firstName(user.getFirstName())
+				.build());
+		});
+
+		return participants;
+	}
+
+	@GetMapping("/chat/history/{courseId}")
+	public CourseMessengerHistoryDto getChatHistory(@PathVariable("courseId") Long courseId, Authentication authentication) {
+		try {
+			courseService.isAuthorized(courseId, authentication, "CHAT_READ");
+		}
+		catch (UnauthorizedException e) {
+			return new CourseMessengerHistoryDto(List.of());
+		}
+
+		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+
+		User user = userService.findById(details.getUsername())
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
+
+		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId, user));
+	}
+
 	@PostMapping(value = "/speech/{courseId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Long> postSpeech(@PathVariable("courseId") long courseId,
 			Authentication authentication) {
@@ -299,7 +346,7 @@ public class CourseSubscriberController {
 			message.setFamilyName(details.getFamilyName());
 			message.setUserId(details.getUsername());
 
-			simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/speech", message, Map.of("payloadType", message.getClass().getSimpleName()));
+			simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/speech", message, Map.of("payloadType", message.getClass().getSimpleName()));
 
 			return ResponseEntity.ok().body(speechRequest.getRequestId());
 		}
@@ -345,14 +392,14 @@ public class CourseSubscriberController {
 			message.setFamilyName(details.getFamilyName());
 			message.setUserId(details.getUsername());
 
-			simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/speech", message, Map.of("payloadType", message.getClass().getSimpleName()));
+			simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/speech", message, Map.of("payloadType", message.getClass().getSimpleName()));
 		}
 
 		return response;
 	}
 
 	@MessageMapping("/message/{courseId}")
-    @SendTo("/topic/chat/{courseId}")
+    @SendTo("/topic/course/{courseId}/chat")
     public void sendMessage(@Payload org.springframework.messaging.Message<Message> message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
 		courseService.isAuthorized(courseId, authentication, "CHAT_WRITE");
 
@@ -380,7 +427,7 @@ public class CourseSubscriberController {
 
 			messengerFeatureSaveFeature.onFeatureMessage(courseId, forwardMessage);
 
-			simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
+			simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/chat", forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
 		}
 		else {
 			courseService.isAuthorized(courseId, authentication, "CHAT_WRITE_PRIVATELY");
@@ -400,11 +447,11 @@ public class CourseSubscriberController {
 			messengerFeatureSaveFeature.onFeatureMessage(courseId, forwardMessage);
 
 			// Send back to the sender.
-			simpMessagingTemplate.convertAndSendToUser(details.getUsername(), "/queue/chat/" + courseId,
+			simpMessagingTemplate.convertAndSendToUser(details.getUsername(), "/queue/course/" + courseId + "/chat",
 					forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
 
 			// Send to the recipient.
-			simpMessagingTemplate.convertAndSendToUser(recipient, "/queue/chat/" + courseId,
+			simpMessagingTemplate.convertAndSendToUser(recipient, "/queue/course/" + courseId + "/chat",
 					forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
 		}
     }
@@ -479,7 +526,7 @@ public class CourseSubscriberController {
 			.started(started)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course/all/stream", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/stream", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/event/all/stream", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/stream", courseEvent);
 	}
 }

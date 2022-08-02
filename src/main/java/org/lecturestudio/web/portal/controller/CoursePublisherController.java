@@ -165,8 +165,8 @@ public class CoursePublisherController {
 			.accepted(true)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course/all/speech", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/speech", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/event/all/speech", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/speech", courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -190,8 +190,8 @@ public class CoursePublisherController {
 			.accepted(false)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course/all/speech", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/speech", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/event/all/speech", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/speech", courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -211,8 +211,8 @@ public class CoursePublisherController {
 				.started(isRecorded)
 				.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course/all/recording", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/recording", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/event/all/recording", courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/recording", courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -228,7 +228,7 @@ public class CoursePublisherController {
 	}
 
 	@MessageMapping("/message/publisher/{courseId}")
-	@SendTo("/topic/chat/{courseId}")
+	@SendTo("/topic/course/{courseId}/chat")
 	public void sendMessage(@Payload String messageString, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
@@ -260,15 +260,17 @@ public class CoursePublisherController {
 
 				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
 				
-				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, message,
+				simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/chat", message,
 						Map.of("payloadType", "MessengerMessage"));
 				break;
+				
 			case "MessengerReplyMessage":
 				message = this.objectMapper.readValue(messageString, MessengerReplyMessage.class);
 				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
-				simpMessagingTemplate.convertAndSend("/topic/chat/" + courseId, message,
+				simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/chat", message,
 						Map.of("payloadType", "MessengerReplyMessage"));
 				break;
+
 			case "MessengerDirectMessage":
 				message = this.objectMapper.readValue(messageString, MessengerDirectMessage.class);
 				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
@@ -288,7 +290,7 @@ public class CoursePublisherController {
 				sets.add(Collections.singleton(lecturer.getUserId()));
 				for (Set<String> set : sets) {
 					for (String userDestination : set) {
-						simpMessagingTemplate.convertAndSendToUser(userDestination, "/queue/chat/" + courseId, message,
+						simpMessagingTemplate.convertAndSendToUser(userDestination, "/queue/course/" + courseId + "/chat", message,
 								Map.of("payloadType", "MessengerDirectMessage"));
 					}
 				}
@@ -437,7 +439,7 @@ public class CoursePublisherController {
 			.feature(feature)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course/all/" + name, courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/" + name, courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/event/all/" + name, courseEvent);
+		simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/" + name, courseEvent);
 	}
 }

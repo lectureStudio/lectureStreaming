@@ -2,6 +2,7 @@ package org.lecturestudio.web.portal.service;
 
 import static java.util.Objects.isNull;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -170,10 +171,20 @@ public class CourseService {
 		UserDetails details = (UserDetails) authentication.getDetails();
 		String username = details.getUsername();
 
+		return isAuthorized(courseId, username, operation);
+	}
+
+	public boolean isAuthorized(long courseId, Principal principal, String operation)
+			throws UnauthorizedException {
+		return isAuthorized(courseId, principal.getName(), operation);
+	}
+
+	private boolean isAuthorized(long courseId, String userId, String operation)
+			throws UnauthorizedException {
 		Course course = findById(courseId)
 				.orElseThrow(() -> new UnauthorizedException());
 
-		User user = userService.findById(username)
+		User user = userService.findById(userId)
 				.orElseThrow(() -> new UnauthorizedException());
 
 		for (CourseRegistration registration : course.getRegistrations()) {

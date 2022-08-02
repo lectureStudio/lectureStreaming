@@ -31,8 +31,9 @@ public class RoleSystemLoader implements ApplicationListener<ContextRefreshedEve
 			new Privilege(null, "CHAT_WRITE", "privilege.chat.write"),
 			new Privilege(null, "CHAT_WRITE_TO_ORGANISATOR", "privilege.chat.write.to.organisator"),
 			new Privilege(null, "CHAT_WRITE_PRIVATELY", "privilege.chat.write.privately"),
+			new Privilege(null, "PARTICIPANTS_VIEW", "privilege.participants.view"),
 			new Privilege(null, "QUIZ_PARTICIPATION", "privilege.quiz.participation"),
-			new Privilege(null, "SPEECH", "privilege.speech")
+			new Privilege(null, "SPEECH", "privilege.speech"),
 	};
 
 	private final AtomicBoolean done = new AtomicBoolean();

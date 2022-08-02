@@ -9,6 +9,7 @@ import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.repository.CourseParticipantRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -28,7 +29,7 @@ public class CourseParticipantService {
 	}
 
 	public Iterable<User> findAllUsersByCourseId(Long courseId) {
-		return featureRepository.findAllUsersByCourseId(courseId);
+		return featureRepository.findAllUsersByCourseId(courseId, Sort.by(Sort.Direction.ASC, "user.familyName"));
 	}
 
 	public Optional<CourseParticipant> getParticipantBySessionId(String sessionId) {

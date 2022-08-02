@@ -63,7 +63,6 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 						case "faculty":
 						case "employee":
 						case "member":
-						case "affiliate":
 							authorities.add(member);
 							break;
 
@@ -73,7 +72,10 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 					}
 				}
 
-				if (authorities.contains(student)) {
+				if (authorities.isEmpty()) {
+					authorities.add(student);
+				}
+				else if (authorities.contains(student)) {
 					// Students may have the "MEMBER" affiliation.
 					authorities.remove(member);
 				}

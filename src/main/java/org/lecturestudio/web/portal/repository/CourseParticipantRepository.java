@@ -6,6 +6,7 @@ import org.lecturestudio.web.portal.model.CourseParticipant;
 import org.lecturestudio.web.portal.model.CourseParticipantId;
 import org.lecturestudio.web.portal.model.User;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,6 @@ public interface CourseParticipantRepository extends CrudRepository<CoursePartic
 	public Optional<CourseParticipant> findBySessionId(String sessionId);
 
 	@Query(value = "SELECT user FROM CourseParticipant cp WHERE cp.courseId = ?1")
-	public Iterable<User> findAllUsersByCourseId(Long courseId);
+	public Iterable<User> findAllUsersByCourseId(Long courseId, Sort sort);
 
 }

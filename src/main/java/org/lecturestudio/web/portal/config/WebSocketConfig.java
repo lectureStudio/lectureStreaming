@@ -2,7 +2,6 @@ package org.lecturestudio.web.portal.config;
 
 import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.service.UserService;
-import org.lecturestudio.web.portal.websocket.CourseFeatureWebSocketHandler;
 import org.lecturestudio.web.portal.websocket.CourseStateWebSocketHandler;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +30,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
 		registry
 			.addHandler(new CourseStateWebSocketHandler(courseStates, userService), "/api/publisher/course-state")
 				.setAllowedOrigins("*");
-			// .addHandler(new CourseFeatureWebSocketHandler(), "/api/publisher/messages")
-			// 	.setAllowedOrigins("*");
 	}
 
 	@Bean

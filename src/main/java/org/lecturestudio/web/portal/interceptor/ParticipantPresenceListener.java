@@ -55,7 +55,7 @@ public class ParticipantPresenceListener {
 				presenceMessage.setUserId(userName);
 				presenceMessage.setCoursePresence(CoursePresence.CONNECTED);
 
-				simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/presence", presenceMessage,
+				simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/presence", presenceMessage,
 						Map.of("payloadType", presenceMessage.getClass().getSimpleName()));
 
 				CourseParticipant participant = CourseParticipant.builder()
@@ -92,7 +92,7 @@ public class ParticipantPresenceListener {
 				presenceMessage.setUserId(userName);
 				presenceMessage.setCoursePresence(CoursePresence.DISCONNECTED);
 
-				simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/presence", presenceMessage,
+				simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/presence", presenceMessage,
 					Map.of("payloadType", presenceMessage.getClass().getSimpleName()));
 			}
 
