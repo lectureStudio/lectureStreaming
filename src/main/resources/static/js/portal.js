@@ -40,7 +40,7 @@ class PortalApp {
 
 				this.courseStateChange("recording", state.courseId, state.started);
 			});
-			client.subscribe("/topic/course/event/all/messenger", (message) => {
+			client.subscribe("/topic/course/event/all/chat", (message) => {
 				const state = JSON.parse(message.body);
 
 				this.courseStateChange("messenger", state.courseId, state.started);

@@ -14,11 +14,12 @@ import org.lecturestudio.web.portal.model.CourseParticipant;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.service.CourseParticipantService;
 import org.lecturestudio.web.portal.service.UserService;
+import org.lecturestudio.web.portal.util.SimpEmitter;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
@@ -33,17 +34,26 @@ public class ParticipantPresenceListener {
 	private CourseParticipantService participantService;
 
 	@Autowired
-	private SimpMessagingTemplate simpMessagingTemplate;
+	private SimpEmitter simpEmitter;
+
+	@Value("${simp.events.presence}")
+	private String presenceEvent;
+
+	@Value("${simp.endpoints.state}")
+	private String stateEndpoint;
+
+	@Value("${simp.session.header.endpoint}")
+	private String endpointHeader;
 
 
 	@EventListener
 	private void handleSessionConnected(SessionConnectEvent event) {
 		SimpMessageHeaderAccessor headers = SimpMessageHeaderAccessor.wrap(event.getMessage());
 		Map<String, Object> sessionHeaders = headers.getSessionAttributes();
-		String stompEndpoint = (String) sessionHeaders.get("stomp-endpoint");
+		String stompEndpoint = (String) sessionHeaders.get(endpointHeader);
 		String userName = headers.getUser().getName();
 
-		if ("/ws-state".equals(stompEndpoint)) {
+		if (stateEndpoint.equals(stompEndpoint)) {
 			User user = userService.findById(userName).orElse(null);
 			String courseId = headers.getFirstNativeHeader("courseId");
 
@@ -55,8 +65,7 @@ public class ParticipantPresenceListener {
 				presenceMessage.setUserId(userName);
 				presenceMessage.setCoursePresence(CoursePresence.CONNECTED);
 
-				simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/presence", presenceMessage,
-						Map.of("payloadType", presenceMessage.getClass().getSimpleName()));
+				simpEmitter.emmitEvent(Long.parseLong(courseId), presenceEvent, presenceMessage);
 
 				CourseParticipant participant = CourseParticipant.builder()
 					.courseId(Long.parseLong(courseId))
@@ -75,10 +84,10 @@ public class ParticipantPresenceListener {
 	private void handleSessionDisconnect(SessionDisconnectEvent event) {
 		SimpMessageHeaderAccessor headers = SimpMessageHeaderAccessor.wrap(event.getMessage());
 		Map<String, Object> sessionHeaders = headers.getSessionAttributes();
-		String stompEndpoint = (String) sessionHeaders.get("stomp-endpoint");
+		String stompEndpoint = (String) sessionHeaders.get(endpointHeader);
 		String userName = headers.getUser().getName();
 
-		if ("/ws-state".equals(stompEndpoint)) {
+		if (stateEndpoint.equals(stompEndpoint)) {
 			User user = userService.findById(userName).orElse(null);
 			CourseParticipant participant = participantService.getParticipantBySessionId(headers.getSessionId()).orElse(null);
 
@@ -92,8 +101,7 @@ public class ParticipantPresenceListener {
 				presenceMessage.setUserId(userName);
 				presenceMessage.setCoursePresence(CoursePresence.DISCONNECTED);
 
-				simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/presence", presenceMessage,
-					Map.of("payloadType", presenceMessage.getClass().getSimpleName()));
+				simpEmitter.emmitEvent(courseId, presenceEvent, presenceMessage);
 			}
 
 			participantService.deleteParticipantBySessionId(headers.getSessionId());

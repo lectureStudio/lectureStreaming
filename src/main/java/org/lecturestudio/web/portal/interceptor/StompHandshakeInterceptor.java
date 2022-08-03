@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -11,6 +12,10 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
 public class StompHandshakeInterceptor implements HandshakeInterceptor {
+
+	@Value("${simp.session.header.endpoint}")
+	private String endpointHeader;
+
 
 	@Override
 	public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
@@ -20,7 +25,7 @@ public class StompHandshakeInterceptor implements HandshakeInterceptor {
 			HttpSession session = servletRequest.getServletRequest().getSession(false);
 
 			if (session != null) {
-				attributes.put("stomp-endpoint", request.getURI().getPath());
+				attributes.put(endpointHeader, request.getURI().getPath());
 			}
 		}
 

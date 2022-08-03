@@ -7,7 +7,7 @@ public class CourseMessageFeature extends CourseFeature {
 
 	@Override
 	public String getName() {
-		return "messenger";
+		return "chat";
 	}
 
 }

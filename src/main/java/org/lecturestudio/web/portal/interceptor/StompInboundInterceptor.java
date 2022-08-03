@@ -11,6 +11,7 @@ import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.service.CourseService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -29,6 +30,24 @@ public class StompInboundInterceptor implements ChannelInterceptor {
 	@Autowired
 	private CourseService courseService;
 
+	@Value("${simp.events.chat}")
+	private String chatEvent;
+
+	@Value("${simp.events.presence}")
+	private String presenceEvent;
+
+	@Value("${simp.events.speech}")
+	private String speechEvent;
+
+	@Value("${simp.events.quiz}")
+	private String quizEvent;
+
+	@Value("${simp.session.header.endpoint}")
+	private String endpointHeader;
+
+	@Value("${simp.endpoints.state}")
+	private String stateEndpoint;
+
 
 	@Override
 	public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -36,10 +55,10 @@ public class StompInboundInterceptor implements ChannelInterceptor {
 		StompCommand messageCommand = accessor.getCommand();
 
 		Map<String, Object> sessionHeaders = accessor.getSessionAttributes();
-		String stompEndpoint = (String) sessionHeaders.get("stomp-endpoint");
+		String stompEndpoint = (String) sessionHeaders.get(endpointHeader);
 
 		if (StompCommand.SUBSCRIBE.equals(messageCommand)) {
-			if ("/ws-state".equals(stompEndpoint)) {
+			if (stateEndpoint.equals(stompEndpoint)) {
 				Principal principal = accessor.getUser();
 				String destination = accessor.getDestination();
 
@@ -71,22 +90,17 @@ public class StompInboundInterceptor implements ChannelInterceptor {
 
 			long courseId = Long.parseLong(courseIdStr);
 
-			switch (topic) {
-				case "messenger":
-					courseService.isAuthorized(courseId, principal, "CHAT_READ");
-					break;
-
-				case "presence":
-					courseService.isAuthorized(courseId, principal, "PARTICIPANTS_VIEW");
-					break;
-
-				case "speech":
-					courseService.isAuthorized(courseId, principal, "SPEECH");
-					break;
-
-				case "quiz":
-					courseService.isAuthorized(courseId, principal, "QUIZ_PARTICIPATION");
-					break;
+			if (topic.equals(chatEvent)) {
+				courseService.isAuthorized(courseId, principal, "CHAT_READ");
+			}
+			else if (topic.equals(presenceEvent)) {
+				courseService.isAuthorized(courseId, principal, "PARTICIPANTS_VIEW");
+			}
+			else if (topic.equals(speechEvent)) {
+				courseService.isAuthorized(courseId, principal, "SPEECH");
+			}
+			else if (topic.equals(quizEvent)) {
+				courseService.isAuthorized(courseId, principal, "QUIZ_PARTICIPATION");
 			}
 		}
 	}

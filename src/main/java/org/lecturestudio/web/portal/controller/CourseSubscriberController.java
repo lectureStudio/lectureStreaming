@@ -10,7 +10,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,6 +24,7 @@ import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.UserService;
+import org.lecturestudio.web.portal.util.SimpEmitter;
 import org.lecturestudio.web.portal.validator.MessageValidator;
 import org.lecturestudio.web.portal.validator.QuizAnswerValidator;
 import org.lecturestudio.web.portal.validator.SpeechValidator;
@@ -62,6 +62,7 @@ import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.CoursePrivilegeDto;
 import org.lecturestudio.web.portal.model.dto.CourseStateDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
+import org.lecturestudio.web.portal.property.SimpProperties;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,7 +77,6 @@ import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
@@ -93,9 +93,6 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/course")
 public class CourseSubscriberController {
-
-	@Autowired
-	private SimpMessagingTemplate simpMessagingTemplate;
 
 	@Autowired
 	private CourseService courseService;
@@ -120,6 +117,12 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private SimpProperties simpProperties;
+
+	@Autowired
+	private SimpEmitter simpEmitter;
 
 	@Autowired
 	private FileStorageService fileStorageService;
@@ -346,7 +349,7 @@ public class CourseSubscriberController {
 			message.setFamilyName(details.getFamilyName());
 			message.setUserId(details.getUsername());
 
-			simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/speech", message, Map.of("payloadType", message.getClass().getSimpleName()));
+			simpEmitter.emmitEvent(courseId, simpProperties.getEvents().getSpeech(), message);
 
 			return ResponseEntity.ok().body(speechRequest.getRequestId());
 		}
@@ -392,7 +395,7 @@ public class CourseSubscriberController {
 			message.setFamilyName(details.getFamilyName());
 			message.setUserId(details.getUsername());
 
-			simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/speech", message, Map.of("payloadType", message.getClass().getSimpleName()));
+			simpEmitter.emmitEvent(courseId, simpProperties.getEvents().getSpeech(), message);
 		}
 
 		return response;
@@ -427,7 +430,7 @@ public class CourseSubscriberController {
 
 			messengerFeatureSaveFeature.onFeatureMessage(courseId, forwardMessage);
 
-			simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/chat", forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
+			simpEmitter.emmitChatMessage(courseId, forwardMessage);
 		}
 		else {
 			courseService.isAuthorized(courseId, authentication, "CHAT_WRITE_PRIVATELY");
@@ -447,12 +450,10 @@ public class CourseSubscriberController {
 			messengerFeatureSaveFeature.onFeatureMessage(courseId, forwardMessage);
 
 			// Send back to the sender.
-			simpMessagingTemplate.convertAndSendToUser(details.getUsername(), "/queue/course/" + courseId + "/chat",
-					forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
+			simpEmitter.emmitChatMessageToUser(courseId, forwardMessage, details.getUsername());
 
 			// Send to the recipient.
-			simpMessagingTemplate.convertAndSendToUser(recipient, "/queue/course/" + courseId + "/chat",
-					forwardMessage, Map.of("payloadType", forwardMessage.getClass().getSimpleName()));
+			simpEmitter.emmitChatMessageToUser(courseId, forwardMessage, recipient);
 		}
     }
 
@@ -477,7 +478,7 @@ public class CourseSubscriberController {
 
 			QuizAnswerMessage qMessage = new QuizAnswerMessage(quizAnswer, request.getRemoteAddr(), ZonedDateTime.now());
 
-			simpMessagingTemplate.convertAndSend("/topic/quiz/" + courseId, qMessage, Map.of("payloadType", qMessage.getClass().getSimpleName()));
+			simpEmitter.emmitEventAndAll(courseId, simpProperties.getEvents().getQuiz(), qMessage);
 		}
 
 		return response;
@@ -526,7 +527,6 @@ public class CourseSubscriberController {
 			.started(started)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course/event/all/stream", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course/event/" + courseId + "/stream", courseEvent);
+		simpEmitter.emmitEventAndAll(courseId, simpProperties.getEvents().getStream(), courseEvent);
 	}
 }
