@@ -1,10 +1,10 @@
 package org.lecturestudio.web.portal.config;
 
 import org.lecturestudio.web.portal.security.CoursePrivilegeEvaluator;
+import org.lecturestudio.web.portal.security.CoursePrivilegeMethodExpressionHandler;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.GlobalMethodSecurityConfiguration;
@@ -20,7 +20,7 @@ public class MethodSecurityConfig extends GlobalMethodSecurityConfiguration {
 
 	@Override
 	protected MethodSecurityExpressionHandler createExpressionHandler() {
-		DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
+		CoursePrivilegeMethodExpressionHandler expressionHandler = new CoursePrivilegeMethodExpressionHandler();
 		expressionHandler.setPermissionEvaluator(coursePrivilegeEvaluator());
 
 		return expressionHandler;

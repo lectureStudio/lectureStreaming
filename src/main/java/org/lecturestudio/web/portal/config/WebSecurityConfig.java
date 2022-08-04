@@ -248,7 +248,8 @@ public class WebSecurityConfig {
 					.antMatchers("/app/**").permitAll()
 					.antMatchers("/message/**").permitAll()
 					.antMatchers("/saml/**").permitAll()
-					.antMatchers("/course/{courseId}").access("@webSecurity.checkCourseId(authentication,#courseId)")
+					.antMatchers("/course/{courseId:[\\d+]}").access("@webSecurity.checkCourseId(authentication,#courseId)")
+					.antMatchers("/course/{courseId:[\\d+]}/**").access("@webSecurity.checkCourseId(authentication,#courseId)")
 					.anyRequest().authenticated();
 
 			http
