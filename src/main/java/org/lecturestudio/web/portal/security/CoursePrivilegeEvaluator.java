@@ -1,9 +1,13 @@
 package org.lecturestudio.web.portal.security;
 
+import static java.util.Objects.isNull;
+
 import java.io.Serializable;
+import java.util.Set;
 
 import javax.annotation.Resource;
 
+import org.lecturestudio.web.portal.model.Privilege;
 import org.lecturestudio.web.portal.model.ScopedCoursePrivileges;
 
 import org.springframework.security.access.PermissionEvaluator;
@@ -17,13 +21,25 @@ public class CoursePrivilegeEvaluator implements PermissionEvaluator {
 
 	@Override
 	public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
-		System.out.println("hasPermission: " + requestScopedPrivileges.getPrivileges());
+		System.out.println("hasPermission: " + permission + " -> " + requestScopedPrivileges.getPrivileges());
+
+		final Set<Privilege> privileges = requestScopedPrivileges.getPrivileges();
+
+		if (isNull(authentication) || isNull(privileges) || !(permission instanceof String)) {
+			return false;
+		}
+
+		for (Privilege privilege : privileges) {
+			if (privilege.getName().equals(permission)) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 
 	@Override
 	public boolean hasPermission(Authentication authentication, Serializable targetId, String targetType, Object permission) {
-		System.out.println("hasPermission: " + requestScopedPrivileges.getPrivileges());
 		return false;
 	}
 

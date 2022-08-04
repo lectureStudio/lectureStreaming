@@ -1,17 +1,13 @@
 package org.lecturestudio.web.portal.model;
 
 import java.util.Objects;
-import java.util.Set;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -38,9 +34,6 @@ public class CoursePrivilege {
 	@ManyToOne
 	@JoinColumn(name = "privilege_id")
 	Privilege privilege;
-
-	@ManyToMany(mappedBy = "privileges", cascade = { CascadeType.REFRESH, CascadeType.MERGE, CascadeType.PERSIST })
-	Set<CourseRole> roles;
 
 
 	@Override

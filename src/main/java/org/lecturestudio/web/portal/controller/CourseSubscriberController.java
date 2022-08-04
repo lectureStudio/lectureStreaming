@@ -45,18 +45,14 @@ import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
-import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseQuizResource;
-import org.lecturestudio.web.portal.model.CourseRegistration;
-import org.lecturestudio.web.portal.model.CourseRole;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStateListener;
 import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.model.Privilege;
-import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.dto.CourseMessengerHistoryDto;
 import org.lecturestudio.web.portal.model.dto.CoursePrivilegeDto;
@@ -79,6 +75,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -161,9 +158,6 @@ public class CourseSubscriberController {
 		Course course = courseService.findById(id)
 				.orElseThrow(() -> new CourseNotFoundException());
 
-		User user = userService.findById(details.getUsername())
-				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
-
 		boolean isProtected = nonNull(course.getPasscode()) && !course.getPasscode().isEmpty();
 
 		CourseMessageFeature messageFeature = null;
@@ -173,38 +167,11 @@ public class CourseSubscriberController {
 
 		Set<CoursePrivilegeDto> userPrivileges = new HashSet<>();
 
-		for (CourseRegistration registration : course.getRegistrations()) {
-			if (registration.getUser().equals(user)) {
-				// User is the owner of the course and thereby has all privileges.
-				List<Privilege> privileges = courseService.getAllPossiblePrivileges();
-
-				for (Privilege privilege : privileges) {
-					userPrivileges.add(CoursePrivilegeDto.builder()
-							.name(privilege.getName())
-							.descriptionKey(privilege.getDescriptionKey())
-							.build());
-				}
-				break;
-			}
-		}
-
-		if (userPrivileges.isEmpty()) {
-			// No privileges found, i.e. user is not the owner of the course.
-			Set<CourseRole> courseRoles = course.getRoles();
-			Set<Role> userRoles = user.getRoles();
-
-			for (CourseRole courseRole : courseRoles) {
-				if (userRoles.contains(courseRole.getRole())) {
-					for (CoursePrivilege coursePrivilege : courseRole.getPrivileges()) {
-						Privilege privilege = coursePrivilege.getPrivilege();
-
-						userPrivileges.add(CoursePrivilegeDto.builder()
-								.name(privilege.getName())
-								.descriptionKey(privilege.getDescriptionKey())
-								.build());
-					}
-				}
-			}
+		for (Privilege privilege : courseService.getUserPrivileges(id, details.getUsername())) {
+			userPrivileges.add(CoursePrivilegeDto.builder()
+					.name(privilege.getName())
+					.descriptionKey(privilege.getDescriptionKey())
+					.build());
 		}
 
 		for (var feature : course.getFeatures()) {
@@ -282,6 +249,7 @@ public class CourseSubscriberController {
 	}
 
 	@GetMapping("/participants/{courseId}")
+	// @PreAuthorize("hasPrivilege('PARTICIPANTS_VIEW')")
 	public List<UserDto> getParticipants(@PathVariable("courseId") Long courseId, Authentication authentication) {
 		List<UserDto> participants = new ArrayList<>();
 

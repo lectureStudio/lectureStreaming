@@ -1,5 +1,6 @@
 package org.lecturestudio.web.portal.controller;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.CourseForm.CourseFormPrivilege;
 import org.lecturestudio.web.portal.model.CourseForm.CourseFormRole;
+import org.lecturestudio.web.portal.model.CourseForm.CourseFormUser;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
@@ -38,7 +40,6 @@ import org.lecturestudio.web.portal.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.data.util.Streamable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -69,7 +70,6 @@ public class CourseController {
 
 
 	@RequestMapping("/{id}")
-	// @PreAuthorize("hasPermission(returnObject, 'CHAT_WRITE')")
 	public String showCourse(@PathVariable("id") long id, @RequestParam(required = false) String pass, Authentication authentication, Model model) {
 		Course course = courseService.findById(id)
 				.orElseThrow(() -> new CourseNotFoundException());
@@ -168,43 +168,22 @@ public class CourseController {
 		return "redirect:/course/{id}";
 	}
 
-	@RequestMapping("/new")
+	@RequestMapping("/add")
 	public String addCourse(Authentication authentication, Model model) {
 		CourseForm courseForm = courseService.createCourseForm();
 
-		List<String> users = Streamable.of(userService.getAllUsers())
-			.filter((user) -> {
-				return !user.getUserId().equals(authentication.getName());
-			})
-			.map((user) -> {
-				return user.getUserId();
-			})
-			.toList();
-
 		model.addAttribute("courseForm", courseForm);
 		model.addAttribute("edit", false);
-		model.addAttribute("users", users);
 		model.addAttribute("canAlterPrivileges", true);
 
 		return "course-form";
 	}
 
-	@PostMapping("/new")
-	public String newCourse(Authentication authentication, HttpServletRequest request, @Valid CourseForm courseForm, BindingResult result, Model model) {
+	@PostMapping("/add")
+	public String addCourse(Authentication authentication, HttpServletRequest request, @Valid CourseForm courseForm, BindingResult result, Model model) {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		if (result.hasErrors()) {
-			List<String> users = Streamable.of(userService.getAllUsers())
-				.filter((user) -> {
-					return !user.getUserId().equals(authentication.getName());
-				})
-				.map((user) -> {
-					return user.getUserId();
-				})
-				.toList();
-
-			model.addAttribute("edit", false);
-			model.addAttribute("users", users);
 			model.addAttribute("edit", false);
 			model.addAttribute("canAlterPrivileges", true);
 
@@ -258,10 +237,9 @@ public class CourseController {
 		return "redirect:/";
 	}
 
-	@RequestMapping("/edit/{id}")
+	@RequestMapping("/{id}/edit")
+	@PreAuthorize("hasPrivilege('COURSE_EDIT')")
 	public String editCourse(@PathVariable("id") long id, Authentication authentication, Model model) {
-		courseService.isAuthorized(id, authentication, "COURSE_EDIT");
-
 		Course course = courseService.findById(id)
 				.orElseThrow(() -> new CourseNotFoundException());
 
@@ -269,45 +247,24 @@ public class CourseController {
 
 		CourseForm courseForm = courseService.createCourseForm(course);
 
-		List<String> users = Streamable.of(userService.getAllUsers())
-			.filter((user) -> {
-				return !user.getUserId().equals(authentication.getName());
-			})
-			.map((user) -> {
-				return user.getUserId();
-			})
-			.toList();
-
 		model.addAttribute("courseForm", courseForm);
 		model.addAttribute("edit", true);
-		model.addAttribute("users", users);
 		model.addAttribute("canAlterPrivileges", canAlterPrivileges);
 
 		return "course-form";
 	}
 
-	@PostMapping("/edit/{id}")
+	@PostMapping("/{id}/edit")
+	@PreAuthorize("hasPrivilege('COURSE_EDIT')")
 	public String updateCourse(Authentication authentication, HttpServletRequest request, @PathVariable("id") long id, @Valid CourseForm courseForm,
 			BindingResult result, Model model) {
-		courseService.isAuthorized(id, authentication, "COURSE_EDIT");
-
 		Course dbCourse = courseService.findById(id)
 				.orElseThrow(() -> new CourseNotFoundException());
 
 		boolean canAlterPrivileges = courseService.isAuthorized(id, authentication, "COURSE_ALTER_PRIVILEGES");
 
 		if (result.hasErrors()) {
-			List<String> users = Streamable.of(userService.getAllUsers())
-					.filter((user) -> {
-						return !user.getUserId().equals(authentication.getName());
-					})
-					.map((user) -> {
-						return user.getUserId();
-					})
-					.toList();
-
 			model.addAttribute("edit", true);
-			model.addAttribute("users", users);
 			model.addAttribute("canAlterPrivileges", canAlterPrivileges);
 
 			return "course-form";
@@ -320,24 +277,41 @@ public class CourseController {
 		dbCourse.setPasscode(courseForm.getPasscode());
 
 		if (canAlterPrivileges) {
-			Set<CourseRole> courseRoles = new HashSet<>();
+			Set<CourseRole> courseRoles = dbCourse.getRoles();
 
 			for (CourseFormRole formRole : courseForm.getRoles()) {
-				Set<CoursePrivilege> coursePrivileges = new HashSet<>();
+				// Find the corresponding course-role.
+				CourseRole courseRole = courseRoles.stream()
+						.filter(r -> r.getRole().equals(formRole.getRole()))
+						.findFirst().orElse(null);
 
-				for (CourseFormPrivilege formPrivilege : formRole.getPrivileges()) {
-					if (formPrivilege.isSelected()) {
-						coursePrivileges.add(CoursePrivilege.builder()
-								.privilege(formPrivilege.getPrivilege())
-								.build());
-					}
+				if (isNull(courseRole)) {
+					continue;
 				}
 
-				courseRoles.add(CourseRole.builder()
-						.course(dbCourse)
-						.role(formRole.getRole())
-						.privileges(coursePrivileges)
-						.build());
+				Set<CoursePrivilege> coursePrivileges = courseRole.getPrivileges();
+
+				for (CourseFormPrivilege formPrivilege : formRole.getPrivileges()) {
+					CoursePrivilege coursePrivilege = coursePrivileges.stream()
+							.filter(p -> p.getPrivilege().equals(formPrivilege.getPrivilege()))
+							.findFirst().orElse(null);
+
+					if (isNull(coursePrivilege)) {
+						// Privilege not assigned to the course-role yet.
+						if (formPrivilege.isSelected()) {
+							// Update privileges of the course-role.
+							coursePrivileges.add(CoursePrivilege.builder()
+									.privilege(formPrivilege.getPrivilege())
+									.build());
+						}
+					}
+					else {
+						if (!formPrivilege.isSelected()) {
+							// Remove privilege from the course-role.
+							coursePrivileges.remove(coursePrivilege);
+						}
+					}
+				}
 			}
 
 			dbCourse.setRoles(courseRoles);
@@ -348,63 +322,32 @@ public class CourseController {
 		return "redirect:/";
 	}
 
-	@PostMapping("/delete/{id}")
+	@PostMapping("/{id}/delete")
+	@PreAuthorize("hasPrivilege('COURSE_DELETE')")
 	public String deleteCourse(Authentication authentication, @PathVariable("id") long id, Model model) {
-		courseService.isAuthorized(id, authentication, "COURSE_DELETE");
 		courseService.deleteById(id);
 
 		return "redirect:/";
 	}
 
-	@PostMapping("/new/addUser")
-	public String newCourseAddUser(Authentication authentication, @Valid CourseForm courseForm, BindingResult result, Model model) {
-		// addUserToPersonalPrivilegeSelection(authentication, courseForm, result, model, false);
+	@PostMapping(params = "addUser", path = { "/add/user" })
+	public String addUser(@Valid CourseForm courseForm, BindingResult result) {
+		if (result.hasErrors()) {
 
-		return "course-form";
+			return "course-form :: course-form-users";
+		}
+
+		courseForm.getPrivilegedUsers().add(courseForm.getNewUser());
+
+		courseForm.setNewUser(new CourseFormUser());
+
+		return "course-form :: course-form-users";
 	}
 
-	// @PostMapping("/edit/{id}/addUser")
-	// public String updateCourseAddUser(Authentication authentication, @PathVariable("id") long id, @Valid CourseForm courseForm,
-	// 		BindingResult result, Model model) {
-	// 	Course course = courseService.findById(id)
-	// 			.orElseThrow(() -> new CourseNotFoundException());
+	@PostMapping(params = "removeUser", path = { "/remove/user" })
+	public String removeUser(CourseForm courseForm, @RequestParam("removeUser") int index, Model model) {
+		courseForm.getPrivilegedUsers().remove(index);
 
-	// 	LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-	// 	courseForm.setId(course.getId());
-
-	// 	Optional<CoursePrivilege> requiredPrivilege = roleService.findByPrivilegeName("ALTER_PRIVILEGES_PRIVILEGE");
-	// 	if (requiredPrivilege.isPresent()) {
-	// 		roleService.checkAuthorization(course, details, requiredPrivilege.get());
-	// 	}
-
-	// 	addUserToPersonalPrivilegeSelection(authentication, courseForm, result, model, true);
-
-	// 	return "course-form";
-	// }
-
-	// @PostMapping("/new/removeUser/{userId}")
-	// public String newCourseRemoveUser(Authentication authentication, @PathVariable("userId")  String userId, @Valid CourseForm courseForm, BindingResult result, Model model) {
-	// 	removeUserFromPersonalPrivilegeSelection(authentication, null, userId, courseForm, result, model, false);
-
-	// 	return "course-form";
-	// }
-
-	// @PostMapping("/edit/{id}/removeUser/{userId}")
-	// public String updateCourseRemoveUser(Authentication authentication, @PathVariable("id") long id, @PathVariable("userId") String userId, @Valid CourseForm courseForm,
-	// 		BindingResult result, Model model) {
-	// 	Course course = courseService.findById(id)
-	// 		.orElseThrow(() -> new CourseNotFoundException());
-
-	// 	LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-	// 	Optional<CoursePrivilege> requiredPrivilege = roleService.findByPrivilegeName("ALTER_PRIVILEGES_PRIVILEGE");
-	// 	if (requiredPrivilege.isPresent()) {
-	// 		roleService.checkAuthorization(course, details, requiredPrivilege.get());
-	// 	}
- 
-	// 	removeUserFromPersonalPrivilegeSelection(authentication, id, userId, courseForm, result, model, true);
-
-	// 	return "course-form";
-	// }
+		return "course-form :: course-form-users";
+	}
 }

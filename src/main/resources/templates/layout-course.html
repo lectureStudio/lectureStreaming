@@ -49,7 +49,7 @@
 							data-bs-toggle="dropdown" aria-expanded="false"></a>
 						<ul class="dropdown-menu dropdown-menu-end text-small" aria-labelledby="navbarDropdown">
 							<li sec:authorize="hasAnyRole('MEMBER')">
-								<a class="dropdown-item" th:href="@{/course/new}" th:text="#{home.add.course}"></a>
+								<a class="dropdown-item" th:href="@{/course/add}" th:text="#{home.add.course}"></a>
 							</li>
 							<li>
 								<a class="dropdown-item" th:href="@{/settings}" th:text="#{home.settings}">Settings</a>

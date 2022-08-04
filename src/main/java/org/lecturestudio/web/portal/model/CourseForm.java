@@ -2,6 +2,10 @@ package org.lecturestudio.web.portal.model;
 
 import java.util.List;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,6 +21,8 @@ public class CourseForm {
 
 	private String roomId;
 
+	@NotNull
+	@Size(min = 3, max = 200)
 	private String title;
 
 	private String description;
@@ -25,9 +31,25 @@ public class CourseForm {
 
 	private List<CourseFormRole> roles;
 
-	private List<User> personallyPrivilegedUsers;
+	private List<CourseFormRole> userRoles;
 
-	private String username;
+	private List<CourseFormUser> privilegedUsers;
+
+	@NotNull
+	@Valid
+	private CourseFormUser newUser;
+
+
+
+	
+
+
+
+	@Override
+	public String toString() {
+		return "CourseForm [description=" + description + ", id=" + id + ", passcode=" + passcode + ", privilegedUsers="
+				+ privilegedUsers + ", roles=" + roles + ", title=" + title + ", userRoles=" + userRoles + "]";
+	}
 
 
 
@@ -53,5 +75,25 @@ public class CourseForm {
 
 		private boolean selected;
 
+	}
+
+
+
+	@Getter
+	@Setter
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class CourseFormUser {
+
+		@NotNull
+		@Size(min = 3, max = 200)
+		private String username;
+
+		private Role role;
+
+		@Override
+		public String toString() {
+			return "CourseFormUser [role=" + role + ", username=" + username + "]";
+		}
 	}
 }

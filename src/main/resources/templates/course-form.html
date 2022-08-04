@@ -16,30 +16,34 @@
 			<div th:text="${edit} ? #{course.form.edit.course} : #{course.form.add.course}"></div>
 		</div>
 		<div class="bg-light border rounded-3 p-4 mb-4">
-			<form autocomplete="off" id="course-form" th:action="${edit} ? @{/course/edit/{id}(id=${courseForm.id})} : @{/course/new}" th:object="${courseForm}" method="post">
+			<form autocomplete="off" id="course-form" th:action="${edit} ? @{/course/{id}/edit(id=${courseForm.id})} : @{/course/add}" th:object="${courseForm}" method="post">
 				<input type="hidden" th:field="*{description}" id="course-description">
-				<div class="mb-3">
-					<label th:text="#{course.form.title}" for="title" class="form-label"></label>
+
+				<h5 th:text="#{course.form.title}" for="title" class="form-label"></h5>
+				<div class="mb-4 p-2">
 					<input type="text" class="form-control" id="title" th:field="*{title}" th:errorclass="is-invalid" aria-describedby="title-feedback">
 					<div id="title-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="${courseForm.title}"></div>
 					<div id="titleHelpBlock" class="form-text">
 						<span th:text="#{course.form.title.description}"></span> <span th:text="#{form.required}" class="badge bg-light text-dark"></span>
 					</div>
 				</div>
-				<div class="mb-3">
-					<label th:text="#{course.form.description}" for="description" class="form-label"></label>
+
+				<h5 th:text="#{course.form.description}" for="description" class="form-label"></h5>
+				<div class="mb-4 p-2">
 					<div class="bg-body border rounded-2" id="description-editor"></div>
 				</div>
-				<div class="mb-3">
-					<label th:text="#{course.form.passcode}" for="passcode" class="form-label"></label>
+
+				<h5 th:text="#{course.form.passcode}" for="passcode" class="form-label"></h5>
+				<div class="mb-4 p-2">
 					<div class="input-group">
 						<input type="password" class="form-control" id="passcode" name="passcode" th:field="*{passcode}" aria-describedby="passVisibility">
 						<button type="button" is="password-visibility" for="passcode" class="btn btn-outline-secondary" id="passVisibility" data-class-visible="bi-eye" data-class-hidden="bi-eye-slash"><i id="visibility-icon" class="bi bi-eye-slash"></i></button>
 					</div>
 					<div th:text="#{course.form.passcode.description}" id="pinHelpBlock" class="form-text"></div>
 				</div>
-				<div class="mb-3" th:if="${canAlterPrivileges}">
-					<label for="role-accordion" class="form-label" th:text="#{course.form.role.title}"></label>
+
+				<h5 for="role-accordion" class="form-label" th:text="#{course.form.role.title}"></h5>
+				<div class="mb-4 p-2" th:if="${canAlterPrivileges}">
 					<div id="role-accordion" class="accordion">
 						<div class="accordion-item" th:each="formRole,roleStat : ${courseForm.roles}">
 							<input type="hidden" th:field="*{roles[__${roleStat.index}__].role}" th:value="${formRole.role}">
@@ -64,46 +68,31 @@
 						<span th:text="#{course.form.role.owner.info}" class="badge bg-light text-dark"></span>
 					</div>
 				</div>
-				<div class="mb-3" th:if="${canAlterPrivileges}">
-					<label th:text="#{course.form.user.privileges.title}" for="username-accordion" class="form-label"></label>
-					<div id="username-accordion" class="accordion mb-3">
-						<div class="accordion-item" th:each="user,useridx : ${courseForm.personallyPrivilegedUsers}">
-							<input type="hidden" th:value="${user.userId}" class="courseUser">
-							<h2 class="accordion-header d-flex" th:id="UserHeading + ${user.userId}">
-								<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" th:attr="data-bs-target='#UserCollapse' + ${user.userId}, aria-expanded=false" aria-controls="collapseOne" th:text="${user.userId}"></button>
-								<button type="submit" action="action" class="btn btn-outline-danger btn-sm" th:text="#{course.form.remove.user}" th:formaction="${edit} ? @{/course/edit/{id}/removeUser/{userId}(id=${courseForm.id}, userId=${user.userId})} : @{/course/new/removeUser/{userId}(userId=${user.userId})}"></button>
-							</h2>
-							<div th:id="UserCollapse + ${user.userId}" class="accordion-collapse collapse" th:attr="aria-labelledby='UserHeading' + ${user.userId}" data-bs-parent="#username-accordion">
-								<div class="accordion-body">
-									<!-- <div class="form-check form-switch" th:each="privInd : ${#numbers.sequence(0, courseForm.numOfPrivileges-1)}">
-										<div th:with="i=${((useridx.getCount()-1 + #lists.size(courseForm.courseRoles)) * courseForm.numOfPrivileges) + privInd}">
-											<div th:with="privSink=${courseForm.privilegeSinks[__${i}__]}">
-												<input th:id="userPrivilege + ${privInd}" class="userPrivilege" type="hidden" th:field="*{privilegeSinks[__${i}__].privilege}">
-												<input th:id="userPrivilege + ${privInd} + Depends" th:attr="class='privilegeDependency'+ ${user.userId}" type="hidden" th:field="*{privilegeSinks[__${i}__].privilege.dependsOn}">
-												<input th:attr="class='form-check-input privilegeCheck' + ${user.userId}" type="checkbox" th:id="privCheck + ${i}" th:field="*{privilegeSinks[__${i}__].expressed}" th:checked="${privSink.expressed}">
-												<label class="form-check-label" th:for="privCheck + ${i}" th:text="#{${privSink.privilege.descriptionKey}}"></label>
-											</div>
-										</div>
-									</div> -->
-								</div>
-							</div>
+
+				<h5 th:text="#{course.form.manage.users.title}" class="form-label"></h5>
+				<div class="mb-4 p-2" th:if="${canAlterPrivileges}">
+					<label th:text="#{course.form.manage.users.description}" class="form-text d-block"></label>
+
+					<div class="d-flex flex-row mb-3">
+						<div class="pt-2 pr-2">
+							<label th:text="#{course.form.manage.users.username}" for="username" class="form-label"></label>
+							<input type="text" class="form-control form-control-sm" id="username" th:field="*{newUser.username}" th:errorclass="is-invalid" aria-describedby="username-feedback">
+							<div id="username-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('newUser.username')}" th:errors="${courseForm.newUser.username}"></div>
 						</div>
+						<div class="p-2">
+							<label th:text="#{course.form.manage.users.role}" for="roleSelect" class="form-label"></label>
+							<select th:field="*{newUser.role}" class="form-select form-select-sm">
+								<option th:each="formUserRole,userRoleStat : ${courseForm.userRoles}" th:value="${formUserRole.role.id}" th:text="#{${formUserRole.role.descriptionKey}}">
+								</option>
+							</select>
+						</div>
+						<div class="p-2 d-flex align-items-end">
+							<button th:text="#{course.form.add.user}" type="submit" name="addUser" class="btn btn-sm btn-outline-primary"></button>
+						</div>
+					  </div>
+					<div id="users" th:replace="course-form :: course-form-users">
 					</div>
-					<div class="input-group">
-						<input type="text" th:attr="class=${#fields.hasErrors('username') ? 'form-control is-invalid' : 'form-control'}" id="username" name="username" th:field="*{username}" aria-describedby="add-user-feedback">
-						<button th:text="#{course.form.add.user}" type="submit" name="action" class="btn btn-outline-primary btn-sm" th:formaction="${edit} ? @{/course/edit/{id}/addUser(id=${courseForm.id})} : @{/course/new/addUser}"></button>
-					</div>
-					<div id="username-autocomplete-container" class="dropdown-menu" style="max-height: 200px; overflow: auto; cursor: default">
-					</div>
-					<div id="add-user-feedback" class="form-text text-danger" th:if="${#fields.hasErrors('username')}" th:errors="${courseForm.username}"></div>
-					<div th:text="#{course.form.add.user.description}" id="pinHelpBlock" class="form-text"></div>
-				</div>
-				<div>
-					<!-- <input id="courseRolesInput" type="hidden" th:field="*{courseRoles}">
-					<input id="numOfPrivilegesInput" type="hidden" th:field="*{numOfPrivileges}">
-					<input id="courseRolesSizeInput" type="hidden" th:value="${#lists.size(courseForm.courseRoles)}"> -->
-					<!-- <input id="personallyPrivilegedUsers" type="hidden" th:field="*{personallyPrivilegedUsers}">
-					<input id="numOfPersonallyPrivilegedUsers" type="hidden" th:value="${#lists.size(courseForm.personallyPrivilegedUsers)}" -->
+					<div id="add-user-feedback" class="form-text text-danger" th:if="${#fields.hasErrors('newUser.username')}" th:errors="${courseForm.newUser.username}"></div>
 				</div>
 				<div class="mt-3 col-12">
 					<button th:text="${edit} ? #{course.form.update} : #{course.form.create}" type="submit" class="btn btn-outline-primary btn-sm"></button>
@@ -112,15 +101,76 @@
 		</div>
 	</th:block>
 
-	<th:block layout:fragment="optional">
-		<script src="/js/autocomplete.js"></script>
-		<script th:inline="javascript">
-			const users = /*[[${users}]]*/ "";
+	<div th:fragment="course-form-users" id="users">
+		<table class="table table-hover table-sm">
+			<thead class="table-light">
+				<tr>
+					<th scope="col" class="w-50" th:text="#{course.form.manage.users.username}"></th>
+					<th scope="col" class="w-50" th:text="#{course.form.manage.users.role}"></th>
+					<th scope="col" class=""></th>
+				</tr>
+			</thead>
+			<tbody th:unless="${#lists.isEmpty(courseForm.privilegedUsers)}">
+				<tr th:each="privilegedUser,userStat : ${courseForm.privilegedUsers}">
+					<input type="hidden" th:field="${courseForm.privilegedUsers[__${userStat.index}__].username}">
+					<input type="hidden" th:field="${courseForm.privilegedUsers[__${userStat.index}__].role}">
+	
+					<td th:text="${privilegedUser.username}"></td>
+					<td th:text="#{${privilegedUser.role.descriptionKey}}"></td>
+					<td>
+						<button name="removeUser" th:value="${userStat.index}" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" th:title="#{course.delete}">
+							<i class="bi bi-trash3"></i>
+						</button>
+					</td>
+				</tr>
+			</tbody>
+			<tbody th:if="${#lists.isEmpty(courseForm.privilegedUsers)}">
+				<tr>
+					<td colspan="3" class="text-center" th:text="#{course.form.manage.users.empty}"></td>
+				</tr>
+			</tbody>
+		</table>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+		<script>
+			var courseForm = document.getElementById("course-form");
+			var userRemoveButton = document.querySelector("button[name='removeUser']");
+
+			function replaceItems(html) {
+				// Replace the user-table with a new one returned by server.
+				$('#users').replaceWith($(html));
+			}
+
+			$('button[name="addUser"]').click(function (event) {
+				event.preventDefault();
+
+				var entries = Object.fromEntries(new FormData(courseForm));
+				entries.addUser = "TEST";
+
+				const data = new URLSearchParams(entries).toString();
+
+				$.post('/course/add/user', data, replaceItems);
+			});
+
+			$("button[name='removeUser']").click(function (event) {
+				event.preventDefault();
+
+				var entries = Object.fromEntries(new FormData(courseForm));
+				// Add parameter and index of item that is going to be removed.
+				entries.removeUser = $(this).val();
+
+				const data = new URLSearchParams(entries).toString();
+
+				$.post('/course/remove/user', data, replaceItems);
+			});
 		</script>
+	</div>
+
+	<th:block layout:fragment="optional">
 		<script>
 			const form = document.getElementById("course-form");
 			const description = document.getElementById("course-description");
-			const addUserInput = document.getElementById("username");
 
 			const quill = new Quill("#description-editor", {
 				theme: "snow"
@@ -132,66 +182,6 @@
 				description.value = quill.root.innerHTML;
 				return true;
 			}
-
-			const usernameAutocompleteContainer = document.getElementById("username-autocomplete-container");
-
-			autocomplete(addUserInput, users, usernameAutocompleteContainer);
-
-
-			/*
-			*	Folgend die Logik dafür, dass Checkboxes von
-			*	Privilegien welche von anderen
-			*	Privilegien abhängen deaktiviert werden, wenn 
-			*	die Privilegien von denen Sie abhängen auch deaktiviert sind.
-			*	Für denjenigen der das hier aus irgend einem Grund 
-			*	nochmal nachvollziehen muss:
-			*	Ich wünsche viel Spaß und Vergnügen :*
-			*	VG
-			*	Hendrik Siemund
-			*/
-
-			const courseRoleIds = Array.from(document.querySelectorAll(".courseRole"))
-				.map(roleInput => roleInput.value);
-			const courseUserIds = Array.from(document.querySelectorAll(".courseUser"))
-				.map(userInput => userInput.value);
-
-			const privilegeCheckInputPostFixes = courseRoleIds.concat(courseUserIds);
-
-			for (const postFix of privilegeCheckInputPostFixes) {
-				const privilegeToPrivilegesDependingOnMap = new Map();
-
-				const privilegeCheckboxInput = Array.from(document.querySelectorAll(".privilegeCheck" + postFix));
-				const privilegeDependencies = Array.from(document.querySelectorAll(".privilegeDependency" + postFix))
-					.map(dep => parseInt(dep.value)-1);
-
-				for (const [i,num] of privilegeDependencies.entries()) {
-					if (! isNaN(num)) {
-						var privParent = privilegeToPrivilegesDependingOnMap.get(num);
-						if (privParent) {
-							privParent.push(i);
-						}
-						else {
-							privilegeToPrivilegesDependingOnMap.set(num, [i]);
-						}
-					}
-				}
-				for (let [key, value] of privilegeToPrivilegesDependingOnMap) {
-					if (value.length > 0) {
-						privilegeCheckboxInput[key].addEventListener("input", function() {
-						for (const dependant of value) {
-							const dependantPrivilegeCheckboxInput = privilegeCheckboxInput[dependant];
-							if (!this.checked) {
-								dependantPrivilegeCheckboxInput.checked = this.checked;
-							}
-							dependantPrivilegeCheckboxInput.disabled = !this.checked;
-						}
-						});
-						for (const dependant of value) {
-							privilegeCheckboxInput[dependant].disabled = ! privilegeCheckboxInput[key].checked;
-						}
-					}
-				}
-			}			
 		</script>
 
 		<style>

@@ -4,12 +4,14 @@ import static java.util.Objects.isNull;
 
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
+import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseForm;
@@ -21,6 +23,7 @@ import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.CourseForm.CourseFormPrivilege;
 import org.lecturestudio.web.portal.model.CourseForm.CourseFormRole;
+import org.lecturestudio.web.portal.model.CourseForm.CourseFormUser;
 import org.lecturestudio.web.portal.repository.CourseRepository;
 import org.lecturestudio.web.portal.repository.CourseRoleRepository;
 import org.lecturestudio.web.portal.repository.PrivilegeRepository;
@@ -33,6 +36,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,17 +58,14 @@ public class CourseService {
 	@Autowired
 	private UserService userService;
 
-	@Autowired
-	private CourseRegistrationService courseRegistrationService;
 
-
-	public Optional<Course> findById(Long id) {
-		return repository.findById(id);
+	public Optional<Course> findById(Long courseId) {
+		return repository.findById(courseId);
 	}
 
 	@Transactional
-	public void deleteById(Long id) {
-		repository.deleteById(id);
+	public void deleteById(Long courseId) {
+		repository.deleteById(courseId);
 	}
 
 	public Course saveCourse(Course course) {
@@ -85,6 +86,39 @@ public class CourseService {
 
 	public List<Privilege> getAllPossiblePrivileges() {
 		return privilegeRepository.findAll();
+	}
+
+	public Set<Privilege> getUserPrivileges(Long courseId, String userId) {
+		Course course = findById(courseId)
+				.orElseThrow(() -> new CourseNotFoundException());
+
+		User user = userService.findById(userId)
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
+
+		Set<CourseRole> courseRoles = course.getRoles();
+		Set<Role> userRoles = user.getRoles();
+
+		Set<Privilege> userPrivileges = new HashSet<>();
+
+		for (CourseRegistration registration : course.getRegistrations()) {
+			if (registration.getUser().equals(user)) {
+				// User is the owner of the course and thereby has all privileges.
+				userPrivileges.addAll(getAllPossiblePrivileges());
+				break;
+			}
+		}
+
+		if (userPrivileges.isEmpty()) {
+			for (CourseRole courseRole : courseRoles) {
+				if (userRoles.contains(courseRole.getRole())) {
+					for (CoursePrivilege coursePrivilege : courseRole.getPrivileges()) {
+						userPrivileges.add(coursePrivilege.getPrivilege());
+					}
+				}
+			}
+		}
+
+		return userPrivileges;
 	}
 
 	public Page<Course> getPaginated(final int pageNumber, final int pageSize, final String sortField,
@@ -118,6 +152,7 @@ public class CourseService {
 		List<Privilege> privileges = privilegeRepository.findAll();
 
 		List<CourseFormRole> formRoles = new ArrayList<>();
+		List<CourseFormRole> formUserRoles = new ArrayList<>();
 
 		for (Role role : roles) {
 			List<CourseFormPrivilege> formPrivileges = new ArrayList<>();
@@ -127,12 +162,17 @@ public class CourseService {
 			}
 
 			formRoles.add(new CourseFormRole(role, formPrivileges));
+
+			if (!role.getName().equals("participant")) {
+				formUserRoles.add(new CourseFormRole(role, null));
+			}
 		}
 
 		CourseForm form = new CourseForm();
 		form.setRoles(formRoles);
-		form.setUsername("");
-		form.setPersonallyPrivilegedUsers(List.of());
+		form.setUserRoles(formUserRoles);
+		form.setNewUser(new CourseFormUser());
+		form.setPrivilegedUsers(List.of());
 
 		return form;
 	}
@@ -141,6 +181,7 @@ public class CourseService {
 		List<Privilege> privileges = privilegeRepository.findAll();
 
 		List<CourseFormRole> formRoles = new ArrayList<>();
+		List<CourseFormRole> formUserRoles = new ArrayList<>();
 
 		for (CourseRole courseRole : course.getRoles()) {
 			List<CourseFormPrivilege> formPrivileges = new ArrayList<>();
@@ -152,6 +193,10 @@ public class CourseService {
 			}
 
 			formRoles.add(new CourseFormRole(courseRole.getRole(), formPrivileges));
+
+			if (!courseRole.getRole().getName().equals("participant")) {
+				formUserRoles.add(new CourseFormRole(courseRole.getRole(), null));
+			}
 		}
 
 		CourseForm form = new CourseForm();
@@ -161,7 +206,9 @@ public class CourseService {
 		form.setDescription(course.getDescription());
 		form.setPasscode(course.getPasscode());
 		form.setRoles(formRoles);
-		form.setUsername("");
+		form.setUserRoles(formUserRoles);
+		form.setNewUser(new CourseFormUser());
+		form.setPrivilegedUsers(List.of());
 
 		return form;
 	}
