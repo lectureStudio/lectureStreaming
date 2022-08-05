@@ -61,4 +61,7 @@ public class Course {
 		inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
 	Set<CourseRole> roles;
 
+	@ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.ALL })
+	Set<CourseUserRole> userRoles;
+
 }

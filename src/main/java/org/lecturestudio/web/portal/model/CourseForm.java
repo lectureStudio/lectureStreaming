@@ -2,7 +2,6 @@ package org.lecturestudio.web.portal.model;
 
 import java.util.List;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -35,8 +34,6 @@ public class CourseForm {
 
 	private List<CourseFormUser> privilegedUsers;
 
-	@NotNull
-	@Valid
 	private CourseFormUser newUser;
 
 
@@ -63,6 +60,10 @@ public class CourseForm {
 
 		private List<CourseFormPrivilege> privileges;
 
+		@Override
+		public String toString() {
+			return "CourseFormRole [privileges=" + privileges + ", role=" + role + "]";
+		}
 	}
 
 	@Getter
@@ -85,8 +86,6 @@ public class CourseForm {
 	@AllArgsConstructor
 	public static class CourseFormUser {
 
-		@NotNull
-		@Size(min = 3, max = 200)
 		private String username;
 
 		private Role role;

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -26,6 +27,7 @@ import org.lecturestudio.web.portal.model.CourseForm.CourseFormRole;
 import org.lecturestudio.web.portal.model.CourseForm.CourseFormUser;
 import org.lecturestudio.web.portal.repository.CourseRepository;
 import org.lecturestudio.web.portal.repository.CourseRoleRepository;
+import org.lecturestudio.web.portal.repository.CourseUserRoleRepository;
 import org.lecturestudio.web.portal.repository.PrivilegeRepository;
 import org.lecturestudio.web.portal.repository.RoleRepository;
 
@@ -48,6 +50,9 @@ public class CourseService {
 
 	@Autowired
 	private CourseRoleRepository courseRoleRepository;
+
+	@Autowired
+	private CourseUserRoleRepository courseUserRoleRepository;
 
 	@Autowired
 	private RoleRepository roleRepository;
@@ -97,6 +102,7 @@ public class CourseService {
 
 		Set<CourseRole> courseRoles = course.getRoles();
 		Set<Role> userRoles = user.getRoles();
+		userRoles.addAll(courseUserRoleRepository.findAllRoles(courseId, user.getUserId()));
 
 		Set<Privilege> userPrivileges = new HashSet<>();
 
@@ -199,6 +205,10 @@ public class CourseService {
 			}
 		}
 
+		List<CourseFormUser> privilegedUsers = course.getUserRoles().stream()
+				.map(userRole -> new CourseFormUser(userRole.getUsername(), userRole.getRole()))
+				.collect(Collectors.toList());
+
 		CourseForm form = new CourseForm();
 		form.setId(course.getId());
 		form.setRoomId(course.getRoomId());
@@ -208,7 +218,7 @@ public class CourseService {
 		form.setRoles(formRoles);
 		form.setUserRoles(formUserRoles);
 		form.setNewUser(new CourseFormUser());
-		form.setPrivilegedUsers(List.of());
+		form.setPrivilegedUsers(privilegedUsers);
 
 		return form;
 	}
@@ -243,6 +253,7 @@ public class CourseService {
 
 		Set<CourseRole> courseRoles = course.getRoles();
 		Set<Role> userRoles = user.getRoles();
+		userRoles.addAll(courseUserRoleRepository.findAllRoles(courseId, user.getUserId()));
 
 		for (CourseRole courseRole : courseRoles) {
 			if (userRoles.contains(courseRole.getRole())) {

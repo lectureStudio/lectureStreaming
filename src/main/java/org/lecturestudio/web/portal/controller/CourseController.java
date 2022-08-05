@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -26,6 +28,7 @@ import org.lecturestudio.web.portal.model.CourseRegistration;
 import org.lecturestudio.web.portal.model.CourseRole;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.model.CourseUserRole;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.CourseForm.CourseFormPrivilege;
 import org.lecturestudio.web.portal.model.CourseForm.CourseFormRole;
@@ -220,6 +223,24 @@ public class CourseController {
 
 		course.setRoles(courseRoles);
 
+		List<CourseFormUser> privilegedUsers = courseForm.getPrivilegedUsers();
+
+		if (isNull(privilegedUsers)) {
+			privilegedUsers = List.of();
+		}
+
+		Set<CourseUserRole> userRoles = privilegedUsers.stream()
+				.map(formUser -> {
+					return CourseUserRole.builder()
+							.course(course)
+							.username(formUser.getUsername())
+							.role(formUser.getRole())
+							.build();
+				})
+				.collect(Collectors.toSet());
+
+		course.setUserRoles(userRoles);
+
 		User user = userService.findById(details.getUsername())
 				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
 
@@ -315,6 +336,24 @@ public class CourseController {
 			}
 
 			dbCourse.setRoles(courseRoles);
+
+			List<CourseFormUser> privilegedUsers = courseForm.getPrivilegedUsers();
+
+			if (isNull(privilegedUsers)) {
+				privilegedUsers = List.of();
+			}
+
+			Set<CourseUserRole> userRoles = privilegedUsers.stream()
+					.map(formUser -> {
+						return CourseUserRole.builder()
+								.course(dbCourse)
+								.username(formUser.getUsername())
+								.role(formUser.getRole())
+								.build();
+					})
+					.collect(Collectors.toSet());
+
+			dbCourse.setUserRoles(userRoles);
 		}
 
 		courseService.saveCourse(dbCourse);
@@ -331,23 +370,29 @@ public class CourseController {
 	}
 
 	@PostMapping(params = "addUser", path = { "/add/user" })
-	public String addUser(@Valid CourseForm courseForm, BindingResult result) {
-		if (result.hasErrors()) {
-
-			return "course-form :: course-form-users";
+	public String addUser(@Valid CourseForm courseForm, BindingResult result, Model model) {
+		if (isNull(courseForm.getPrivilegedUsers())) {
+			courseForm.setPrivilegedUsers(new ArrayList<>());
 		}
 
 		courseForm.getPrivilegedUsers().add(courseForm.getNewUser());
-
 		courseForm.setNewUser(new CourseFormUser());
 
-		return "course-form :: course-form-users";
+		model.addAttribute("userRoles", courseForm.getUserRoles());
+		model.addAttribute("newUser", new CourseFormUser());
+		model.addAttribute("courseForm", courseForm);
+
+		return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";
 	}
 
 	@PostMapping(params = "removeUser", path = { "/remove/user" })
 	public String removeUser(CourseForm courseForm, @RequestParam("removeUser") int index, Model model) {
 		courseForm.getPrivilegedUsers().remove(index);
 
-		return "course-form :: course-form-users";
+		model.addAttribute("userRoles", courseForm.getUserRoles());
+		model.addAttribute("newUser", new CourseFormUser());
+		model.addAttribute("courseForm", courseForm);
+
+		return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";
 	}
 }
