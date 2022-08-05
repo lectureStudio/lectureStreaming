@@ -7,6 +7,8 @@
 
 	<link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
 	<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 
 <body>
@@ -73,26 +75,8 @@
 				<div class="mb-4 p-2" th:if="${canAlterPrivileges}">
 					<label th:text="#{course.form.manage.users.description}" class="form-text d-block"></label>
 
-					<div class="d-flex flex-row mb-3">
-						<div class="pt-2 pr-2">
-							<label th:text="#{course.form.manage.users.username}" for="username" class="form-label"></label>
-							<input type="text" class="form-control form-control-sm" id="username" th:field="*{newUser.username}" th:errorclass="is-invalid" aria-describedby="username-feedback">
-							<div id="username-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('newUser.username')}" th:errors="${courseForm.newUser.username}"></div>
-						</div>
-						<div class="p-2">
-							<label th:text="#{course.form.manage.users.role}" for="roleSelect" class="form-label"></label>
-							<select th:field="*{newUser.role}" class="form-select form-select-sm">
-								<option th:each="formUserRole,userRoleStat : ${courseForm.userRoles}" th:value="${formUserRole.role.id}" th:text="#{${formUserRole.role.descriptionKey}}">
-								</option>
-							</select>
-						</div>
-						<div class="p-2 d-flex align-items-end">
-							<button th:text="#{course.form.add.user}" type="submit" name="addUser" class="btn btn-sm btn-outline-primary"></button>
-						</div>
-					  </div>
-					<div id="users" th:replace="course-form :: course-form-users">
+					<div id="users" th:replace="course-form :: course-form-users('newUser', 'userRoles')">
 					</div>
-					<div id="add-user-feedback" class="form-text text-danger" th:if="${#fields.hasErrors('newUser.username')}" th:errors="${courseForm.newUser.username}"></div>
 				</div>
 				<div class="mt-3 col-12">
 					<button th:text="${edit} ? #{course.form.update} : #{course.form.create}" type="submit" class="btn btn-outline-primary btn-sm"></button>
@@ -101,7 +85,31 @@
 		</div>
 	</th:block>
 
-	<div th:fragment="course-form-users" id="users">
+	<div th:fragment="course-form-users(newUser, userRoles)" id="users">
+		<div class="d-flex flex-row mb-3" th:object="${courseForm}">
+			<input type="hidden" th:each="formUserRole,userRoleStat : *{__${userRoles}__}" th:field="*{__${userRoles}__[__${userRoleStat.index}__].role}" th:value="${formUserRole.role}">
+			</input>
+
+			<div class="pt-2 pr-2">
+				<label th:text="#{course.form.manage.users.username}" for="username" class="form-label"></label>
+				<input type="text" class="form-control form-control-sm" id="username" th:field="*{__${newUser}__.username}">
+			</div>
+			<div class="p-2">
+				<label th:text="#{course.form.manage.users.role}" for="roleSelect" class="form-label"></label>
+				<input type="hidden" th:each="formUserRole,userRoleStat : *{__${userRoles}__}" th:value="${formUserRole.role}">
+
+				<select th:field="*{newUser.role}" class="form-select form-select-sm">
+					<option th:each="formUserRole,userRoleStat : *{__${userRoles}__}" th:value="${formUserRole.role.id}"
+						th:text="#{${formUserRole.role.descriptionKey}}">
+					</option>
+				</select>
+			</div>
+			<div class="p-2 d-flex align-items-end">
+				<button th:text="#{course.form.add.user}" type="submit" name="addUser"
+					class="btn btn-sm btn-outline-primary"></button>
+			</div>
+		</div>
+
 		<table class="table table-hover table-sm">
 			<thead class="table-light">
 				<tr>
@@ -130,8 +138,6 @@
 				</tr>
 			</tbody>
 		</table>
-
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 		<script>
 			var courseForm = document.getElementById("course-form");
