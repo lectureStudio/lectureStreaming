@@ -399,7 +399,7 @@ public class CourseSubscriberController {
 			simpEmitter.emmitChatMessage(courseId, forwardMessage);
 		}
 		else {
-			if (courseService.isAuthorized(courseId, authentication, "CHAT_WRITE_PRIVATELY")) {
+			if (!courseService.isAuthorized(courseId, authentication, "CHAT_WRITE_PRIVATELY")) {
 				throw new UnauthorizedException();
 			}
 
@@ -487,7 +487,7 @@ public class CourseSubscriberController {
 
 	@MessageExceptionHandler
 	public void messengerMessageError(Exception exc) {
-		System.out.println(exc.getMessage());
+		exc.printStackTrace();
 	}
 
 	private void sendCourseEvent(CourseState state, long courseId, boolean started) {

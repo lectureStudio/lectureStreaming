@@ -22,7 +22,7 @@ public class StompHandshakeInterceptor implements HandshakeInterceptor {
 			WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
 		if (request instanceof ServletServerHttpRequest) {
 			ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
-			HttpSession session = servletRequest.getServletRequest().getSession(false);
+			HttpSession session = servletRequest.getServletRequest().getSession(true);
 
 			if (session != null) {
 				attributes.put(endpointHeader, request.getURI().getPath());

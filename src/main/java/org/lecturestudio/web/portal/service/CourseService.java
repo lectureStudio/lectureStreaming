@@ -68,6 +68,10 @@ public class CourseService {
 		return repository.findById(courseId);
 	}
 
+	public Iterable<Course> findAllByUserId(String userId) {
+		return repository.findAllByUserId(userId);
+	}
+
 	@Transactional
 	public void deleteById(Long courseId) {
 		repository.deleteById(courseId);

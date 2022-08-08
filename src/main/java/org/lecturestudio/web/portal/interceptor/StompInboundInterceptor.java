@@ -89,7 +89,7 @@ public class StompInboundInterceptor implements ChannelInterceptor {
 			}
 
 			long courseId = Long.parseLong(courseIdStr);
-			boolean authorized = false;
+			boolean authorized = true;
 
 			if (topic.equals(chatEvent)) {
 				authorized = courseService.isAuthorized(courseId, principal, "CHAT_READ");

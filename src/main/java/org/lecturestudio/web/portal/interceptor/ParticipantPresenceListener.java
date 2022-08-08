@@ -39,6 +39,9 @@ public class ParticipantPresenceListener {
 	@Value("${simp.events.presence}")
 	private String presenceEvent;
 
+	@Value("${simp.endpoints.publisher}")
+	private String publisherEndpoint;
+
 	@Value("${simp.endpoints.state}")
 	private String stateEndpoint;
 
@@ -53,7 +56,7 @@ public class ParticipantPresenceListener {
 		String stompEndpoint = (String) sessionHeaders.get(endpointHeader);
 		String userName = headers.getUser().getName();
 
-		if (stateEndpoint.equals(stompEndpoint)) {
+		if (stateEndpoint.equals(stompEndpoint) || publisherEndpoint.equals(stompEndpoint)) {
 			User user = userService.findById(userName).orElse(null);
 			String courseId = headers.getFirstNativeHeader("courseId");
 

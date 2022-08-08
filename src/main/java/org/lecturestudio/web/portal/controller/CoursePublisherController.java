@@ -110,7 +110,8 @@ public class CoursePublisherController {
 		UserDto userDto = UserDto.builder()
 				.userId(authentication.getName())
 				.familyName(user.getFamilyName())
-				.firstName(user.getFirstName()).build();
+				.firstName(user.getFirstName())
+				.build();
 
 		return userDto;
 	}
@@ -119,7 +120,7 @@ public class CoursePublisherController {
 	public List<CourseDto> getCourses(Authentication authentication) {
 		List<CourseDto> courses = new ArrayList<>();
 
-		courseService.getAllCourses().forEach(course -> {
+		courseService.findAllByUserId(authentication.getName()).forEach(course -> {
 			courses.add(CourseDto.builder()
 					.id(course.getId())
 					.roomId(course.getRoomId())
