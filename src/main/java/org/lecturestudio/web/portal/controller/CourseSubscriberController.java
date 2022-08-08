@@ -75,7 +75,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -249,14 +248,10 @@ public class CourseSubscriberController {
 	}
 
 	@GetMapping("/participants/{courseId}")
-	// @PreAuthorize("hasPrivilege('PARTICIPANTS_VIEW')")
 	public List<UserDto> getParticipants(@PathVariable("courseId") Long courseId, Authentication authentication) {
 		List<UserDto> participants = new ArrayList<>();
 
-		try {
-			courseService.isAuthorized(courseId, authentication, "PARTICIPANTS_VIEW");
-		}
-		catch (UnauthorizedException e) {
+		if (!courseService.isAuthorized(courseId, authentication, "PARTICIPANTS_VIEW")) {
 			return participants;
 		}
 
@@ -273,10 +268,7 @@ public class CourseSubscriberController {
 
 	@GetMapping("/chat/history/{courseId}")
 	public CourseMessengerHistoryDto getChatHistory(@PathVariable("courseId") Long courseId, Authentication authentication) {
-		try {
-			courseService.isAuthorized(courseId, authentication, "CHAT_READ");
-		}
-		catch (UnauthorizedException e) {
+		if (!courseService.isAuthorized(courseId, authentication, "CHAT_READ")) {
 			return new CourseMessengerHistoryDto(List.of());
 		}
 
@@ -291,7 +283,9 @@ public class CourseSubscriberController {
 	@PostMapping(value = "/speech/{courseId}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Long> postSpeech(@PathVariable("courseId") long courseId,
 			Authentication authentication) {
-		courseService.isAuthorized(courseId, authentication, "SPEECH");
+		if (!courseService.isAuthorized(courseId, authentication, "SPEECH")) {
+			throw new UnauthorizedException();
+		}
 
 		// Validate input.
 		ResponseEntity<CourseFeatureResponse> response = speechValidator.validate(courseId);
@@ -328,7 +322,9 @@ public class CourseSubscriberController {
 	@DeleteMapping("/speech/{courseId}/{requestId}")
 	public ResponseEntity<CourseFeatureResponse> cancelSpeech(@PathVariable("courseId") long courseId,
 			@PathVariable("requestId") long requestId, Authentication authentication) {
-		courseService.isAuthorized(courseId, authentication, "SPEECH");
+		if (!courseService.isAuthorized(courseId, authentication, "SPEECH")) {
+			throw new UnauthorizedException();
+		}
 
 		CourseState courseState = courseStates.getCourseState(courseId);
 
@@ -372,7 +368,9 @@ public class CourseSubscriberController {
 	@MessageMapping("/message/{courseId}")
     @SendTo("/topic/course/{courseId}/chat")
     public void sendMessage(@Payload org.springframework.messaging.Message<Message> message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
-		courseService.isAuthorized(courseId, authentication, "CHAT_WRITE");
+		if (!courseService.isAuthorized(courseId, authentication, "CHAT_WRITE")) {
+			throw new UnauthorizedException();
+		}
 
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
@@ -401,7 +399,9 @@ public class CourseSubscriberController {
 			simpEmitter.emmitChatMessage(courseId, forwardMessage);
 		}
 		else {
-			courseService.isAuthorized(courseId, authentication, "CHAT_WRITE_PRIVATELY");
+			if (courseService.isAuthorized(courseId, authentication, "CHAT_WRITE_PRIVATELY")) {
+				throw new UnauthorizedException();
+			}
 
 			User destUser = userService.findById(recipient).orElse(null);
 
@@ -428,7 +428,9 @@ public class CourseSubscriberController {
 	@PostMapping("/quiz/post/{courseId}")
 	public ResponseEntity<CourseFeatureResponse> postQuizAnswer(@PathVariable("courseId") long courseId,
 			@RequestBody QuizAnswer quizAnswer, Authentication authentication, HttpServletRequest request) {
-		courseService.isAuthorized(courseId, authentication, "QUIZ_PARTICIPATION");
+		if (!courseService.isAuthorized(courseId, authentication, "QUIZ_PARTICIPATION")) {
+			throw new UnauthorizedException();
+		}
 
 		final CourseQuizFeature feature = (CourseQuizFeature) courseFeatureService.findQuizByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());

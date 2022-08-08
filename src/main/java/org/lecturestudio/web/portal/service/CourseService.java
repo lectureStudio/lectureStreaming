@@ -251,11 +251,17 @@ public class CourseService {
 
 	private boolean isAuthorized(long courseId, String userId, String operation)
 			throws UnauthorizedException {
-		Course course = findById(courseId)
-				.orElseThrow(() -> new UnauthorizedException());
+		Course course = findById(courseId).orElse(null);
 
-		User user = userService.findById(userId)
-				.orElseThrow(() -> new UnauthorizedException());
+		if (isNull(course)) {
+			return false;
+		}
+
+		User user = userService.findById(userId).orElse(null);
+
+		if (isNull(user)) {
+			return false;
+		}
 
 		for (CourseRegistration registration : course.getRegistrations()) {
 			if (registration.getUser().equals(user)) {
@@ -278,6 +284,6 @@ public class CourseService {
 			}
 		}
 
-		throw new UnauthorizedException();
+		return false;
 	}
 }

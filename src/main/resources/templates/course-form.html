@@ -44,40 +44,43 @@
 					<div th:text="#{course.form.passcode.description}" id="pinHelpBlock" class="form-text"></div>
 				</div>
 
-				<h5 for="role-accordion" class="form-label" th:text="#{course.form.role.title}"></h5>
-				<div class="mb-4 p-2" th:if="${canAlterPrivileges}">
-					<div id="role-accordion" class="accordion">
-						<div class="accordion-item" th:each="formRole,roleStat : ${courseForm.roles}">
-							<input type="hidden" th:field="*{roles[__${roleStat.index}__].role}" th:value="${formRole.role}">
+				<div th:if="${canAlterPrivileges}">
+					<h5 for="role-accordion" class="form-label" th:text="#{course.form.role.title}"></h5>
+					<div class="mb-4 p-2">
+						<div id="role-accordion" class="accordion">
+							<div class="accordion-item" th:each="formRole,roleStat : ${courseForm.roles}">
+								<input type="hidden" th:field="*{roles[__${roleStat.index}__].role}" th:value="${formRole.role}">
 
-							<h2 class="accordion-header" th:id="heading + ${formRole.role.id}">
-								<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" th:attr="data-bs-target='#collapse' + ${formRole.role.id}, aria-expanded=false" aria-controls="collapseOne" th:text="#{${formRole.role.descriptionKey}}"></button>
-							</h2>
-							<div th:id="collapse + ${formRole.role.id}" class="accordion-collapse collapse" th:attr="aria-labelledby='heading' + ${formRole.role.id}" data-bs-parent="#role-accordion">
-								<div class="accordion-body">
-									<div class="form-check form-switch" th:each="formPrivilege,privStat : ${formRole.privileges}">
-										<input type="hidden" th:field="*{roles[__${roleStat.index}__].privileges[__${privStat.index}__].privilege}" th:value="${formPrivilege.privilege}">
+								<h2 class="accordion-header" th:id="heading + ${formRole.role.id}">
+									<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" th:attr="data-bs-target='#collapse' + ${formRole.role.id}, aria-expanded=false" aria-controls="collapseOne" th:text="#{${formRole.role.descriptionKey}}"></button>
+								</h2>
+								<div th:id="collapse + ${formRole.role.id}" class="accordion-collapse collapse" th:attr="aria-labelledby='heading' + ${formRole.role.id}" data-bs-parent="#role-accordion">
+									<div class="accordion-body">
+										<div class="form-check form-switch" th:each="formPrivilege,privStat : ${formRole.privileges}">
+											<input type="hidden" th:field="*{roles[__${roleStat.index}__].privileges[__${privStat.index}__].privilege}" th:value="${formPrivilege.privilege}">
 
-										<input th:id="${formRole.role.id} + '-' + ${formPrivilege.privilege.id}" class="form-check-input privilegeCheck" type="checkbox" th:field="*{roles[__${roleStat.index}__].privileges[__${privStat.index}__].selected}" th:checked="${formPrivilege.selected}">
-										<label th:for="${formRole.role.id} + '-' + ${formPrivilege.privilege.id}" class="form-check-label" th:text="#{${formPrivilege.privilege.descriptionKey}}"></label>
+											<input th:id="${formRole.role.id} + '-' + ${formPrivilege.privilege.id}" class="form-check-input privilegeCheck" type="checkbox" th:field="*{roles[__${roleStat.index}__].privileges[__${privStat.index}__].selected}" th:checked="${formPrivilege.selected}">
+											<label th:for="${formRole.role.id} + '-' + ${formPrivilege.privilege.id}" class="form-check-label" th:text="#{${formPrivilege.privilege.descriptionKey}}"></label>
+										</div>
 									</div>
 								</div>
 							</div>
 						</div>
+						<div id="courseRoleHelpBlock" class="form-text">
+							<span th:text="#{course.form.role.description}"></span>
+							<span th:text="#{course.form.role.owner.info}" class="badge bg-light text-dark"></span>
+						</div>
 					</div>
-					<div id="courseRoleHelpBlock" class="form-text">
-						<span th:text="#{course.form.role.description}"></span>
-						<span th:text="#{course.form.role.owner.info}" class="badge bg-light text-dark"></span>
+
+					<h5 th:text="#{course.form.manage.users.title}" class="form-label"></h5>
+					<div class="mb-4 p-2">
+						<label th:text="#{course.form.manage.users.description}" class="form-text d-block"></label>
+
+						<div id="users" th:replace="course-form :: course-form-users('newUser', 'userRoles')">
+						</div>
 					</div>
 				</div>
 
-				<h5 th:text="#{course.form.manage.users.title}" class="form-label"></h5>
-				<div class="mb-4 p-2" th:if="${canAlterPrivileges}">
-					<label th:text="#{course.form.manage.users.description}" class="form-text d-block"></label>
-
-					<div id="users" th:replace="course-form :: course-form-users('newUser', 'userRoles')">
-					</div>
-				</div>
 				<div class="mt-3 col-12">
 					<button th:text="${edit} ? #{course.form.update} : #{course.form.create}" type="submit" class="btn btn-outline-primary btn-sm"></button>
 				</div>

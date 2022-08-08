@@ -89,18 +89,23 @@ public class StompInboundInterceptor implements ChannelInterceptor {
 			}
 
 			long courseId = Long.parseLong(courseIdStr);
+			boolean authorized = false;
 
 			if (topic.equals(chatEvent)) {
-				courseService.isAuthorized(courseId, principal, "CHAT_READ");
+				authorized = courseService.isAuthorized(courseId, principal, "CHAT_READ");
 			}
 			else if (topic.equals(presenceEvent)) {
-				courseService.isAuthorized(courseId, principal, "PARTICIPANTS_VIEW");
+				authorized = courseService.isAuthorized(courseId, principal, "PARTICIPANTS_VIEW");
 			}
 			else if (topic.equals(speechEvent)) {
-				courseService.isAuthorized(courseId, principal, "SPEECH");
+				authorized = courseService.isAuthorized(courseId, principal, "SPEECH");
 			}
 			else if (topic.equals(quizEvent)) {
-				courseService.isAuthorized(courseId, principal, "QUIZ_PARTICIPATION");
+				authorized = courseService.isAuthorized(courseId, principal, "QUIZ_PARTICIPATION");
+			}
+
+			if (!authorized) {
+				throw new UnauthorizedException();
 			}
 		}
 	}
@@ -117,7 +122,9 @@ public class StompInboundInterceptor implements ChannelInterceptor {
 
 			long courseId = Long.parseLong(courseIdStr);
 
-			courseService.isAuthorized(courseId, principal, "CHAT_READ");
+			if (!courseService.isAuthorized(courseId, principal, "CHAT_READ")) {
+				throw new UnauthorizedException();
+			}
 		}
 	}
 
@@ -133,7 +140,9 @@ public class StompInboundInterceptor implements ChannelInterceptor {
 
 			long courseId = Long.parseLong(courseIdStr);
 
-			courseService.isAuthorized(courseId, principal, "CHAT_READ");
+			if (!courseService.isAuthorized(courseId, principal, "CHAT_READ")) {
+				throw new UnauthorizedException();
+			}
 		}
 	}
 

@@ -66,8 +66,8 @@ public class HomeController {
 			List<UserDto> authors = new ArrayList<>();
 			CourseMessageFeature messageFeature = null;
 			CourseQuizFeature quizFeature = null;
-			boolean canDelete = false;
-			boolean canEdit = false;
+			boolean canDelete = courseService.isAuthorized(course.getId(), authentication, "COURSE_DELETE");
+			boolean canEdit = courseService.isAuthorized(course.getId(), authentication, "COURSE_EDIT");
 
 			for (var registration : course.getRegistrations()) {
 				User user = registration.getUser();
