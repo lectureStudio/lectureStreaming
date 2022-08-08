@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -36,6 +36,7 @@ import org.lecturestudio.web.portal.model.CourseForm.CourseFormUser;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
+import org.lecturestudio.web.portal.service.CourseRegistrationService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.util.StringUtils;
@@ -64,6 +65,9 @@ public class CourseController {
 
 	@Autowired
 	private CourseService courseService;
+
+	@Autowired
+	private CourseRegistrationService courseRegistrationService;
 
 	@Autowired
 	private CourseStates courseStates;
@@ -233,7 +237,7 @@ public class CourseController {
 				.map(formUser -> {
 					return CourseUserRole.builder()
 							.course(course)
-							.username(formUser.getUsername())
+							.userId(formUser.getUsername())
 							.role(formUser.getRole())
 							.build();
 				})
@@ -347,13 +351,14 @@ public class CourseController {
 					.map(formUser -> {
 						return CourseUserRole.builder()
 								.course(dbCourse)
-								.username(formUser.getUsername())
+								.userId(formUser.getUsername())
 								.role(formUser.getRole())
 								.build();
 					})
 					.collect(Collectors.toSet());
 
-			dbCourse.setUserRoles(userRoles);
+			dbCourse.getUserRoles().clear();
+			dbCourse.getUserRoles().addAll(userRoles);
 		}
 
 		courseService.saveCourse(dbCourse);
@@ -369,28 +374,69 @@ public class CourseController {
 		return "redirect:/";
 	}
 
-	@PostMapping(params = "addUser", path = { "/add/user" })
-	public String addUser(@Valid CourseForm courseForm, BindingResult result, Model model) {
+	@PostMapping(path = { "/add/user" }, params = "addUser")
+	public String addUser(@Valid CourseForm courseForm, BindingResult result, Model model, Authentication authentication) {
+		Long courseId = courseForm.getId();
+
 		if (isNull(courseForm.getPrivilegedUsers())) {
 			courseForm.setPrivilegedUsers(new ArrayList<>());
 		}
 
-		courseForm.getPrivilegedUsers().add(courseForm.getNewUser());
+		CourseFormUser newUser = courseForm.getNewUser();
+		String userName = newUser.getUsername();
+
+		boolean userInvalid = userName.isEmpty();
+		boolean roleInvalid = courseForm.getPrivilegedUsers().contains(newUser);
+		boolean assignedSelf = authentication.getName().equals(userName);
+		boolean assignedOwner = false;
+
+		if (nonNull(courseId)) {
+			Optional<CourseRegistration> courseReg = courseRegistrationService.findByCourseAndUserId(courseId, userName);
+
+			assignedOwner = courseReg.isPresent();
+		}
+
+		if (userInvalid || roleInvalid || assignedSelf || assignedOwner) {
+			if (userInvalid) {
+				result.rejectValue("newUser.username", "course.form.user.error.username.empty");
+			}
+			else if (assignedSelf) {
+				result.rejectValue("newUser.username", "course.form.user.error.assigned.self");
+			}
+			else if (assignedOwner) {
+				result.rejectValue("newUser.username", "course.form.user.error.assigned.owner");
+			}
+			else if (roleInvalid) {
+				String roleName = messageSource.getMessage(newUser.getRole().getDescriptionKey(), null,
+						LocaleContextHolder.getLocale());
+
+				result.reject("course.form.user.error.role.duplicate",
+						new String[] { userName, roleName }, "");
+			}
+
+			return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";
+		}
+
+		Optional<User> user = userService.findById(userName);
+
+		if (user.isPresent()) {
+			newUser.setFirstName(user.get().getFirstName());
+			newUser.setFamilyName(user.get().getFamilyName());
+		}
+
+		courseForm.getPrivilegedUsers().add(newUser);
+		courseForm.getPrivilegedUsers().sort(CourseFormUser::compareByUserName);
 		courseForm.setNewUser(new CourseFormUser());
 
-		model.addAttribute("userRoles", courseForm.getUserRoles());
-		model.addAttribute("newUser", new CourseFormUser());
 		model.addAttribute("courseForm", courseForm);
 
 		return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";
 	}
 
-	@PostMapping(params = "removeUser", path = { "/remove/user" })
+	@PostMapping(path = { "/remove/user" }, params = "removeUser")
 	public String removeUser(CourseForm courseForm, @RequestParam("removeUser") int index, Model model) {
 		courseForm.getPrivilegedUsers().remove(index);
 
-		model.addAttribute("userRoles", courseForm.getUserRoles());
-		model.addAttribute("newUser", new CourseFormUser());
 		model.addAttribute("courseForm", courseForm);
 
 		return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";

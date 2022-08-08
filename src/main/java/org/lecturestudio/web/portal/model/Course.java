@@ -16,6 +16,9 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.Size;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -61,7 +64,8 @@ public class Course {
 		inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
 	Set<CourseRole> roles;
 
-	@ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.ALL })
+	@OneToMany(mappedBy = "course", fetch = FetchType.EAGER, orphanRemoval = true, cascade = { CascadeType.ALL })
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	Set<CourseUserRole> userRoles;
 
 }

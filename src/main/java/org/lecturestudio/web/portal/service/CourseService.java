@@ -206,8 +206,21 @@ public class CourseService {
 		}
 
 		List<CourseFormUser> privilegedUsers = course.getUserRoles().stream()
-				.map(userRole -> new CourseFormUser(userRole.getUsername(), userRole.getRole()))
+				.map(userRole -> {
+					Optional<User> user = userService.findById(userRole.getUserId());
+					String userFirstName = null;
+					String userFamilyName = null;
+
+					if (user.isPresent()) {
+						userFirstName = user.get().getFirstName();
+						userFamilyName = user.get().getFamilyName();
+					}
+
+					return new CourseFormUser(userRole.getUserId(), userFirstName, userFamilyName, userRole.getRole());
+				})
 				.collect(Collectors.toList());
+
+		privilegedUsers.sort(CourseFormUser::compareByUserName);
 
 		CourseForm form = new CourseForm();
 		form.setId(course.getId());

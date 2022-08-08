@@ -6,6 +6,9 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -38,18 +41,6 @@ public class CourseForm {
 
 
 
-	
-
-
-
-	@Override
-	public String toString() {
-		return "CourseForm [description=" + description + ", id=" + id + ", passcode=" + passcode + ", privilegedUsers="
-				+ privilegedUsers + ", roles=" + roles + ", title=" + title + ", userRoles=" + userRoles + "]";
-	}
-
-
-
 	@Getter
 	@Setter
 	@NoArgsConstructor
@@ -60,10 +51,6 @@ public class CourseForm {
 
 		private List<CourseFormPrivilege> privileges;
 
-		@Override
-		public String toString() {
-			return "CourseFormRole [privileges=" + privileges + ", role=" + role + "]";
-		}
 	}
 
 	@Getter
@@ -80,6 +67,8 @@ public class CourseForm {
 
 
 
+	@Data
+	@Builder
 	@Getter
 	@Setter
 	@NoArgsConstructor
@@ -88,11 +77,17 @@ public class CourseForm {
 
 		private String username;
 
+		@EqualsAndHashCode.Exclude
+		private String firstName;
+
+		@EqualsAndHashCode.Exclude
+		private String familyName;
+
 		private Role role;
 
-		@Override
-		public String toString() {
-			return "CourseFormUser [role=" + role + ", username=" + username + "]";
+
+		public static int compareByUserName(CourseFormUser lhs, CourseFormUser rhs) {
+			return lhs.getUsername().compareTo(rhs.getUsername());
 		}
 	}
 }

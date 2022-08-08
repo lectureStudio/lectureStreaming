@@ -21,7 +21,7 @@ public class CoursePrivilegeEvaluator implements PermissionEvaluator {
 
 	@Override
 	public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
-		System.out.println("hasPermission: " + permission + " -> " + requestScopedPrivileges.getPrivileges());
+		// System.out.println("hasPermission: " + permission + " -> " + requestScopedPrivileges.getPrivileges());
 
 		final Set<Privilege> privileges = requestScopedPrivileges.getPrivileges();
 

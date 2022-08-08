@@ -85,14 +85,16 @@
 		</div>
 	</th:block>
 
-	<div th:fragment="course-form-users(newUser, userRoles)" id="users">
-		<div class="d-flex flex-row mb-3" th:object="${courseForm}">
+	<div th:fragment="course-form-users(newUser, userRoles)" id="users" th:object="${courseForm}">
+		<input type="hidden" th:field="*{id}">
+
+		<div class="d-flex flex-row mb-3">
 			<input type="hidden" th:each="formUserRole,userRoleStat : *{__${userRoles}__}" th:field="*{__${userRoles}__[__${userRoleStat.index}__].role}" th:value="${formUserRole.role}">
 			</input>
 
 			<div class="pt-2 pr-2">
 				<label th:text="#{course.form.manage.users.username}" for="username" class="form-label"></label>
-				<input type="text" class="form-control form-control-sm" id="username" th:field="*{__${newUser}__.username}">
+				<input type="text" class="form-control form-control-sm" id="username" th:field="*{__${newUser}__.username}" th:errorclass="is-invalid" aria-describedby="user-feedback">
 			</div>
 			<div class="p-2">
 				<label th:text="#{course.form.manage.users.role}" for="roleSelect" class="form-label"></label>
@@ -109,21 +111,30 @@
 					class="btn btn-sm btn-outline-primary"></button>
 			</div>
 		</div>
+		<div th:if="${#fields.hasAnyErrors()}" class="mb-3">
+			<ul class="list-group">
+				<li th:each="error : ${#fields.allErrors()}" th:text="${error}" class="list-group-item list-group-item-danger"></li>
+			</ul>
+		</div>
 
 		<table class="table table-hover table-sm">
 			<thead class="table-light">
 				<tr>
-					<th scope="col" class="w-50" th:text="#{course.form.manage.users.username}"></th>
-					<th scope="col" class="w-50" th:text="#{course.form.manage.users.role}"></th>
+					<th scope="col" class="w-25" th:text="#{course.form.manage.users.username}"></th>
+					<th scope="col" class="w-50" th:text="#{course.form.manage.users.name}"></th>
+					<th scope="col" class="w-25" th:text="#{course.form.manage.users.role}"></th>
 					<th scope="col" class=""></th>
 				</tr>
 			</thead>
 			<tbody th:unless="${#lists.isEmpty(courseForm.privilegedUsers)}">
 				<tr th:each="privilegedUser,userStat : ${courseForm.privilegedUsers}">
 					<input type="hidden" th:field="${courseForm.privilegedUsers[__${userStat.index}__].username}">
+					<input type="hidden" th:field="${courseForm.privilegedUsers[__${userStat.index}__].firstName}">
+					<input type="hidden" th:field="${courseForm.privilegedUsers[__${userStat.index}__].familyName}">
 					<input type="hidden" th:field="${courseForm.privilegedUsers[__${userStat.index}__].role}">
-	
+
 					<td th:text="${privilegedUser.username}"></td>
+					<td th:text="${not #strings.isEmpty(privilegedUser.firstName)} ? |${privilegedUser.firstName} ${privilegedUser.familyName}| : #{course.form.manage.users.name.not.found}"></td>
 					<td th:text="#{${privilegedUser.role.descriptionKey}}"></td>
 					<td>
 						<button name="removeUser" th:value="${userStat.index}" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" th:title="#{course.delete}">
@@ -134,7 +145,7 @@
 			</tbody>
 			<tbody th:if="${#lists.isEmpty(courseForm.privilegedUsers)}">
 				<tr>
-					<td colspan="3" class="text-center" th:text="#{course.form.manage.users.empty}"></td>
+					<td colspan="4" class="text-center" th:text="#{course.form.manage.users.empty}"></td>
 				</tr>
 			</tbody>
 		</table>
@@ -152,7 +163,7 @@
 				event.preventDefault();
 
 				var entries = Object.fromEntries(new FormData(courseForm));
-				entries.addUser = "TEST";
+				entries.addUser = "";
 
 				const data = new URLSearchParams(entries).toString();
 

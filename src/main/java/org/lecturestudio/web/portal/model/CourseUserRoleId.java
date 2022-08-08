@@ -14,11 +14,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CourseUserRoleId implements Serializable {
 
-	private long course;
+	private Course course;
 
-	private long role;
+	private Role role;
 
-	private String username;
+	private String userId;
 
 
 	@Override
@@ -34,12 +34,12 @@ public class CourseUserRoleId implements Serializable {
 
 		return Objects.equals(course, that.course)
 			&& Objects.equals(role, that.role)
-			&& Objects.equals(username, that.username);
+			&& Objects.equals(userId, that.userId);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(course, role, username);
+		return Objects.hash(course, role, userId);
 	}
 
 }
