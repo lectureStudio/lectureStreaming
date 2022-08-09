@@ -256,11 +256,15 @@ public class CourseSubscriberController {
 		}
 
 		participantService.findAllUsersByCourseId(courseId).forEach(user -> {
-			participants.add(UserDto.builder()
-				.userId(user.getUserId())
-				.familyName(user.getFamilyName())
-				.firstName(user.getFirstName())
-				.build());
+			UserDto participant = UserDto.builder()
+					.userId(user.getUserId())
+					.familyName(user.getFamilyName())
+					.firstName(user.getFirstName())
+					.build();
+
+			if (!participants.contains(participant)) {
+				participants.add(participant);
+			}
 		});
 
 		return participants;

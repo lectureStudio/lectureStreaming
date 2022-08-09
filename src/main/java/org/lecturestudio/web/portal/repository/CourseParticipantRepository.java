@@ -18,6 +18,9 @@ public interface CourseParticipantRepository extends CrudRepository<CoursePartic
 
 	public Optional<CourseParticipant> findBySessionId(String sessionId);
 
+	@Query("SELECT CASE WHEN count(cp) > 0 THEN true ELSE false END FROM CourseParticipant cp WHERE cp.user.userId = ?1")
+	public boolean existsByUser(String userId);
+
 	@Query(value = "SELECT user FROM CourseParticipant cp WHERE cp.courseId = ?1")
 	public Iterable<User> findAllUsersByCourseId(Long courseId, Sort sort);
 

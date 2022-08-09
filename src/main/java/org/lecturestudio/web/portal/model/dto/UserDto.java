@@ -1,13 +1,13 @@
 package org.lecturestudio.web.portal.model.dto;
 
-import java.util.Objects;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -21,25 +21,4 @@ public class UserDto {
 
 	String familyName;
 
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (!(o instanceof UserDto)) {
-			return false;
-		}
-
-		UserDto userDto = (UserDto) o;
-
-		return Objects.equals(userId, userDto.userId)
-			&& Objects.equals(firstName, userDto.firstName)
-			&& Objects.equals(familyName, userDto.familyName);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(userId, firstName, familyName);
-	}
 }

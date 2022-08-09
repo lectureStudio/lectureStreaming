@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.lecturestudio.web.api.message.MessengerDirectMessage;
 import org.lecturestudio.web.api.message.MessengerMessage;
@@ -88,7 +89,21 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
 	}
 
 	public List<WebMessage> getMessengerHistoryOfCourse(long courseId, User user) {
+		String userId = user.getUserId();
 		List<WebMessage> historyList = messengerMessageHistories.get(courseId);
+
+		if (nonNull(historyList)) {
+			historyList = historyList.stream().filter(webMessage -> {
+				if (webMessage instanceof MessengerDirectMessage) {
+					MessengerDirectMessage directMessage = (MessengerDirectMessage) webMessage;
+	
+					// Return only private messages that we have sent or received.
+					return directMessage.getUserId().equals(userId) || directMessage.getRecipient().equals(userId);
+				}
+	
+				return true;
+			}).collect(Collectors.toList());
+		}
 
 		return nonNull(historyList) ? historyList : List.of();
 	}

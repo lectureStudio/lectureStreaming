@@ -68,7 +68,9 @@ public class ParticipantPresenceListener {
 				presenceMessage.setUserId(userName);
 				presenceMessage.setCoursePresence(CoursePresence.CONNECTED);
 
-				simpEmitter.emmitEvent(Long.parseLong(courseId), presenceEvent, presenceMessage);
+				if (!participantService.existsByUserId(userName)) {
+					simpEmitter.emmitEvent(Long.parseLong(courseId), presenceEvent, presenceMessage);
+				}
 
 				CourseParticipant participant = CourseParticipant.builder()
 					.courseId(Long.parseLong(courseId))
@@ -104,7 +106,9 @@ public class ParticipantPresenceListener {
 				presenceMessage.setUserId(userName);
 				presenceMessage.setCoursePresence(CoursePresence.DISCONNECTED);
 
-				simpEmitter.emmitEvent(courseId, presenceEvent, presenceMessage);
+				if (participantService.existsByUserId(userName)) {
+					simpEmitter.emmitEvent(courseId, presenceEvent, presenceMessage);
+				}
 			}
 
 			participantService.deleteParticipantBySessionId(headers.getSessionId());

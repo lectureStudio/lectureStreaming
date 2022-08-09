@@ -35,4 +35,8 @@ public class CourseParticipantService {
 	public Optional<CourseParticipant> getParticipantBySessionId(String sessionId) {
 		return featureRepository.findBySessionId(sessionId);
 	}
+
+	public boolean existsByUserId(String userId) {
+		return featureRepository.existsByUser(userId);
+	}
 }
