@@ -90,7 +90,7 @@ public class ParticipantPresenceListener {
 		String stompEndpoint = (String) sessionHeaders.get(endpointHeader);
 		String userName = headers.getUser().getName();
 
-		if (stateEndpoint.equals(stompEndpoint)) {
+		if (stateEndpoint.equals(stompEndpoint) || publisherEndpoint.equals(stompEndpoint)) {
 			User user = userService.findById(userName).orElse(null);
 			CourseParticipant participant = participantService.getParticipantBySessionId(headers.getSessionId()).orElse(null);
 
