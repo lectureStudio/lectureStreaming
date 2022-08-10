@@ -28,6 +28,11 @@ html, body {
 	line-height: 2em;
 	margin-bottom: 0.5em;
 }
+.theme-nav-head {
+	border-bottom: 1px solid #e5e5e5;
+	line-height: 2em;
+	margin-bottom: 0.5em;
+}
 
 .disabled-content {
 	pointer-events: none;

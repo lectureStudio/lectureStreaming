@@ -19,6 +19,7 @@ import org.lecturestudio.web.portal.model.CourseForm;
 import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseRegistration;
 import org.lecturestudio.web.portal.model.CourseRole;
+import org.lecturestudio.web.portal.model.DefaultRolePrivilege;
 import org.lecturestudio.web.portal.model.Privilege;
 import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
@@ -28,6 +29,7 @@ import org.lecturestudio.web.portal.model.CourseForm.CourseFormUser;
 import org.lecturestudio.web.portal.repository.CourseRepository;
 import org.lecturestudio.web.portal.repository.CourseRoleRepository;
 import org.lecturestudio.web.portal.repository.CourseUserRoleRepository;
+import org.lecturestudio.web.portal.repository.DefaultRolePrivilegeRepository;
 import org.lecturestudio.web.portal.repository.PrivilegeRepository;
 import org.lecturestudio.web.portal.repository.RoleRepository;
 
@@ -59,6 +61,9 @@ public class CourseService {
 
 	@Autowired
 	private PrivilegeRepository privilegeRepository;
+
+	@Autowired
+	private DefaultRolePrivilegeRepository defaultRolePrivilegeRepository;
 
 	@Autowired
 	private UserService userService;
@@ -159,16 +164,16 @@ public class CourseService {
 
 	public CourseForm createCourseForm() {
 		List<Role> roles = roleRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
-		List<Privilege> privileges = privilegeRepository.findAll();
 
 		List<CourseFormRole> formRoles = new ArrayList<>();
 		List<CourseFormRole> formUserRoles = new ArrayList<>();
 
 		for (Role role : roles) {
+			List<DefaultRolePrivilege> defaultPrivileges = defaultRolePrivilegeRepository.findAllByRoleId(role.getId());
 			List<CourseFormPrivilege> formPrivileges = new ArrayList<>();
 
-			for (Privilege privilege : privileges) {
-				formPrivileges.add(new CourseFormPrivilege(privilege, false));
+			for (DefaultRolePrivilege privilege : defaultPrivileges) {
+				formPrivileges.add(new CourseFormPrivilege(privilege.getPrivilege(), privilege.getEnabled()));
 			}
 
 			formRoles.add(new CourseFormRole(role, formPrivileges));

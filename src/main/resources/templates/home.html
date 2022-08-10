@@ -9,6 +9,9 @@
 <body>
 
 	<th:block layout:fragment="content">
+		<div class="mb-3 theme-nav-head" sec:authorize="hasAnyRole('MEMBER')">
+			<a class="" th:href="@{/course/add}" th:text="#{home.add.course}"></a>
+		</div>
 		<div class="list-group bg-light border rounded-3 p-4">
 			<div th:each="course: ${courses}" class="list-group-item" aria-current="true">
 				<a th:href="@{/course/{id}(id=${course.id})}" class="overlay-link"></a>

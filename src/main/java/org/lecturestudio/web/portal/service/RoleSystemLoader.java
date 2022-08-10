@@ -1,11 +1,15 @@
 package org.lecturestudio.web.portal.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.transaction.Transactional;
 
+import org.lecturestudio.web.portal.model.DefaultRolePrivilege;
 import org.lecturestudio.web.portal.model.Privilege;
 import org.lecturestudio.web.portal.model.Role;
+import org.lecturestudio.web.portal.repository.DefaultRolePrivilegeRepository;
 import org.lecturestudio.web.portal.repository.PrivilegeRepository;
 import org.lecturestudio.web.portal.repository.RoleRepository;
 
@@ -27,6 +31,7 @@ public class RoleSystemLoader implements ApplicationListener<ContextRefreshedEve
 			new Privilege(null, "COURSE_ALTER_PRIVILEGES", "privilege.course.alter.privileges"),
 			new Privilege(null, "COURSE_EDIT", "privilege.course.edit"),
 			new Privilege(null, "COURSE_DELETE", "privilege.course.delete"),
+			new Privilege(null, "COURSE_STREAM", "privilege.course.stream"),
 			new Privilege(null, "CHAT_READ", "privilege.chat.read"),
 			new Privilege(null, "CHAT_WRITE", "privilege.chat.write"),
 			new Privilege(null, "CHAT_WRITE_TO_ORGANISATOR", "privilege.chat.write.to.organisator"),
@@ -44,6 +49,9 @@ public class RoleSystemLoader implements ApplicationListener<ContextRefreshedEve
 	@Autowired
 	private PrivilegeRepository privilegeRepository;
 
+	@Autowired
+	private DefaultRolePrivilegeRepository defaultRolePrivilegeRepository;
+
 
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -53,8 +61,15 @@ public class RoleSystemLoader implements ApplicationListener<ContextRefreshedEve
 			}
 
 			for (Privilege privilege : PRIVILEGES) {
-				privilege = createPrivilegeIfNotFound(privilege);
+				createPrivilegeIfNotFound(privilege);
 			}
+
+			createDefaultRolePrivileges(roleRepository.findByName("organisator"),
+					List.of());
+			createDefaultRolePrivileges(roleRepository.findByName("co-organisator"),
+					List.of("COURSE_ALTER_PRIVILEGES", "COURSE_EDIT", "COURSE_DELETE"));
+			createDefaultRolePrivileges(roleRepository.findByName("participant"),
+					List.of("COURSE_ALTER_PRIVILEGES", "COURSE_EDIT", "COURSE_DELETE", "COURSE_STREAM", "CHAT_WRITE_PRIVATELY"));
 		}
 	}
 
@@ -78,5 +93,21 @@ public class RoleSystemLoader implements ApplicationListener<ContextRefreshedEve
 		}
 
 		return role;
+	}
+
+	@Transactional
+	void createDefaultRolePrivileges(Role role, List<String> disabledPrivileges) {
+		List<Privilege> privileges = privilegeRepository.findAll();
+		List<DefaultRolePrivilege> defaultPrivileges = new ArrayList<>();
+
+		for (Privilege privilege : privileges) {
+			defaultPrivileges.add(DefaultRolePrivilege.builder()
+					.role(role)
+					.privilege(privilege)
+					.enabled(!disabledPrivileges.contains(privilege.getName()))
+					.build());
+		}
+
+		defaultRolePrivilegeRepository.saveAll(defaultPrivileges);
 	}
 }

@@ -19,6 +19,12 @@ class PortalApp {
 	}
 
 	initialize() {
+		const storedMediaProfile = localStorage.getItem("media.profile");
+
+		if (!storedMediaProfile) {
+			localStorage.setItem("media.profile", "home");
+		}
+
 		const client = new StompJs.Client({
 			brokerURL: "wss://" + window.location.host + "/ws-state",
 			reconnectDelay: 1000,

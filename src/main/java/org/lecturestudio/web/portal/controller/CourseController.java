@@ -36,10 +36,10 @@ import org.lecturestudio.web.portal.model.CourseForm.CourseFormUser;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
-import org.lecturestudio.web.portal.service.CourseRegistrationService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.util.StringUtils;
+import org.lecturestudio.web.portal.validator.CourseUserRoleValidator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -67,10 +67,10 @@ public class CourseController {
 	private CourseService courseService;
 
 	@Autowired
-	private CourseRegistrationService courseRegistrationService;
+	private CourseStates courseStates;
 
 	@Autowired
-	private CourseStates courseStates;
+	private CourseUserRoleValidator courseFormValidator;
 
 	@Autowired
 	private MessageSource messageSource;
@@ -283,9 +283,6 @@ public class CourseController {
 	@PreAuthorize("hasPrivilege('COURSE_EDIT')")
 	public String updateCourse(Authentication authentication, HttpServletRequest request, @PathVariable("id") long id, @Valid CourseForm courseForm,
 			BindingResult result, Model model) {
-		Course dbCourse = courseService.findById(id)
-				.orElseThrow(() -> new CourseNotFoundException());
-
 		boolean canAlterPrivileges = courseService.isAuthorized(id, authentication, "COURSE_ALTER_PRIVILEGES");
 
 		if (result.hasErrors()) {
@@ -297,6 +294,8 @@ public class CourseController {
 
 		String baseUri = request.getScheme() + "://" + request.getServerName();
 
+		Course dbCourse = courseService.findById(id)
+				.orElseThrow(() -> new CourseNotFoundException());
 		dbCourse.setTitle(courseForm.getTitle());
 		dbCourse.setDescription(StringUtils.cleanHtml(courseForm.getDescription(), baseUri));
 		dbCourse.setPasscode(courseForm.getPasscode());
@@ -375,49 +374,16 @@ public class CourseController {
 	}
 
 	@PostMapping(path = { "/add/user" }, params = "addUser")
-	public String addUser(@Valid CourseForm courseForm, BindingResult result, Model model, Authentication authentication) {
-		Long courseId = courseForm.getId();
+	public String addUser(@Valid CourseForm courseForm, BindingResult result, Model model,
+			Authentication authentication) {
+		courseFormValidator.validateNewUser(courseForm, authentication, result);
 
-		if (isNull(courseForm.getPrivilegedUsers())) {
-			courseForm.setPrivilegedUsers(new ArrayList<>());
-		}
-
-		CourseFormUser newUser = courseForm.getNewUser();
-		String userName = newUser.getUsername();
-
-		boolean userInvalid = userName.isEmpty();
-		boolean roleInvalid = courseForm.getPrivilegedUsers().contains(newUser);
-		boolean assignedSelf = authentication.getName().equals(userName);
-		boolean assignedOwner = false;
-
-		if (nonNull(courseId)) {
-			Optional<CourseRegistration> courseReg = courseRegistrationService.findByCourseAndUserId(courseId, userName);
-
-			assignedOwner = courseReg.isPresent();
-		}
-
-		if (userInvalid || roleInvalid || assignedSelf || assignedOwner) {
-			if (userInvalid) {
-				result.rejectValue("newUser.username", "course.form.user.error.username.empty");
-			}
-			else if (assignedSelf) {
-				result.rejectValue("newUser.username", "course.form.user.error.assigned.self");
-			}
-			else if (assignedOwner) {
-				result.rejectValue("newUser.username", "course.form.user.error.assigned.owner");
-			}
-			else if (roleInvalid) {
-				String roleName = messageSource.getMessage(newUser.getRole().getDescriptionKey(), null,
-						LocaleContextHolder.getLocale());
-
-				result.reject("course.form.user.error.role.duplicate",
-						new String[] { userName, roleName }, "");
-			}
-
+		if (result.hasErrors()) {
 			return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";
 		}
 
-		Optional<User> user = userService.findById(userName);
+		CourseFormUser newUser = courseForm.getNewUser();
+		Optional<User> user = userService.findById(newUser.getUsername());
 
 		if (user.isPresent()) {
 			newUser.setFirstName(user.get().getFirstName());
@@ -434,7 +400,14 @@ public class CourseController {
 	}
 
 	@PostMapping(path = { "/remove/user" }, params = "removeUser")
-	public String removeUser(CourseForm courseForm, @RequestParam("removeUser") int index, Model model) {
+	public String removeUser(CourseForm courseForm, @RequestParam("removeUser") int index, BindingResult result,
+			Model model, Authentication authentication) {
+		courseFormValidator.validateRemoveUser(courseForm, authentication, result, index);
+
+		if (result.hasErrors()) {
+			return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";
+		}
+
 		courseForm.getPrivilegedUsers().remove(index);
 
 		model.addAttribute("courseForm", courseForm);

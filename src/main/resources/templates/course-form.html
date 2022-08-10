@@ -91,7 +91,7 @@
 	<div th:fragment="course-form-users(newUser, userRoles)" id="users" th:object="${courseForm}">
 		<input type="hidden" th:field="*{id}">
 
-		<div class="d-flex flex-row mb-3">
+		<div class="d-flex flex-row mb-1">
 			<input type="hidden" th:each="formUserRole,userRoleStat : *{__${userRoles}__}" th:field="*{__${userRoles}__[__${userRoleStat.index}__].role}" th:value="${formUserRole.role}">
 			</input>
 
@@ -113,6 +113,9 @@
 				<button th:text="#{course.form.add.user}" type="submit" name="addUser"
 					class="btn btn-sm btn-outline-primary"></button>
 			</div>
+		</div>
+		<div class="form-text mb-3">
+			<span th:text="#{course.form.manage.users.save}" class="form-label"></span>
 		</div>
 		<div th:if="${#fields.hasAnyErrors()}" class="mb-3">
 			<ul class="list-group">
