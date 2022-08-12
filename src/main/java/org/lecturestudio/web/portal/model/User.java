@@ -54,7 +54,7 @@ public class User {
 	@JoinColumn(name = "token_id", referencedColumnName = "id")
 	PersonalToken token;
 
-	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
 	Set<CourseRegistration> registrations;
 
 	@ManyToMany(fetch = FetchType.EAGER)

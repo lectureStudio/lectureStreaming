@@ -34,6 +34,8 @@ public class JanusEventController {
 				if (event instanceof JanusVideoRoomEvent) {
 					JanusVideoRoomEvent roomEvent = (JanusVideoRoomEvent) event;
 
+					System.out.println(roomEvent.getEventType());
+
 					if (roomEvent.getEventType() == JanusVideoRoomEventType.SUBSCRIBED) {
 						long courseId = roomEvent.getRoomId().longValue();
 						CourseState state = courseStates.getCourseState(courseId);

@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
-
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
@@ -102,6 +101,10 @@ public class CourseService {
 		return privilegeRepository.findAll();
 	}
 
+	public List<Role> findAllRoles(Long courseId, String username) {
+		return courseUserRoleRepository.findAllRoles(courseId, username);
+	}
+
 	public Set<Privilege> getUserPrivileges(Long courseId, String userId) {
 		Course course = findById(courseId)
 				.orElseThrow(() -> new CourseNotFoundException());
@@ -110,8 +113,8 @@ public class CourseService {
 				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
 
 		Set<CourseRole> courseRoles = course.getRoles();
-		Set<Role> userRoles = user.getRoles();
-		userRoles.addAll(courseUserRoleRepository.findAllRoles(courseId, user.getUserId()));
+		Set<Role> userRoles = new HashSet<>(user.getRoles());
+		userRoles.addAll(findAllRoles(courseId, user.getUserId()));
 
 		Set<Privilege> userPrivileges = new HashSet<>();
 
@@ -245,6 +248,26 @@ public class CourseService {
 		return form;
 	}
 
+	public List<String> getOrganisators(long courseId) {
+		Course course = findById(courseId)
+				.orElseThrow(() -> new CourseNotFoundException());
+
+		List<String> users = new ArrayList<>();
+
+		for (var registration : course.getRegistrations()) {
+			users.add(registration.getUser().getUserId());
+		}
+		for (var userRole : course.getUserRoles()) {
+			String roleName = userRole.getRole().getName();
+
+			if (roleName.equals("organisator") || roleName.equals("co-organisator")) {
+				users.add(userRole.getUserId());
+			}
+		}
+
+		return users;
+	}
+
 	public boolean isAuthorized(long courseId, Authentication authentication, String operation)
 			throws UnauthorizedException {
 		UserDetails details = (UserDetails) authentication.getDetails();
@@ -281,7 +304,7 @@ public class CourseService {
 
 		Set<CourseRole> courseRoles = course.getRoles();
 		Set<Role> userRoles = user.getRoles();
-		userRoles.addAll(courseUserRoleRepository.findAllRoles(courseId, user.getUserId()));
+		userRoles.addAll(findAllRoles(courseId, user.getUserId()));
 
 		for (CourseRole courseRole : courseRoles) {
 			if (userRoles.contains(courseRole.getRole())) {

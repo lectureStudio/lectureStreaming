@@ -27,7 +27,7 @@ import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStatePage;
 import org.lecturestudio.web.portal.model.CourseStates;
-import org.lecturestudio.web.portal.service.UserService;
+import org.lecturestudio.web.portal.service.CoursePresenceService;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.socket.BinaryMessage;
@@ -47,12 +47,12 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 	private final CourseStates courseStates;
 
-	private final UserService userService;
+	private final CoursePresenceService presenceService;
 
 
-	public CourseStateWebSocketHandler(CourseStates courseStates, UserService userService) {
+	public CourseStateWebSocketHandler(CourseStates courseStates, CoursePresenceService presenceService) {
 		this.courseStates = courseStates;
-		this.userService = userService;
+		this.presenceService = presenceService;
 	}
 
 	@Override
@@ -206,7 +206,7 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		userSockets.put(session, courseId);
 
 		// Bind course state to the course ID.
-		initStates.put(courseId, new CourseState(userService, courseId));
+		initStates.put(courseId, new CourseState(presenceService, courseId));
 	}
 
 	private void sessionStart(StreamStartAction startAction) {

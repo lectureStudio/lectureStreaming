@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.lecturestudio.core.recording.RecordedPage;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
 import org.lecturestudio.web.portal.service.CourseParticipantService;
+import org.lecturestudio.web.portal.service.CoursePresenceService;
 import org.lecturestudio.web.portal.service.CourseQuizResourceService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
@@ -110,6 +111,9 @@ public class CourseSubscriberController {
 
 	@Autowired
 	private CourseParticipantService participantService;
+
+	@Autowired
+	private CoursePresenceService presenceService;
 
 	@Autowired
 	private UserService userService;
@@ -260,6 +264,7 @@ public class CourseSubscriberController {
 					.userId(user.getUserId())
 					.familyName(user.getFamilyName())
 					.firstName(user.getFirstName())
+					.participantType(presenceService.getCourseParticipantType(user, courseId))
 					.build();
 
 			if (!participants.contains(participant)) {
@@ -307,7 +312,7 @@ public class CourseSubscriberController {
 
 			speechRequestService.saveRequest(speechRequest);
 
-			// Notify service provider endpoint.
+			// Notify course organisators.
 			SpeechRequestMessage message = new SpeechRequestMessage();
 			message.setRequestId(speechRequest.getRequestId());
 			message.setDate(ZonedDateTime.now());
@@ -315,7 +320,9 @@ public class CourseSubscriberController {
 			message.setFamilyName(details.getFamilyName());
 			message.setUserId(details.getUsername());
 
-			simpEmitter.emmitEvent(courseId, simpProperties.getEvents().getSpeech(), message);
+			for (String userId : courseService.getOrganisators(courseId)) {
+				simpEmitter.emmitEventToUser(courseId, simpProperties.getEvents().getSpeech(), message, userId);
+			}
 
 			return ResponseEntity.ok().body(speechRequest.getRequestId());
 		}
@@ -355,7 +362,7 @@ public class CourseSubscriberController {
 
 			speechRequestService.deleteById(speechRequest.getId());
 
-			// Notify service provider endpoint.
+			// Notify course organisators.
 			SpeechCancelMessage message = new SpeechCancelMessage();
 			message.setRequestId(speechRequest.getRequestId());
 			message.setDate(ZonedDateTime.now());
@@ -363,7 +370,9 @@ public class CourseSubscriberController {
 			message.setFamilyName(details.getFamilyName());
 			message.setUserId(details.getUsername());
 
-			simpEmitter.emmitEvent(courseId, simpProperties.getEvents().getSpeech(), message);
+			for (String userId : courseService.getOrganisators(courseId)) {
+				simpEmitter.emmitEventToUser(courseId, simpProperties.getEvents().getSpeech(), message, userId);
+			}
 		}
 
 		return response;
@@ -394,13 +403,38 @@ public class CourseSubscriberController {
 		String recipient = accessor.getFirstNativeHeader("recipient");
 
 		if (recipient.equals("public")) {
-			WebMessage forwardMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
-			forwardMessage.setFirstName(details.getFirstName());
-			forwardMessage.setFamilyName(details.getFamilyName());
+			WebMessage chatMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
+			chatMessage.setFirstName(details.getFirstName());
+			chatMessage.setFamilyName(details.getFamilyName());
 
-			messengerFeatureSaveFeature.onFeatureMessage(courseId, forwardMessage);
+			messengerFeatureSaveFeature.onFeatureMessage(courseId, chatMessage);
 
-			simpEmitter.emmitChatMessage(courseId, forwardMessage);
+			simpEmitter.emmitChatMessage(courseId, chatMessage);
+		}
+		else if (recipient.equals("organisers")) {
+			if (!courseService.isAuthorized(courseId, authentication, "CHAT_WRITE_TO_ORGANISATOR")) {
+				throw new UnauthorizedException();
+			}
+
+			MessengerDirectMessage chatMessage = new MessengerDirectMessage(recipient);
+			chatMessage.setUserId(details.getUsername());
+			chatMessage.setFirstName(details.getFirstName());
+			chatMessage.setFamilyName(details.getFamilyName());
+			chatMessage.setMessage(payload);
+			chatMessage.setDate(ZonedDateTime.now());
+			chatMessage.setReply(false);
+
+			messengerFeatureSaveFeature.onFeatureMessage(courseId, chatMessage);
+
+			// Send back to the sender.
+			simpEmitter.emmitChatMessageToUser(courseId, chatMessage, details.getUsername());
+
+			// Send to all (co-)organisators.
+			for (String userId : courseService.getOrganisators(courseId)) {
+				chatMessage.setRecipient(userId);
+
+				simpEmitter.emmitChatMessageToUser(courseId, chatMessage, userId);
+			}
 		}
 		else {
 			if (!courseService.isAuthorized(courseId, authentication, "CHAT_WRITE_PRIVATELY")) {
@@ -414,18 +448,21 @@ public class CourseSubscriberController {
 				return;
 			}
 
-			MessengerDirectMessage forwardMessage = new MessengerDirectMessage(recipient, payload, details.getUsername(), ZonedDateTime.now());
-			forwardMessage.setFirstName(details.getFirstName());
-			forwardMessage.setFamilyName(details.getFamilyName());
-			forwardMessage.setReply(false);
+			MessengerDirectMessage chatMessage = new MessengerDirectMessage(recipient);
+			chatMessage.setUserId(details.getUsername());
+			chatMessage.setFirstName(details.getFirstName());
+			chatMessage.setFamilyName(details.getFamilyName());
+			chatMessage.setMessage(payload);
+			chatMessage.setDate(ZonedDateTime.now());
+			chatMessage.setReply(false);
 
-			messengerFeatureSaveFeature.onFeatureMessage(courseId, forwardMessage);
+			messengerFeatureSaveFeature.onFeatureMessage(courseId, chatMessage);
 
 			// Send back to the sender.
-			simpEmitter.emmitChatMessageToUser(courseId, forwardMessage, details.getUsername());
+			simpEmitter.emmitChatMessageToUser(courseId, chatMessage, details.getUsername());
 
 			// Send to the recipient.
-			simpEmitter.emmitChatMessageToUser(courseId, forwardMessage, recipient);
+			simpEmitter.emmitChatMessageToUser(courseId, chatMessage, recipient);
 		}
     }
 
@@ -450,9 +487,11 @@ public class CourseSubscriberController {
 
 			courseFeatureService.save(feature);
 
-			QuizAnswerMessage qMessage = new QuizAnswerMessage(quizAnswer, request.getRemoteAddr(), ZonedDateTime.now());
+			QuizAnswerMessage qMessage = new QuizAnswerMessage(quizAnswer, "", ZonedDateTime.now());
 
-			simpEmitter.emmitEventAndAll(courseId, simpProperties.getEvents().getQuiz(), qMessage);
+			for (String userId : courseService.getOrganisators(courseId)) {
+				simpEmitter.emmitEventToUser(courseId, simpProperties.getEvents().getQuiz(), qMessage, userId);
+			}
 		}
 
 		return response;

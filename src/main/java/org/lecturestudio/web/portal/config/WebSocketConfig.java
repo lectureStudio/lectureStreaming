@@ -1,7 +1,7 @@
 package org.lecturestudio.web.portal.config;
 
 import org.lecturestudio.web.portal.model.CourseStates;
-import org.lecturestudio.web.portal.service.UserService;
+import org.lecturestudio.web.portal.service.CoursePresenceService;
 import org.lecturestudio.web.portal.websocket.CourseStateWebSocketHandler;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,13 +22,13 @@ public class WebSocketConfig implements WebSocketConfigurer {
 	private CourseStates courseStates;
 
 	@Autowired
-	private UserService userService;
+	private CoursePresenceService presenceService;
 
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		registry
-			.addHandler(new CourseStateWebSocketHandler(courseStates, userService), "/api/publisher/course-state")
+			.addHandler(new CourseStateWebSocketHandler(courseStates, presenceService), "/api/publisher/course-state")
 				.setAllowedOrigins("*");
 	}
 

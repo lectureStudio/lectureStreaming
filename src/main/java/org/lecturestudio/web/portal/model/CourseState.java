@@ -8,11 +8,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.lecturestudio.web.portal.service.UserService;
+import org.lecturestudio.web.api.stream.model.CoursePresence;
+import org.lecturestudio.web.api.stream.model.CoursePresenceType;
+import org.lecturestudio.web.portal.service.CoursePresenceService;
 
 public class CourseState {
 
-	private final UserService userService;
+	private final CoursePresenceService presenceService;
 
 	private final long courseId;
 
@@ -27,8 +29,8 @@ public class CourseState {
 	private boolean isRecorded;
 
 
-	public CourseState(UserService userService, long courseId) {
-		this.userService = userService;
+	public CourseState(CoursePresenceService presenceService, long courseId) {
+		this.presenceService = presenceService;
 		this.courseId = courseId;
 		timestamp = System.currentTimeMillis();
 	}
@@ -63,19 +65,7 @@ public class CourseState {
 		}
 
 		if (openSessions.isEmpty()) {
-			// Optional<User> user = userService.findById(participantId);
-
-			// Send notification of arrival.
-			// CourseParticipantMessage participantMessage = new CourseParticipantMessage();
-			// participantMessage.setConnected(true);
-
-			// if (user.isPresent()) {
-			// 	participantMessage.setFirstName(user.get().getFirstName());
-			// 	participantMessage.setFamilyName(user.get().getFamilyName());
-			// 	participantMessage.setUserName(user.get().getUserId());
-			// }
-
-			// postParticipantMessage(courseId, participantMessage);
+			presenceService.sendCoursePresenceToOrganisers(CoursePresence.CONNECTED, CoursePresenceType.STREAM, participantId, courseId);
 		}
 
 		openSessions.add(sessionId);
@@ -94,25 +84,13 @@ public class CourseState {
 				entry.getValue().remove(sessionId);
 
 				if (entry.getValue().isEmpty()) {
-					// Optional<User> user = userService.findById(participantId);
-
-					// // Send notification of departure.
-					// CourseParticipantMessage participantMessage = new CourseParticipantMessage();
-					// participantMessage.setConnected(false);
-
-					// if (user.isPresent()) {
-					// 	participantMessage.setFirstName(user.get().getFirstName());
-					// 	participantMessage.setFamilyName(user.get().getFamilyName());
-					// 	participantMessage.setUserName(user.get().getUserId());
-					// }
-
-					// postParticipantMessage(courseId, participantMessage);
+					presenceService.sendCoursePresenceToOrganisers(CoursePresence.DISCONNECTED, CoursePresenceType.STREAM, participantId, courseId);
 				}
 
 				break;
 			}
 		}
-		}
+	}
 
 	public CourseStateDocument getActiveDocument() {
 		return avtiveDocument;

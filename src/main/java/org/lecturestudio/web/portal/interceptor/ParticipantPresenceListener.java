@@ -3,18 +3,17 @@ package org.lecturestudio.web.portal.interceptor;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
-import java.time.ZonedDateTime;
 import java.util.Map;
 
 import javax.transaction.Transactional;
 
-import org.lecturestudio.web.api.message.CoursePresenceMessage;
 import org.lecturestudio.web.api.stream.model.CoursePresence;
+import org.lecturestudio.web.api.stream.model.CoursePresenceType;
 import org.lecturestudio.web.portal.model.CourseParticipant;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.service.CourseParticipantService;
+import org.lecturestudio.web.portal.service.CoursePresenceService;
 import org.lecturestudio.web.portal.service.UserService;
-import org.lecturestudio.web.portal.util.SimpEmitter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,16 +27,13 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 public class ParticipantPresenceListener {
 
 	@Autowired
+	private CoursePresenceService coursePresenceService;
+
+	@Autowired
 	private UserService userService;
 
 	@Autowired
 	private CourseParticipantService participantService;
-
-	@Autowired
-	private SimpEmitter simpEmitter;
-
-	@Value("${simp.events.presence}")
-	private String presenceEvent;
 
 	@Value("${simp.endpoints.publisher}")
 	private String publisherEndpoint;
@@ -58,25 +54,20 @@ public class ParticipantPresenceListener {
 
 		if (stateEndpoint.equals(stompEndpoint) || publisherEndpoint.equals(stompEndpoint)) {
 			User user = userService.findById(userName).orElse(null);
-			String courseId = headers.getFirstNativeHeader("courseId");
+			String courseIdStr = headers.getFirstNativeHeader("courseId");
 
-			if (nonNull(user) && isNumeric(courseId)) {
-				CoursePresenceMessage presenceMessage = new CoursePresenceMessage();
-				presenceMessage.setDate(ZonedDateTime.now());
-				presenceMessage.setFamilyName(user.getFamilyName());
-				presenceMessage.setFirstName(user.getFirstName());
-				presenceMessage.setUserId(userName);
-				presenceMessage.setCoursePresence(CoursePresence.CONNECTED);
+			if (nonNull(user) && isNumeric(courseIdStr)) {
+				Long courseId = Long.parseLong(courseIdStr);
 
 				if (!participantService.existsByUserId(userName)) {
-					simpEmitter.emmitEvent(Long.parseLong(courseId), presenceEvent, presenceMessage);
+					coursePresenceService.sendCoursePresence(CoursePresence.CONNECTED, CoursePresenceType.CLASSROOM, user, courseId);
 				}
 
 				CourseParticipant participant = CourseParticipant.builder()
-					.courseId(Long.parseLong(courseId))
-					.user(user)
-					.sessionId(headers.getSessionId())
-					.build();
+						.courseId(courseId)
+						.user(user)
+						.sessionId(headers.getSessionId())
+						.build();
 
 				// Store the session as we need it to be idempotent in the disconnect event processing.
 				participantService.saveParticipant(participant);
@@ -93,22 +84,12 @@ public class ParticipantPresenceListener {
 		String userName = headers.getUser().getName();
 
 		if (stateEndpoint.equals(stompEndpoint) || publisherEndpoint.equals(stompEndpoint)) {
-			User user = userService.findById(userName).orElse(null);
 			CourseParticipant participant = participantService.getParticipantBySessionId(headers.getSessionId()).orElse(null);
 
-			if (nonNull(participant)) {
+			if (nonNull(participant) && participantService.existsByUserId(userName)) {
 				Long courseId = participant.getCourseId();
 
-				CoursePresenceMessage presenceMessage = new CoursePresenceMessage();
-				presenceMessage.setDate(ZonedDateTime.now());
-				presenceMessage.setFamilyName(user.getFamilyName());
-				presenceMessage.setFirstName(user.getFirstName());
-				presenceMessage.setUserId(userName);
-				presenceMessage.setCoursePresence(CoursePresence.DISCONNECTED);
-
-				if (participantService.existsByUserId(userName)) {
-					simpEmitter.emmitEvent(courseId, presenceEvent, presenceMessage);
-				}
+				coursePresenceService.sendCoursePresence(CoursePresence.DISCONNECTED, CoursePresenceType.CLASSROOM, userName, courseId);
 			}
 
 			participantService.deleteParticipantBySessionId(headers.getSessionId());

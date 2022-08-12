@@ -162,7 +162,7 @@ public class CoursePublisherController {
 			.accepted(true)
 			.build();
 
-		simpEmitter.emmitEventAndAll(courseId, simpProperties.getEvents().getSpeech(), courseEvent);
+		simpEmitter.emmitEventToUser(courseId, simpProperties.getEvents().getSpeech(), courseEvent, speechRequest.getUserId());
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -186,7 +186,7 @@ public class CoursePublisherController {
 			.accepted(false)
 			.build();
 
-		simpEmitter.emmitEventAndAll(courseId, simpProperties.getEvents().getSpeech(), courseEvent);
+		simpEmitter.emmitEventToUser(courseId, simpProperties.getEvents().getSpeech(), courseEvent, speechRequest.getUserId());
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}

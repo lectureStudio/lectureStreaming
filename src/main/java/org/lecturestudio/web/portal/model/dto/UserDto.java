@@ -1,5 +1,7 @@
 package org.lecturestudio.web.portal.model.dto;
 
+import org.lecturestudio.web.api.stream.model.CourseParticipantType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,5 +22,7 @@ public class UserDto {
 	String firstName;
 
 	String familyName;
+
+	CourseParticipantType participantType;
 
 }

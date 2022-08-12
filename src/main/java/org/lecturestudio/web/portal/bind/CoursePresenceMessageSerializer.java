@@ -22,6 +22,8 @@ public class CoursePresenceMessageSerializer extends JsonSerializer<CoursePresen
 		generator.writeStringField("familyName", message.getFamilyName());
 		generator.writeStringField("userId", message.getUserId());
 		generator.writeStringField("presence", message.getCoursePresence().toString());
+		generator.writeStringField("presenceType", message.getCoursePresenceType().toString());
+		generator.writeStringField("participantType", message.getCourseParticipantType().toString());
 		generator.writeEndObject();
 	}
 }

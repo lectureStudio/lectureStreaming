@@ -16,6 +16,9 @@ public class SimpEmitter {
 	@Value("${simp.destinations.event}")
 	private String eventDestination;
 
+	@Value("${simp.destinations.event.user}")
+	private String eventUserDestination;
+
 
 	public void emmitChatMessage(Long courseId, Object payload) {
 		simpMessagingTemplate.convertAndSend("/topic/course/" + courseId + "/chat", payload,
@@ -29,6 +32,11 @@ public class SimpEmitter {
 
 	public void emmitEvent(Long courseId, String eventName, Object payload) {
 		simpMessagingTemplate.convertAndSend(eventDestination + courseId + "/" + eventName, payload,
+				Map.of("payloadType", payload.getClass().getSimpleName()));
+	}
+
+	public void emmitEventToUser(Long courseId, String eventName, Object payload, String user) {
+		simpMessagingTemplate.convertAndSendToUser(user, "/queue/course/" + courseId + "/" + eventName, payload,
 				Map.of("payloadType", payload.getClass().getSimpleName()));
 	}
 
