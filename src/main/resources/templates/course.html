@@ -9,7 +9,7 @@
 	<script src="/js/portal.js"></script>
 
 	<script src="/js/pdf.worker.js"></script>
-	<script th:if="${course.isConference()}" src="/js/main.js"></script>
+	<script th:if="${!course.isConference()}" src="/js/main.js"></script>
 	<script th:if="${course.isConference()}" src="/angular/runtime.js" type="module"></script>
 	<script th:if="${course.isConference()}" src="/angular/polyfills.js" type="module"></script>
 	<script th:if="${course.isConference()}" src="/angular/main.js" type="module"></script>
