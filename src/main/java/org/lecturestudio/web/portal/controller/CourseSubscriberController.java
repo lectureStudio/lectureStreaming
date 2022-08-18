@@ -54,14 +54,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/course")
@@ -116,6 +112,18 @@ public class CourseSubscriberController {
 			}
 
 		});
+	}
+
+	@PostMapping("/file/upload")
+	public ResponseEntity<String> uploadFile(@RequestPart("file") MultipartFile file) {
+		String fileName = fileStorageService.save(file);
+
+		String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+				.path("/course/file/")
+				.path(fileName)
+				.toUriString();
+
+		return ResponseEntity.status(HttpStatus.OK).body(fileDownloadUri);
 	}
 
 	@GetMapping("/state/{id}")

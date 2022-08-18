@@ -228,8 +228,75 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "Action": () => (/* binding */ Action)
 /* harmony export */ });
-class Action {}
+let Action = /*#__PURE__*/(() => {
+  class Action {
+    createDataView(payloadLength) {
+      let header = 0;
 
+      if (this.keyEvent) {
+        payloadLength += 9;
+        header |= Action.KEY_EVENT_MASK;
+      }
+
+      let dataViewByteOffsetObject = this.createActionBuffer(payloadLength + 4);
+      let dataView = dataViewByteOffsetObject.dataView;
+      let byteOffset = dataViewByteOffsetObject.byteOffset;
+      dataView.setInt32(byteOffset, header);
+      byteOffset += 4;
+
+      if (this.keyEvent) {
+        dataView.setInt32(byteOffset, Number(this.keyEvent.code));
+        byteOffset += 4;
+        dataView.setInt32(byteOffset, 0);
+        byteOffset += 4;
+        let type = -1;
+
+        switch (this.keyEvent.type) {
+          case "keydown":
+            type = 0;
+            break;
+
+          case "keyup":
+            type = 1;
+            break;
+
+          case "keypressed":
+            type = 2;
+            break;
+        }
+
+        if (type === -1) {
+          console.error("KeyboardEvent type is not assigned correctly!");
+        }
+
+        dataView.setInt8(byteOffset, type);
+        byteOffset++;
+      }
+
+      return {
+        dataView,
+        byteOffset
+      };
+    }
+
+    createActionBuffer(payloadLength) {
+      let buffer = new ArrayBuffer(payloadLength + 9);
+      let dataView = new DataView(buffer);
+      const byteOffset = 9;
+      dataView.setInt32(0, payloadLength + 5);
+      dataView.setInt8(4, this.getType());
+      dataView.setInt32(5, this.timestamp);
+      return {
+        dataView,
+        byteOffset
+      };
+    }
+
+  }
+
+  Action.KEY_EVENT_MASK = 1;
+  return Action;
+})();
 
 
 /***/ }),
@@ -247,6 +314,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _brush_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./brush.action */ 4798);
 /* harmony import */ var _tool_arrow_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/arrow.tool */ 9329);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -257,6 +326,10 @@ class ArrowAction extends _brush_action__WEBPACK_IMPORTED_MODULE_0__.BrushAction
     tool.brush = this.brush;
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(tool);
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.ARROW;
   }
 
 }
@@ -289,6 +362,22 @@ class BrushAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
     }
   }
 
+  toByteBuffer() {
+    let length = this.brush ? 17 : 4;
+    let dataViewByteOffsetObject = this.createDataView(length);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setInt32(byteOffset, this.shapeHandle);
+
+    if (this.brush) {
+      dataView.setInt32(byteOffset + 4, Number(this.brush.color.toRgba()));
+      dataView.setInt8(byteOffset + 8, 0);
+      dataView.setBigInt64(byteOffset + 9, BigInt(this.brush.width));
+    }
+
+    return dataView.buffer;
+  }
+
 }
 
 
@@ -308,12 +397,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_clear_shapes_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/clear-shapes.tool */ 5496);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
 class ClearShapesAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.selectAndExecuteTool(new _tool_clear_shapes_tool__WEBPACK_IMPORTED_MODULE_1__.ClearShapesTool());
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(0);
+    return dataViewByteOffsetObject.dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.CLEAR_SHAPES;
   }
 
 }
@@ -335,6 +435,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_clone_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/clone.tool */ 10);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -342,6 +444,15 @@ class CloneAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(new _tool_clone_tool__WEBPACK_IMPORTED_MODULE_1__.CloneTool());
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(0);
+    return dataViewByteOffsetObject.dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.CLONE;
   }
 
 }
@@ -363,6 +474,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _brush_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./brush.action */ 4798);
 /* harmony import */ var _tool_ellipse_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/ellipse.tool */ 2817);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -373,6 +486,10 @@ class EllipseAction extends _brush_action__WEBPACK_IMPORTED_MODULE_0__.BrushActi
     tool.brush = this.brush;
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(tool);
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.ELLIPSE;
   }
 
 }
@@ -394,6 +511,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_extend_view_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/extend-view.tool */ 1562);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -406,6 +525,21 @@ class ExtendViewAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.setKeyEvent(this.keyEvent);
     executor.selectAndExecuteTool(new _tool_extend_view_tool__WEBPACK_IMPORTED_MODULE_1__.ExtendViewTool(this.rect));
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.RECTANGLE;
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(32);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setBigInt64(byteOffset, BigInt(this.rect.x));
+    dataView.setBigInt64(byteOffset + 8, BigInt(this.rect.y));
+    dataView.setBigInt64(byteOffset + 16, BigInt(this.rect.width));
+    dataView.setBigInt64(byteOffset + 24, BigInt(this.rect.height));
+    return dataView.buffer;
   }
 
 }
@@ -427,6 +561,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _brush_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./brush.action */ 4798);
 /* harmony import */ var _tool_highlighter_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/highlighter.tool */ 7062);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -436,6 +572,10 @@ class HighlighterAction extends _brush_action__WEBPACK_IMPORTED_MODULE_0__.Brush
     tool.shapeHandle = this.shapeHandle;
     tool.brush = this.brush;
     executor.setTool(tool);
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.HIGHLIGHTER;
   }
 
 }
@@ -456,11 +596,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "KeyAction": () => (/* binding */ KeyAction)
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 class KeyAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.setKeyEvent(this.keyEvent);
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(0);
+    return dataViewByteOffsetObject.dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.KEY;
   }
 
 }
@@ -482,6 +633,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_latex_font_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/latex-font.tool */ 6444);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -498,8 +651,38 @@ class LatexFontAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
     executor.selectAndExecuteTool(new _tool_latex_font_tool__WEBPACK_IMPORTED_MODULE_1__.LatexFontTool(this.handle, this.font, this.textColor, this.textAttributes));
   }
 
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(16);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setInt32(byteOffset, this.handle);
+    let color = this.font.family;
+    let index = Object.values(Fonts).indexOf(this.font.family);
+    dataView.setInt32(byteOffset + 4, index);
+    dataView.setInt32(byteOffset + 8, this.font.size);
+    dataView.setInt32(byteOffset + 12, Number(this.textColor.toRgba()));
+    return dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.LATEX_FONT_CHANGE;
+  }
+
 }
 
+var Fonts = /*#__PURE__*/(() => {
+  (function (Fonts) {
+    Fonts["SERIF"] = "Serif";
+    Fonts["SANSSERIF"] = "Sanserif";
+    Fonts["BOLD"] = "Bold";
+    Fonts["ITALIC"] = "Italic";
+    Fonts["BOLD_ITALIC"] = "Bold_Italic";
+    Fonts["ROMAN"] = "Roman";
+    Fonts["TYPEWRITER"] = "Typewriter";
+  })(Fonts || (Fonts = {}));
+
+  return Fonts;
+})();
 
 
 /***/ }),
@@ -517,6 +700,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_latex_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/latex.tool */ 8004);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -529,6 +714,18 @@ class LatexAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(new _tool_latex_tool__WEBPACK_IMPORTED_MODULE_1__.LatexTool(this.handle));
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(4);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setInt32(byteOffset, this.handle);
+    return dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.LATEX;
   }
 
 }
@@ -550,6 +747,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _brush_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./brush.action */ 4798);
 /* harmony import */ var _tool_line_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/line.tool */ 9485);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -560,6 +759,10 @@ class LineAction extends _brush_action__WEBPACK_IMPORTED_MODULE_0__.BrushAction 
     tool.brush = this.brush;
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(tool);
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.LINE;
   }
 
 }
@@ -580,6 +783,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "PageAction": () => (/* binding */ PageAction)
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 class PageAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
@@ -590,6 +795,19 @@ class PageAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
 
   execute(executor) {
     executor.setPageNumber(this.pageNumber);
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(12);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setBigInt64(byteOffset, BigInt(0));
+    dataView.setInt32(byteOffset + 8, this.pageNumber);
+    return dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.PAGE;
   }
 
 }
@@ -611,6 +829,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_pan_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/pan.tool */ 7989);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -618,6 +838,15 @@ class PanAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(new _tool_pan_tool__WEBPACK_IMPORTED_MODULE_1__.PanTool());
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(0);
+    return dataViewByteOffsetObject.dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.PANNING;
   }
 
 }
@@ -674,6 +903,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _text_highlight_action__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ../text-highlight.action */ 4414);
 /* harmony import */ var _latex_action__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ../latex.action */ 2750);
 /* harmony import */ var _latex_font_action__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ../latex-font.action */ 8069);
+/* harmony import */ var _stream_action_type__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ../stream.action-type */ 2970);
+/* harmony import */ var _services_playback_service__WEBPACK_IMPORTED_MODULE_38__ = __webpack_require__(/*! ../../services/playback.service */ 8818);
+
+
 
 
 
@@ -1025,6 +1258,25 @@ let ActionParser = /*#__PURE__*/(() => {
       return new _latex_font_action__WEBPACK_IMPORTED_MODULE_36__.LatexFontAction(handle, font, color, attributes);
     }
 
+    static parseActionToBinary(action) {
+      const actionByteBuffer = action.toByteBuffer();
+      let buffer = new ArrayBuffer(17);
+      let dataView = new DataView(buffer);
+      dataView.setInt32(0, actionByteBuffer.byteLength);
+      dataView.setInt8(4, _stream_action_type__WEBPACK_IMPORTED_MODULE_37__.StreamActionType.STREAM_PAGE_ACTION);
+      let playbackService = _services_playback_service__WEBPACK_IMPORTED_MODULE_38__.PlaybackService.getInstance();
+      let page = playbackService.renderController.getPage();
+      let docId = page.getDocument().getDocumentId();
+      let pageNumber = page.getPageNumber();
+      dataView.setBigInt64(5, BigInt(docId));
+      dataView.setInt32(13, pageNumber);
+      const headerBuffer = dataView.buffer;
+      let combinedBuffer = new Uint8Array(actionByteBuffer.byteLength + headerBuffer.byteLength);
+      combinedBuffer.set(new Uint8Array(headerBuffer), 0);
+      combinedBuffer.set(new Uint8Array(actionByteBuffer), headerBuffer.byteLength);
+      return combinedBuffer.buffer;
+    }
+
   }
 
   ActionParser.KEY_EVENT_MASK = 1;
@@ -1373,6 +1625,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _brush_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./brush.action */ 4798);
 /* harmony import */ var _tool_pen_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/pen.tool */ 8395);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -1382,6 +1636,10 @@ class PenAction extends _brush_action__WEBPACK_IMPORTED_MODULE_0__.BrushAction {
     tool.shapeHandle = this.shapeHandle;
     tool.brush = this.brush;
     executor.setTool(tool);
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.PEN;
   }
 
 }
@@ -1403,6 +1661,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _brush_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./brush.action */ 4798);
 /* harmony import */ var _tool_pointer_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/pointer.tool */ 5205);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -1411,6 +1671,10 @@ class PointerAction extends _brush_action__WEBPACK_IMPORTED_MODULE_0__.BrushActi
     const tool = new _tool_pointer_tool__WEBPACK_IMPORTED_MODULE_1__.PointerTool();
     tool.brush = this.brush;
     executor.setTool(tool);
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.POINTER;
   }
 
 }
@@ -1432,6 +1696,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _brush_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./brush.action */ 4798);
 /* harmony import */ var _tool_rectangle_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/rectangle.tool */ 8156);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -1442,6 +1708,10 @@ class RectangleAction extends _brush_action__WEBPACK_IMPORTED_MODULE_0__.BrushAc
     tool.brush = this.brush;
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(tool);
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.RECTANGLE;
   }
 
 }
@@ -1463,12 +1733,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_redo_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/redo.tool */ 9223);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
 class RedoAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.selectAndExecuteTool(new _tool_redo_tool__WEBPACK_IMPORTED_MODULE_1__.RedoTool());
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(0);
+    return dataViewByteOffsetObject.dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.REDO;
   }
 
 }
@@ -1491,6 +1772,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_delete_shape_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/delete.shape.tool */ 2065);
 /* harmony import */ var _geometry_pen_point__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../geometry/pen-point */ 7578);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -1505,6 +1788,15 @@ class RubberAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(new _tool_delete_shape_tool__WEBPACK_IMPORTED_MODULE_1__.DeleteShapeTool(this.shapeHandle));
     executor.beginTool(new _geometry_pen_point__WEBPACK_IMPORTED_MODULE_2__.PenPoint(0, 0, 0));
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(0);
+    return dataViewByteOffsetObject.dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_3__.ActionType.RUBBER;
   }
 
 }
@@ -1526,6 +1818,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_select_group_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/select-group.tool */ 5912);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -1533,6 +1827,15 @@ class SelectGroupAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(new _tool_select_group_tool__WEBPACK_IMPORTED_MODULE_1__.SelectGroupTool());
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(0);
+    return dataViewByteOffsetObject.dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.SELECT_GROUP;
   }
 
 }
@@ -1554,6 +1857,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_select_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/select.tool */ 5686);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -1561,6 +1866,15 @@ class SelectAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(new _tool_select_tool__WEBPACK_IMPORTED_MODULE_1__.SelectTool());
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(0);
+    return dataViewByteOffsetObject.dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.SELECT;
   }
 
 }
@@ -1708,6 +2022,7 @@ class StreamActionPlayer extends _action_player__WEBPACK_IMPORTED_MODULE_0__.Act
     while (actionCount > 0) {
       // Get next action for execution.
       const action = this.actions[0];
+      console.log("Execute action ", action);
       const time = this.syncState.audioTime; // if (time >= action.timestamp) {
       //console.log("action latency: " + (time - action.timestamp));
 
@@ -1900,7 +2215,6 @@ class StreamDocumentAction extends _stream_action__WEBPACK_IMPORTED_MODULE_0__.S
       byteOffset++;
     }
 
-    console.log(byteOffset);
     return dataView.buffer;
   }
 
@@ -2326,6 +2640,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_text_change_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/text-change.tool */ 3774);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -2338,6 +2654,24 @@ class TextChangeAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
 
   execute(executor) {
     executor.selectAndExecuteTool(new _tool_text_change_tool__WEBPACK_IMPORTED_MODULE_1__.TextChangeTool(this.handle, this.text));
+  }
+
+  toByteBuffer() {
+    const utf8Encode = new TextEncoder();
+    const byteArr = utf8Encode.encode(this.text);
+    let dataViewByteOffsetObject = this.createDataView(8 + byteArr.byteLength);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setInt32(byteOffset, this.handle);
+    dataView.setInt32(byteOffset + 4, byteArr.byteLength);
+    let combinedBuffer = new Uint8Array(dataView.buffer.byteLength + byteArr.byteLength);
+    combinedBuffer.set(new Uint8Array(dataView.buffer), 0);
+    combinedBuffer.set(new Uint8Array(byteArr.buffer), dataView.buffer.byteLength);
+    return combinedBuffer.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.TEXT_CHANGE;
   }
 
 }
@@ -2359,6 +2693,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_text_font_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/text-font.tool */ 2294);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -2373,6 +2709,35 @@ class TextFontAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
 
   execute(executor) {
     executor.selectAndExecuteTool(new _tool_text_font_tool__WEBPACK_IMPORTED_MODULE_1__.TextFontTool(this.handle, this.font, this.textColor, this.textAttributes));
+  }
+
+  toByteBuffer() {
+    const utf8Encode = new TextEncoder(); // Font family buffer
+
+    const byteArr = utf8Encode.encode(this.font.family);
+    let dataViewByteOffsetObject = this.createDataView(12); // Header + first 12 Bytes
+
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setInt32(byteOffset, this.handle);
+    dataView.setInt32(byteOffset + 4, Number(this.textColor.toRgba()));
+    dataView.setInt32(byteOffset + 8, byteArr.buffer.byteLength);
+    let buffer = new ArrayBuffer(12);
+    let trailingDataView = new DataView(buffer);
+    trailingDataView.setFloat64(0, this.font.size);
+    trailingDataView.setInt8(8, 0);
+    trailingDataView.setInt8(9, 0);
+    trailingDataView.setInt8(10, this.textAttributes.get("strikethrough") ? 1 : 0);
+    trailingDataView.setInt8(11, this.textAttributes.get("underline") ? 1 : 0);
+    let combinedBuffer = new Uint8Array(dataView.buffer.byteLength + byteArr.byteLength + trailingDataView.buffer.byteLength);
+    combinedBuffer.set(new Uint8Array(dataView.buffer), 0);
+    combinedBuffer.set(new Uint8Array(byteArr.buffer), dataView.buffer.byteLength);
+    combinedBuffer.set(new Uint8Array(trailingDataView.buffer), dataView.buffer.byteLength + byteArr.buffer.byteLength);
+    return combinedBuffer.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.TEXT_FONT_CHANGE;
   }
 
 }
@@ -2395,6 +2760,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_text_highlight_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/text-highlight.tool */ 9045);
 /* harmony import */ var _geometry_pen_point__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../geometry/pen-point */ 7578);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -2411,6 +2778,30 @@ class TextHighlightAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(new _tool_text_highlight_tool__WEBPACK_IMPORTED_MODULE_1__.TextHighlightTool(this.shapeHandle, this.color, this.textBounds));
     executor.beginTool(new _geometry_pen_point__WEBPACK_IMPORTED_MODULE_2__.PenPoint(0, 0, 0));
+  }
+
+  toByteBuffer() {
+    let length = 8 + this.textBounds.length * 32;
+    let dataViewByteOffsetObject = this.createDataView(length);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setInt32(byteOffset, Number(this.color.toRgba()));
+    dataView.setInt32(byteOffset + 4, this.textBounds.length);
+
+    if (this.textBounds.length !== 0) {
+      for (const textBound of this.textBounds) {
+        dataView.setFloat64(byteOffset + 8, textBound.x);
+        dataView.setFloat64(byteOffset + 16, textBound.y);
+        dataView.setFloat64(byteOffset + 24, textBound.width);
+        dataView.setFloat64(byteOffset + 32, textBound.height);
+      }
+    }
+
+    return dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_3__.ActionType.TEXT_SELECTION;
   }
 
 }
@@ -2432,6 +2823,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_text_move_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/text-move.tool */ 3469);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -2444,6 +2837,20 @@ class TextMoveAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
 
   execute(executor) {
     executor.selectAndExecuteTool(new _tool_text_move_tool__WEBPACK_IMPORTED_MODULE_1__.TextMoveTool(this.handle, this.point));
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(20);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setInt32(byteOffset, this.handle);
+    dataView.setBigInt64(byteOffset + 4, BigInt(this.point.x));
+    dataView.setBigInt64(byteOffset + 12, BigInt(this.point.y));
+    return dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.TEXT_LOCATION_CHANGE;
   }
 
 }
@@ -2465,6 +2872,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_text_remove_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/text-remove.tool */ 7134);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -2476,6 +2885,18 @@ class TextRemoveAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
 
   execute(executor) {
     executor.selectAndExecuteTool(new _tool_text_remove_tool__WEBPACK_IMPORTED_MODULE_1__.TextRemoveTool(this.handle));
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(4);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setInt32(byteOffset, this.handle);
+    return dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.TEXT_REMOVE;
   }
 
 }
@@ -2497,6 +2918,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_text_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/text.tool */ 7280);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -2509,6 +2932,18 @@ class TextAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(new _tool_text_tool__WEBPACK_IMPORTED_MODULE_1__.TextTool(this.handle));
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(4);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset;
+    dataView.setInt32(byteOffset, this.handle);
+    return dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.TEXT;
   }
 
 }
@@ -2529,11 +2964,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "ToolBeginAction": () => (/* binding */ ToolBeginAction)
 /* harmony export */ });
 /* harmony import */ var _tool_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./tool.action */ 354);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 class ToolBeginAction extends _tool_action__WEBPACK_IMPORTED_MODULE_0__.ToolAction {
   execute(executor) {
     executor.beginTool(this.point);
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TOOL_BEGIN;
   }
 
 }
@@ -2554,11 +2995,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "ToolEndAction": () => (/* binding */ ToolEndAction)
 /* harmony export */ });
 /* harmony import */ var _tool_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./tool.action */ 354);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 class ToolEndAction extends _tool_action__WEBPACK_IMPORTED_MODULE_0__.ToolAction {
   execute(executor) {
     executor.endTool(this.point);
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TOOL_END;
   }
 
 }
@@ -2579,11 +3026,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "ToolExecuteAction": () => (/* binding */ ToolExecuteAction)
 /* harmony export */ });
 /* harmony import */ var _tool_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./tool.action */ 354);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 class ToolExecuteAction extends _tool_action__WEBPACK_IMPORTED_MODULE_0__.ToolAction {
   execute(executor) {
     executor.executeTool(this.point);
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TOOL_EXECUTE;
   }
 
 }
@@ -2615,6 +3068,23 @@ class ToolAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
     }
   }
 
+  toByteBuffer() {
+    if (this.point) {
+      return this.createDataView(0).dataView.buffer;
+    }
+
+    let dataViewByteOffsetObject = this.createDataView(12);
+    let dataView = dataViewByteOffsetObject.dataView;
+    let byteOffset = dataViewByteOffsetObject.byteOffset; // @ts-ignore
+
+    dataView.setFloat32(byteOffset, this.point.x); // @ts-ignore
+
+    dataView.setFloat32(byteOffset + 4, this.point.y); // @ts-ignore
+
+    dataView.setFloat32(byteOffset + 8, this.point.p);
+    return dataView.buffer;
+  }
+
 }
 
 
@@ -2634,12 +3104,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_undo_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/undo.tool */ 1368);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
 class UndoAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.selectAndExecuteTool(new _tool_undo_tool__WEBPACK_IMPORTED_MODULE_1__.UndoTool());
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(0);
+    return dataViewByteOffsetObject.dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.UNDO;
   }
 
 }
@@ -2661,6 +3142,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./action */ 4712);
 /* harmony import */ var _tool_zoom_out_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/zoom-out.tool */ 6196);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -2668,6 +3151,15 @@ class ZoomOutAction extends _action__WEBPACK_IMPORTED_MODULE_0__.Action {
   execute(executor) {
     executor.setKeyEvent(this.keyEvent);
     executor.selectAndExecuteTool(new _tool_zoom_out_tool__WEBPACK_IMPORTED_MODULE_1__.ZoomOutTool());
+  }
+
+  toByteBuffer() {
+    let dataViewByteOffsetObject = this.createDataView(0);
+    return dataViewByteOffsetObject.dataView.buffer;
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.ZOOM_OUT;
   }
 
 }
@@ -2689,6 +3181,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _brush_action__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./brush.action */ 4798);
 /* harmony import */ var _tool_zoom_tool__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../tool/zoom.tool */ 6010);
+/* harmony import */ var _action_type__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action-type */ 7653);
+
 
 
 
@@ -2700,6 +3194,10 @@ class ZoomAction extends _brush_action__WEBPACK_IMPORTED_MODULE_0__.BrushAction 
   execute(executor) {
     executor.setKeyEvent(this.keyEvent);
     executor.setTool(new _tool_zoom_tool__WEBPACK_IMPORTED_MODULE_1__.ZoomTool());
+  }
+
+  getType() {
+    return _action_type__WEBPACK_IMPORTED_MODULE_2__.ActionType.ZOOM;
   }
 
 }
@@ -2906,19 +3404,25 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "DocumentViewComponent": () => (/* binding */ DocumentViewComponent)
 /* harmony export */ });
-/* harmony import */ var _render_render_surface__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../render/render-surface */ 4741);
-/* harmony import */ var _render_slide_render_surface__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../render/slide-render-surface */ 4177);
-/* harmony import */ var _render_text_layer_surface__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../render/text-layer-surface */ 41);
-/* harmony import */ var _services_playback_service__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../services/playback.service */ 8818);
-/* harmony import */ var _action_stream_page_selected_action__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../action/stream.page.selected.action */ 1);
-/* harmony import */ var _action_parser_stream_action_parser__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../action/parser/stream.action.parser */ 1317);
-/* harmony import */ var _action_page_action__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../action/page.action */ 8078);
-/* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! @angular/core */ 5000);
-/* harmony import */ var _services_janus_janus_service__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../../services/janus/janus.service */ 465);
-/* harmony import */ var _angular_common__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! @angular/common */ 9808);
-/* harmony import */ var _gallery_view_gallery_view_component__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../gallery-view/gallery-view.component */ 8149);
-/* harmony import */ var _menubar_menubar_component__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../menubar/menubar.component */ 1511);
-/* harmony import */ var _menubar_menubar_button_menubar_button_component__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../menubar/menubar-button/menubar-button.component */ 6604);
+/* harmony import */ var _Users_sebastianfelger_Documents_TUD_SS22_PSSS_lecturePlayer_node_modules_babel_runtime_helpers_esm_asyncToGenerator_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js */ 5861);
+/* harmony import */ var _render_render_surface__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../render/render-surface */ 4741);
+/* harmony import */ var _render_slide_render_surface__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../render/slide-render-surface */ 4177);
+/* harmony import */ var _render_text_layer_surface__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../render/text-layer-surface */ 41);
+/* harmony import */ var _services_playback_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../services/playback.service */ 8818);
+/* harmony import */ var _action_stream_page_selected_action__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../action/stream.page.selected.action */ 1);
+/* harmony import */ var _action_parser_stream_action_parser__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../action/parser/stream.action.parser */ 1317);
+/* harmony import */ var _action_page_action__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../../action/page.action */ 8078);
+/* harmony import */ var _action_action_type__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../action/action-type */ 7653);
+/* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! @angular/core */ 5000);
+/* harmony import */ var _services_janus_janus_service__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../../services/janus/janus.service */ 465);
+/* harmony import */ var _services_annotation_service__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../../services/annotation.service */ 9698);
+/* harmony import */ var _angular_common__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! @angular/common */ 9808);
+/* harmony import */ var _gallery_view_gallery_view_component__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../gallery-view/gallery-view.component */ 8149);
+/* harmony import */ var _menubar_menubar_component__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../menubar/menubar.component */ 1511);
+/* harmony import */ var _menubar_menubar_button_menubar_button_component__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../menubar/menubar-button/menubar-button.component */ 6604);
+
+
+
 
 
 
@@ -2941,52 +3445,51 @@ const _c5 = ["pdfActionBar"];
 
 function DocumentViewComponent_div_1_Template(rf, ctx) {
   if (rf & 1) {
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementStart"](0, "div", 15);
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelement"](1, "div", 16);
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementStart"](2, "div", 17);
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelement"](3, "app-gallery-view", 18);
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementEnd"]()();
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](0, "div", 21);
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelement"](1, "div", 22);
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](2, "div", 23);
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelement"](3, "app-gallery-view", 24);
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]()();
   }
 
   if (rf & 2) {
-    const ctx_r0 = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵnextContext"]();
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵadvance"](3);
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵproperty"]("isTinyView", true)("skipAnimations", true)("allowNavigation", true)("cameraStreams", ctx_r0._cameraStreams);
+    const ctx_r0 = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵnextContext"]();
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵadvance"](3);
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵproperty"]("isTinyView", true)("skipAnimations", true)("allowNavigation", true)("cameraStreams", ctx_r0._cameraStreams);
   }
 }
 
-function DocumentViewComponent_app_menubar_14_Template(rf, ctx) {
+function DocumentViewComponent_ng_container_24_Template(rf, ctx) {
   if (rf & 1) {
-    const _r9 = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵgetCurrentView"]();
+    const _r11 = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵgetCurrentView"]();
 
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementStart"](0, "app-menubar", 19, 20);
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵlistener"]("mouseover", function DocumentViewComponent_app_menubar_14_Template_app_menubar_mouseover_0_listener() {
-      _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵrestoreView"](_r9);
-      const ctx_r8 = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵnextContext"]();
-      return ctx_r8.showHoverMenu = true;
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementContainerStart"](0);
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](1, "app-menubar-button", 25);
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵlistener"]("clicked", function DocumentViewComponent_ng_container_24_Template_app_menubar_button_clicked_1_listener() {
+      const restoredCtx = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵrestoreView"](_r11);
+      const i_r9 = restoredCtx.index;
+      const ctx_r10 = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵnextContext"]();
+      return ctx_r10.annotationService.setColor(i_r9);
     });
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementStart"](2, "app-menubar-button", 21);
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵlistener"]("clicked", function DocumentViewComponent_app_menubar_14_Template_app_menubar_button_clicked_2_listener() {
-      _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵrestoreView"](_r9);
-      const ctx_r10 = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵnextContext"]();
-      return ctx_r10.pageBack();
-    });
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementEnd"]();
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementStart"](3, "app-menubar-button", 22);
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵlistener"]("clicked", function DocumentViewComponent_app_menubar_14_Template_app_menubar_button_clicked_3_listener() {
-      _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵrestoreView"](_r9);
-      const ctx_r11 = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵnextContext"]();
-      return ctx_r11.pageForward();
-    });
-    _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementEnd"]()();
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]();
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementContainerEnd"]();
+  }
+
+  if (rf & 2) {
+    const color_r8 = ctx.$implicit;
+    const i_r9 = ctx.index;
+    const ctx_r7 = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵnextContext"]();
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵadvance"](1);
+    _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵproperty"]("colorObject", color_r8)("highlighted", ctx_r7.annotationService.currentColorId === i_r9);
   }
 }
 
 let DocumentViewComponent = /*#__PURE__*/(() => {
   class DocumentViewComponent {
-    constructor(janusService) {
+    constructor(janusService, annotationService) {
       this.janusService = janusService;
-      this.showHoverMenu = false;
+      this.annotationService = annotationService;
+      this.actionType = _action_action_type__WEBPACK_IMPORTED_MODULE_8__.ActionType;
     }
 
     set cameraStreams(value) {
@@ -3003,12 +3506,13 @@ let DocumentViewComponent = /*#__PURE__*/(() => {
     ngOnInit() {}
 
     ngAfterViewInit() {
-      this.slideRenderSurface = new _render_slide_render_surface__WEBPACK_IMPORTED_MODULE_1__.SlideRenderSurface(this.slideCanvas.nativeElement);
-      this.actionRenderSurface = new _render_render_surface__WEBPACK_IMPORTED_MODULE_0__.RenderSurface(this.actionCanvas.nativeElement);
-      this.volatileRenderSurface = new _render_render_surface__WEBPACK_IMPORTED_MODULE_0__.RenderSurface(this.volatileCanvas.nativeElement);
-      this.textLayerSurface = new _render_text_layer_surface__WEBPACK_IMPORTED_MODULE_2__.TextLayerSurface(this.textLayer.nativeElement);
+      this.slideRenderSurface = new _render_slide_render_surface__WEBPACK_IMPORTED_MODULE_2__.SlideRenderSurface(this.slideCanvas.nativeElement);
+      this.actionRenderSurface = new _render_render_surface__WEBPACK_IMPORTED_MODULE_1__.RenderSurface(this.actionCanvas.nativeElement);
+      this.volatileRenderSurface = new _render_render_surface__WEBPACK_IMPORTED_MODULE_1__.RenderSurface(this.volatileCanvas.nativeElement);
+      this.textLayerSurface = new _render_text_layer_surface__WEBPACK_IMPORTED_MODULE_3__.TextLayerSurface(this.textLayer.nativeElement);
       this.repaint();
       new ResizeObserver(this.resize.bind(this)).observe(this.parent.nativeElement);
+      this.renderController = _services_playback_service__WEBPACK_IMPORTED_MODULE_4__.PlaybackService.getInstance().renderController;
     }
 
     getActionRenderSurface() {
@@ -3032,115 +3536,158 @@ let DocumentViewComponent = /*#__PURE__*/(() => {
     }
 
     resize() {
-      var _a;
+      var _this = this;
 
-      const slideRatio = 4 / 3;
-      let width = this.parent.nativeElement.clientWidth;
-      let height = this.parent.nativeElement.clientHeight;
-      const viewRatio = width / height;
+      return (0,_Users_sebastianfelger_Documents_TUD_SS22_PSSS_lecturePlayer_node_modules_babel_runtime_helpers_esm_asyncToGenerator_js__WEBPACK_IMPORTED_MODULE_0__["default"])(function* () {
+        if (!_this.renderController) {
+          _this.renderController = _services_playback_service__WEBPACK_IMPORTED_MODULE_4__.PlaybackService.getInstance().renderController;
+          return;
+        }
 
-      if (viewRatio > slideRatio) {
-        width = height * slideRatio;
-      } else {
-        height = width / slideRatio;
-      }
+        const page = _this.renderController.getPage();
 
-      if (width === 0 || height === 0) {
-        return;
-      }
+        page.getPageBounds().then(bounds => {
+          let width = _this.parent.nativeElement.clientWidth;
+          let height = _this.parent.nativeElement.clientHeight;
+          const slideRatio = bounds.width / bounds.height;
+          const viewRatio = width / height;
 
-      this.slideRenderSurface.setSize(width, height);
-      this.actionRenderSurface.setSize(width, height);
-      this.volatileRenderSurface.setSize(width, height);
-      this.textLayerSurface.setSize(width, height);
+          if (viewRatio > slideRatio) {
+            width = height * slideRatio;
+          } else {
+            height = width / slideRatio;
+          }
 
-      if ((_a = this.pdfActionBar) === null || _a === void 0 ? void 0 : _a.nativeElement) {
-        this.pdfActionBar.nativeElement.style.width = width + 'px';
-      }
+          if (width === 0 || height === 0) {
+            return;
+          }
+
+          _this.slideRenderSurface.setSize(width, height);
+
+          _this.actionRenderSurface.setSize(width, height);
+
+          _this.volatileRenderSurface.setSize(width, height);
+
+          _this.textLayerSurface.setSize(width, height);
+        });
+      })();
     }
 
     pageBack() {
-      const activePageNumber = _services_playback_service__WEBPACK_IMPORTED_MODULE_3__.PlaybackService.getInstance().renderController.getPage().getPageNumber();
+      const activePageNumber = _services_playback_service__WEBPACK_IMPORTED_MODULE_4__.PlaybackService.getInstance().renderController.getPage().getPageNumber();
       this.modifyPage(activePageNumber - 1);
     }
 
     pageForward() {
-      const activePageNumber = _services_playback_service__WEBPACK_IMPORTED_MODULE_3__.PlaybackService.getInstance().renderController.getPage().getPageNumber();
+      const activePageNumber = _services_playback_service__WEBPACK_IMPORTED_MODULE_4__.PlaybackService.getInstance().renderController.getPage().getPageNumber();
       this.modifyPage(activePageNumber + 1);
     }
 
     modifyPage(pageNumber) {
-      const action = new _action_stream_page_selected_action__WEBPACK_IMPORTED_MODULE_4__.StreamPageSelectedAction(BigInt(0), pageNumber);
-      const parsed = _action_parser_stream_action_parser__WEBPACK_IMPORTED_MODULE_5__.StreamActionParser.parseActionToBinary(action);
+      const action = new _action_stream_page_selected_action__WEBPACK_IMPORTED_MODULE_5__.StreamPageSelectedAction(BigInt(0), pageNumber);
+      const parsed = _action_parser_stream_action_parser__WEBPACK_IMPORTED_MODULE_6__.StreamActionParser.parseActionToBinary(action);
       this.janusService.sendData(parsed);
-      const pageAction = new _action_page_action__WEBPACK_IMPORTED_MODULE_6__.PageAction(action.pageNumber);
+      const pageAction = new _action_page_action__WEBPACK_IMPORTED_MODULE_7__.PageAction(action.pageNumber);
       pageAction.timestamp = 0;
-      _services_playback_service__WEBPACK_IMPORTED_MODULE_3__.PlaybackService.getInstance().addAction(pageAction);
+      _services_playback_service__WEBPACK_IMPORTED_MODULE_4__.PlaybackService.getInstance().addAction(pageAction);
     }
 
   }
 
   DocumentViewComponent.ɵfac = function DocumentViewComponent_Factory(t) {
-    return new (t || DocumentViewComponent)(_angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵdirectiveInject"](_services_janus_janus_service__WEBPACK_IMPORTED_MODULE_7__.JanusService));
+    return new (t || DocumentViewComponent)(_angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵdirectiveInject"](_services_janus_janus_service__WEBPACK_IMPORTED_MODULE_9__.JanusService), _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵdirectiveInject"](_services_annotation_service__WEBPACK_IMPORTED_MODULE_10__.AnnotationService));
   };
 
-  DocumentViewComponent.ɵcmp = /*@__PURE__*/_angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵdefineComponent"]({
+  DocumentViewComponent.ɵcmp = /*@__PURE__*/_angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵdefineComponent"]({
     type: DocumentViewComponent,
     selectors: [["app-document-view"]],
     viewQuery: function DocumentViewComponent_Query(rf, ctx) {
       if (rf & 1) {
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵviewQuery"](_c0, 5);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵviewQuery"](_c1, 5);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵviewQuery"](_c2, 5);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵviewQuery"](_c3, 5);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵviewQuery"](_c4, 5);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵviewQuery"](_c5, 5);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵviewQuery"](_c0, 5);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵviewQuery"](_c1, 5);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵviewQuery"](_c2, 5);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵviewQuery"](_c3, 5);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵviewQuery"](_c4, 5);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵviewQuery"](_c5, 5);
       }
 
       if (rf & 2) {
         let _t;
 
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵloadQuery"]()) && (ctx.actionCanvas = _t.first);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵloadQuery"]()) && (ctx.slideCanvas = _t.first);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵloadQuery"]()) && (ctx.volatileCanvas = _t.first);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵloadQuery"]()) && (ctx.textLayer = _t.first);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵloadQuery"]()) && (ctx.parent = _t.first);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵloadQuery"]()) && (ctx.pdfActionBar = _t.first);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵloadQuery"]()) && (ctx.actionCanvas = _t.first);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵloadQuery"]()) && (ctx.slideCanvas = _t.first);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵloadQuery"]()) && (ctx.volatileCanvas = _t.first);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵloadQuery"]()) && (ctx.textLayer = _t.first);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵloadQuery"]()) && (ctx.parent = _t.first);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵqueryRefresh"](_t = _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵloadQuery"]()) && (ctx.pdfActionBar = _t.first);
       }
     },
     inputs: {
       cameraStreams: "cameraStreams"
     },
-    decls: 15,
-    vars: 2,
-    consts: [[1, "conferenceContainer"], ["class", "topBar", 4, "ngIf"], [1, "documentContainer"], [1, "slide-view"], ["parent", ""], [1, "slide-canvas"], ["slideCanvas", ""], ["scale", "full", 1, "action-canvas"], ["actionCanvas", ""], ["scale", "full", 1, "volatile-canvas"], ["volatileCanvas", ""], [1, "text-layer", 3, "mouseover", "mouseleave"], ["textLayer", ""], [1, "menubarContainer"], [3, "mouseover", 4, "ngIf"], [1, "topBar"], [1, "me"], [1, "attendants"], [3, "isTinyView", "skipAnimations", "allowNavigation", "cameraStreams"], [3, "mouseover"], ["pdfActionBar", ""], ["matIconName", "arrow_back", 3, "clicked"], ["matIconName", "arrow_forward", 3, "clicked"]],
+    decls: 25,
+    vars: 4,
+    consts: [[1, "conferenceContainer"], ["class", "topBar", 4, "ngIf"], [1, "documentContainer"], [1, "slide-view"], ["parent", ""], [1, "slide-canvas"], ["slideCanvas", ""], ["scale", "full", 1, "action-canvas", 3, "mousedown", "mouseup", "mousemove"], ["actionCanvas", ""], ["scale", "full", 1, "volatile-canvas"], ["volatileCanvas", ""], [1, "text-layer"], ["textLayer", ""], [1, "menubarContainer"], ["pdfActionBar", ""], ["matIconName", "arrow_back", 3, "clicked"], ["matIconName", "arrow_forward", 3, "clicked"], [1, "separator"], ["matIconName", "edit", 3, "highlighted", "clicked"], ["matIconName", "format_shapes", 3, "highlighted", "clicked"], [4, "ngFor", "ngForOf"], [1, "topBar"], [1, "me"], [1, "attendants"], [3, "isTinyView", "skipAnimations", "allowNavigation", "cameraStreams"], ["matIconName", "lens", 3, "colorObject", "highlighted", "clicked"]],
     template: function DocumentViewComponent_Template(rf, ctx) {
       if (rf & 1) {
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementStart"](0, "div", 0);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵtemplate"](1, DocumentViewComponent_div_1_Template, 4, 4, "div", 1);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementStart"](2, "div", 2)(3, "div", 3, 4);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelement"](5, "canvas", 5, 6)(7, "canvas", 7, 8)(9, "canvas", 9, 10);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementStart"](11, "div", 11, 12);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵlistener"]("mouseover", function DocumentViewComponent_Template_div_mouseover_11_listener() {
-          return ctx.showHoverMenu = true;
-        })("mouseleave", function DocumentViewComponent_Template_div_mouseleave_11_listener() {
-          return ctx.showHoverMenu = true;
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](0, "div", 0);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵtemplate"](1, DocumentViewComponent_div_1_Template, 4, 4, "div", 1);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](2, "div", 2)(3, "div", 3, 4);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelement"](5, "canvas", 5, 6);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](7, "canvas", 7, 8);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵlistener"]("mousedown", function DocumentViewComponent_Template_canvas_mousedown_7_listener($event) {
+          return ctx.annotationService.mouseDown($event);
+        })("mouseup", function DocumentViewComponent_Template_canvas_mouseup_7_listener($event) {
+          return ctx.annotationService.mouseUp($event);
+        })("mousemove", function DocumentViewComponent_Template_canvas_mousemove_7_listener($event) {
+          return ctx.annotationService.drag($event);
         });
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementEnd"]()()();
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementStart"](13, "div", 13);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵtemplate"](14, DocumentViewComponent_app_menubar_14_Template, 4, 0, "app-menubar", 14);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵelementEnd"]()();
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]();
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelement"](9, "canvas", 9, 10)(11, "div", 11, 12);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]()();
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](13, "div", 13)(14, "app-menubar", null, 14)(16, "app-menubar-button", 15);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵlistener"]("clicked", function DocumentViewComponent_Template_app_menubar_button_clicked_16_listener() {
+          return ctx.pageBack();
+        });
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]();
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](17, "app-menubar-button", 16);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵlistener"]("clicked", function DocumentViewComponent_Template_app_menubar_button_clicked_17_listener() {
+          return ctx.pageForward();
+        });
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]();
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](18, "div", 17);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵtext"](19, "\u00A0");
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]();
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](20, "app-menubar-button", 18);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵlistener"]("clicked", function DocumentViewComponent_Template_app_menubar_button_clicked_20_listener() {
+          return ctx.annotationService.setTool(ctx.actionType.POINTER);
+        });
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]();
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](21, "app-menubar-button", 19);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵlistener"]("clicked", function DocumentViewComponent_Template_app_menubar_button_clicked_21_listener() {
+          return ctx.annotationService.setTool(ctx.actionType.PEN);
+        });
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]();
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementStart"](22, "div", 17);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵtext"](23, "\u00A0");
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]();
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵtemplate"](24, DocumentViewComponent_ng_container_24_Template, 2, 2, "ng-container", 20);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵelementEnd"]()()();
       }
 
       if (rf & 2) {
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵadvance"](1);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵproperty"]("ngIf", ctx._cameraStreams.length > 1);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵadvance"](13);
-        _angular_core__WEBPACK_IMPORTED_MODULE_11__["ɵɵproperty"]("ngIf", ctx.showHoverMenu);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵadvance"](1);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵproperty"]("ngIf", ctx._cameraStreams.length > 1);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵadvance"](19);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵproperty"]("highlighted", ctx.annotationService.currentTool === ctx.actionType.POINTER);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵadvance"](1);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵproperty"]("highlighted", ctx.annotationService.currentTool === ctx.actionType.PEN);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵadvance"](3);
+        _angular_core__WEBPACK_IMPORTED_MODULE_14__["ɵɵproperty"]("ngForOf", ctx.annotationService.availableColors);
       }
     },
-    directives: [_angular_common__WEBPACK_IMPORTED_MODULE_12__.NgIf, _gallery_view_gallery_view_component__WEBPACK_IMPORTED_MODULE_8__.GalleryViewComponent, _menubar_menubar_component__WEBPACK_IMPORTED_MODULE_9__.MenubarComponent, _menubar_menubar_button_menubar_button_component__WEBPACK_IMPORTED_MODULE_10__.MenubarButtonComponent],
-    styles: ["[_nghost-%COMP%] {\n  flex: 1;\n  display: flex;\n}\n\n.slide-view[_ngcontent-%COMP%] {\n  flex: 1;\n  min-height: 1px;\n  padding: 0;\n  margin: 0;\n  overflow: hidden;\n  position: relative;\n  text-align: center;\n  box-sizing: border-box;\n  display: flex !important;\n  align-items: center !important;\n  justify-content: center !important;\n  border: none;\n}\n\n.slide-view[_ngcontent-%COMP%]    > canvas[_ngcontent-%COMP%] {\n  position: absolute;\n  transform: translate(-50%, 0);\n  left: 50%;\n  border-radius: 0.2em;\n  border: none;\n}\n\n.slide-view[_ngcontent-%COMP%]   .slide-canvas[_ngcontent-%COMP%] {\n  visibility: hidden;\n  z-index: 0;\n}\n\n.slide-view[_ngcontent-%COMP%]   .action-canvas[_ngcontent-%COMP%] {\n  z-index: 1;\n}\n\n.slide-view[_ngcontent-%COMP%]   .volatile-canvas[_ngcontent-%COMP%] {\n  z-index: 2;\n}\n\n.text-layer[_ngcontent-%COMP%] {\n  position: absolute;\n  left: 0;\n  top: 0;\n  right: 0;\n  bottom: 0;\n  overflow: hidden;\n  opacity: 0.2;\n  line-height: 1;\n  margin: 0 auto;\n  z-index: 3;\n  \n  color: transparent;\n}\n\n.text-layer[_ngcontent-%COMP%]    > span[_ngcontent-%COMP%] {\n  color: transparent;\n  position: absolute;\n  white-space: pre;\n  cursor: text;\n  transform-origin: 0% 0%;\n}\n\n.text-layer[_ngcontent-%COMP%]   .highlight[_ngcontent-%COMP%] {\n  margin: -1px;\n  padding: 1px;\n  background-color: #b400aa;\n  border-radius: 4px;\n}\n\n.text-layer[_ngcontent-%COMP%]   .highlight.begin[_ngcontent-%COMP%] {\n  border-radius: 4px 0 0 4px;\n}\n\n.text-layer[_ngcontent-%COMP%]   .highlight.end[_ngcontent-%COMP%] {\n  border-radius: 0 4px 4px 0;\n}\n\n.text-layer[_ngcontent-%COMP%]   .highlight.middle[_ngcontent-%COMP%] {\n  border-radius: 0;\n}\n\n.text-layer[_ngcontent-%COMP%]   .highlight.selected[_ngcontent-%COMP%] {\n  background-color: darkgreen;\n}\n\n.text-layer[_ngcontent-%COMP%]   [_ngcontent-%COMP%]::selection {\n  background: blue;\n}\n\n.text-layer[_ngcontent-%COMP%]   .endOfContent[_ngcontent-%COMP%] {\n  display: block;\n  position: absolute;\n  left: 0;\n  top: 100%;\n  right: 0;\n  bottom: 0;\n  z-index: -1;\n  cursor: default;\n  -webkit-user-select: none;\n  user-select: none;\n}\n\n.text-layer[_ngcontent-%COMP%]   .endOfContent.active[_ngcontent-%COMP%] {\n  top: 0;\n}\n\n.annotationLayer[_ngcontent-%COMP%]   section[_ngcontent-%COMP%] {\n  position: absolute;\n  z-index: 4;\n}\n\n.annotationLayer[_ngcontent-%COMP%]   .linkAnnotation[_ngcontent-%COMP%]    > a[_ngcontent-%COMP%] {\n  position: absolute;\n  font-size: 1em;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n  cursor: pointer;\n}\n\n.annotationLayer[_ngcontent-%COMP%]   .linkAnnotation[_ngcontent-%COMP%]    > a[_ngcontent-%COMP%]:hover {\n  background: #ff0;\n}\n\n[_nghost-%COMP%] {\n  display: flex;\n  flex: 1;\n}\n\n.conferenceContainer[_ngcontent-%COMP%] {\n  flex: 1;\n  display: flex;\n  flex-direction: column;\n}\n\n.topBar[_ngcontent-%COMP%] {\n  display: flex;\n  max-height: 10vh;\n  margin-bottom: 0.75em;\n}\n\n.attendants[_ngcontent-%COMP%] {\n  flex: 1;\n  display: flex;\n  justify-content: center;\n  min-height: 12vh;\n}\n\n.attendantStreams[_ngcontent-%COMP%] {\n  flex: 1;\n}\n\n.buttonContainer[_ngcontent-%COMP%] {\n  display: flex;\n}\n\nmat-icon[_ngcontent-%COMP%] {\n  color: white;\n}\n\n.button[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  align-items: center;\n  border-radius: 0.5em;\n  max-width: 10vw;\n  width: 100%;\n}\n\n.button[_ngcontent-%COMP%]:hover {\n  background-color: #555555;\n}\n\n.attendantStreams[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: row;\n  justify-content: center;\n  align-items: center;\n  max-height: 100%;\n  max-width: 95%;\n}\n\n.documentContainer[_ngcontent-%COMP%] {\n  flex: 1;\n  display: flex;\n  position: relative;\n  justify-content: center;\n}\n\n.attendantStreamContainer[_ngcontent-%COMP%] {\n  display: flex;\n  overflow: hidden;\n  max-height: 100%;\n  aspect-ratio: 4/3;\n  padding-right: 1em;\n}\n\n.attendantStreamContainer[_ngcontent-%COMP%]:first-of-type   [_ngcontent-%COMP%]:last-of-type {\n  padding: 0;\n}\n\nvideo[_ngcontent-%COMP%] {\n  background: transparent;\n  border-radius: 10px;\n  overflow: hidden;\n}\n\n.menubarContainer[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.menubarContainer[_ngcontent-%COMP%]    > app-menubar[_ngcontent-%COMP%] {\n  z-index: 10;\n  margin-bottom: 0.33em;\n  margin-top: 0.33em;\n  border-radius: 1em;\n  min-width: 10vw;\n}"]
+    directives: [_angular_common__WEBPACK_IMPORTED_MODULE_15__.NgIf, _gallery_view_gallery_view_component__WEBPACK_IMPORTED_MODULE_11__.GalleryViewComponent, _menubar_menubar_component__WEBPACK_IMPORTED_MODULE_12__.MenubarComponent, _menubar_menubar_button_menubar_button_component__WEBPACK_IMPORTED_MODULE_13__.MenubarButtonComponent, _angular_common__WEBPACK_IMPORTED_MODULE_15__.NgForOf],
+    styles: ["[_nghost-%COMP%] {\n  flex: 1;\n  display: flex;\n}\n\n.slide-view[_ngcontent-%COMP%] {\n  flex: 1;\n  min-height: 1px;\n  padding: 0;\n  margin: 0;\n  overflow: hidden;\n  position: relative;\n  text-align: center;\n  box-sizing: border-box;\n  display: flex !important;\n  align-items: center !important;\n  justify-content: center !important;\n  border: none;\n}\n\n.slide-view[_ngcontent-%COMP%]    > canvas[_ngcontent-%COMP%] {\n  position: absolute;\n  transform: translate(-50%, 0);\n  left: 50%;\n  border-radius: 0.2em;\n  border: none;\n}\n\n.slide-view[_ngcontent-%COMP%]   .slide-canvas[_ngcontent-%COMP%] {\n  visibility: hidden;\n  z-index: 0;\n  pointer-events: none;\n}\n\n.slide-view[_ngcontent-%COMP%]   .action-canvas[_ngcontent-%COMP%] {\n  z-index: 1;\n}\n\n.slide-view[_ngcontent-%COMP%]   .volatile-canvas[_ngcontent-%COMP%] {\n  z-index: 2;\n  pointer-events: none;\n}\n\n.text-layer[_ngcontent-%COMP%] {\n  position: absolute;\n  left: 0;\n  top: 0;\n  right: 0;\n  bottom: 0;\n  overflow: hidden;\n  opacity: 0.2;\n  line-height: 1;\n  margin: 0 auto;\n  z-index: -3;\n  pointer-events: none;\n}\n\n.text-layer[_ngcontent-%COMP%]    > span[_ngcontent-%COMP%] {\n  color: transparent;\n  position: absolute;\n  white-space: pre;\n  cursor: text;\n  transform-origin: 0% 0%;\n}\n\n.text-layer[_ngcontent-%COMP%]   .highlight[_ngcontent-%COMP%] {\n  margin: -1px;\n  padding: 1px;\n  background-color: #b400aa;\n  border-radius: 4px;\n}\n\n.text-layer[_ngcontent-%COMP%]   .highlight.begin[_ngcontent-%COMP%] {\n  border-radius: 4px 0 0 4px;\n}\n\n.text-layer[_ngcontent-%COMP%]   .highlight.end[_ngcontent-%COMP%] {\n  border-radius: 0 4px 4px 0;\n}\n\n.text-layer[_ngcontent-%COMP%]   .highlight.middle[_ngcontent-%COMP%] {\n  border-radius: 0;\n}\n\n.text-layer[_ngcontent-%COMP%]   .highlight.selected[_ngcontent-%COMP%] {\n  background-color: darkgreen;\n}\n\n.text-layer[_ngcontent-%COMP%]   [_ngcontent-%COMP%]::selection {\n  background: blue;\n}\n\n.text-layer[_ngcontent-%COMP%]   .endOfContent[_ngcontent-%COMP%] {\n  display: block;\n  position: absolute;\n  left: 0;\n  top: 100%;\n  right: 0;\n  bottom: 0;\n  z-index: -1;\n  cursor: default;\n  -webkit-user-select: none;\n  user-select: none;\n}\n\n.text-layer[_ngcontent-%COMP%]   .endOfContent.active[_ngcontent-%COMP%] {\n  top: 0;\n}\n\n.annotationLayer[_ngcontent-%COMP%]   section[_ngcontent-%COMP%] {\n  position: absolute;\n  z-index: 4;\n}\n\n.annotationLayer[_ngcontent-%COMP%]   .linkAnnotation[_ngcontent-%COMP%]    > a[_ngcontent-%COMP%] {\n  position: absolute;\n  font-size: 1em;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n  cursor: pointer;\n}\n\n.annotationLayer[_ngcontent-%COMP%]   .linkAnnotation[_ngcontent-%COMP%]    > a[_ngcontent-%COMP%]:hover {\n  background: #ff0;\n}\n\n[_nghost-%COMP%] {\n  display: flex;\n  flex: 1;\n}\n\n.conferenceContainer[_ngcontent-%COMP%] {\n  flex: 1;\n  display: flex;\n  flex-direction: column;\n}\n\n.topBar[_ngcontent-%COMP%] {\n  display: flex;\n  max-height: 10vh;\n  margin-bottom: 0.75em;\n}\n\n.attendants[_ngcontent-%COMP%] {\n  flex: 1;\n  display: flex;\n  justify-content: center;\n  min-height: 12vh;\n}\n\n.attendantStreams[_ngcontent-%COMP%] {\n  flex: 1;\n}\n\n.buttonContainer[_ngcontent-%COMP%] {\n  display: flex;\n}\n\nmat-icon[_ngcontent-%COMP%] {\n  color: white;\n}\n\n.button[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  align-items: center;\n  border-radius: 0.5em;\n  max-width: 10vw;\n  width: 100%;\n}\n\n.button[_ngcontent-%COMP%]:hover {\n  background-color: #555555;\n}\n\n.attendantStreams[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: row;\n  justify-content: center;\n  align-items: center;\n  max-height: 100%;\n  max-width: 95%;\n}\n\n.documentContainer[_ngcontent-%COMP%] {\n  flex: 1;\n  display: flex;\n  position: relative;\n  justify-content: center;\n}\n\n.attendantStreamContainer[_ngcontent-%COMP%] {\n  display: flex;\n  overflow: hidden;\n  max-height: 100%;\n  aspect-ratio: 4/3;\n  padding-right: 1em;\n}\n\n.attendantStreamContainer[_ngcontent-%COMP%]:first-of-type   [_ngcontent-%COMP%]:last-of-type {\n  padding: 0;\n}\n\nvideo[_ngcontent-%COMP%] {\n  background: transparent;\n  border-radius: 10px;\n  overflow: hidden;\n}\n\n.menubarContainer[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.menubarContainer[_ngcontent-%COMP%]    > app-menubar[_ngcontent-%COMP%] {\n  z-index: 10;\n  margin-bottom: 0.33em;\n  margin-top: 0.33em;\n  border-radius: 1em;\n  min-width: 30vw;\n  grid-column-gap: 0 !important;\n  display: flex;\n}\n\n.menubarContainer[_ngcontent-%COMP%]    > app-menubar[_ngcontent-%COMP%]    > .separator[_ngcontent-%COMP%] {\n  width: 1px;\n  background-color: white;\n  margin: 2% 1em;\n}"]
   });
   return DocumentViewComponent;
 })();
@@ -3615,7 +4162,9 @@ let MenubarButtonComponent = /*#__PURE__*/(() => {
       this.clicked = new _angular_core__WEBPACK_IMPORTED_MODULE_0__.EventEmitter();
     }
 
-    ngOnInit() {}
+    ngOnInit() {
+      console.log('COLOR OBJECT: ', this.colorObject);
+    }
 
   }
 
@@ -3633,13 +4182,15 @@ let MenubarButtonComponent = /*#__PURE__*/(() => {
       matIconName: "matIconName",
       matIconNameHighlightedToggleState: "matIconNameHighlightedToggleState",
       caption: "caption",
-      captionHighlightedToggleState: "captionHighlightedToggleState"
+      captionHighlightedToggleState: "captionHighlightedToggleState",
+      highlighted: "highlighted",
+      colorObject: "colorObject"
     },
     outputs: {
       clicked: "clicked"
     },
     decls: 6,
-    vars: 5,
+    vars: 9,
     consts: [[1, "button", 3, "click"], ["class", "subbutton", 3, "click", 4, "ngIf"], [1, "subbutton", 3, "click"]],
     template: function MenubarButtonComponent_Template(rf, ctx) {
       if (rf & 1) {
@@ -3658,9 +4209,11 @@ let MenubarButtonComponent = /*#__PURE__*/(() => {
       }
 
       if (rf & 2) {
+        _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵclassProp"]("highlighted", ctx.highlighted);
         _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵadvance"](1);
         _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵproperty"]("ngIf", ctx.subButtonClickAction);
         _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵadvance"](1);
+        _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵstyleProp"]("color", ctx.colorObject ? "rgb(" + ctx.colorObject.r * 255 + ", " + ctx.colorObject.g * 255 + ", " + ctx.colorObject.b * 255 + ")" : null);
         _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵclassProp"]("red", ctx.highlightToggleStateActive);
         _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵadvance"](1);
         _angular_core__WEBPACK_IMPORTED_MODULE_0__["ɵɵtextInterpolate"](ctx.highlightToggleStateActive ? ctx.matIconNameHighlightedToggleState : ctx.matIconName);
@@ -3669,7 +4222,7 @@ let MenubarButtonComponent = /*#__PURE__*/(() => {
       }
     },
     directives: [_angular_common__WEBPACK_IMPORTED_MODULE_1__.NgIf, _angular_material_icon__WEBPACK_IMPORTED_MODULE_2__.MatIcon],
-    styles: ["[_nghost-%COMP%] {\n  display: contents;\n}\n\n.button[_ngcontent-%COMP%] {\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  align-items: center;\n  border-radius: 0.5em;\n  max-width: 6.5vw;\n  width: 100%;\n  padding-top: 0.3em;\n  padding-bottom: 0.3em;\n}\n\n.red[_ngcontent-%COMP%] {\n  color: red;\n}\n\n.button[_ngcontent-%COMP%]:hover {\n  background-color: #555555;\n}\n\nmat-icon[_ngcontent-%COMP%] {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  font-size: min(2.25vw, 2.5em);\n  width: min(2.25vw, 2.5em);\n  height: min(2.25vw, 2.5em);\n  margin: 0;\n  color: white;\n  text-align: center;\n  pointer-events: none;\n}\n\n.button[_ngcontent-%COMP%]    > p[_ngcontent-%COMP%] {\n  font-weight: bold;\n  font-size: min(0.75vw, 1em);\n  margin: 0.25em;\n  color: white;\n  pointer-events: none;\n}\n\n.subbutton[_ngcontent-%COMP%] {\n  position: absolute;\n  right: 0;\n  top: 0;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: context-menu;\n  border-radius: 0.5em;\n}\n\n.subbutton[_ngcontent-%COMP%]:hover {\n  background-color: #393939;\n}\n\n.subbutton[_ngcontent-%COMP%]    > mat-icon[_ngcontent-%COMP%] {\n  font-size: min(2vw, 3em);\n  margin: 0;\n}"]
+    styles: ["[_nghost-%COMP%] {\n  display: contents;\n}\n\n.button[_ngcontent-%COMP%] {\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  align-items: center;\n  border-radius: 0.5em;\n  max-width: 6.5vw;\n  width: 100%;\n  padding-top: 0.3em;\n  padding-bottom: 0.3em;\n}\n\n.red[_ngcontent-%COMP%] {\n  color: red;\n}\n\n.button[_ngcontent-%COMP%]:hover {\n  background-color: #555555;\n}\n\nmat-icon[_ngcontent-%COMP%] {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  font-size: min(2.25vw, 2.5em);\n  width: min(2.25vw, 2.5em);\n  height: min(2.25vw, 2.5em);\n  margin: 0;\n  color: white;\n  text-align: center;\n  pointer-events: none;\n}\n\n.button[_ngcontent-%COMP%]    > p[_ngcontent-%COMP%] {\n  font-weight: bold;\n  font-size: min(0.75vw, 1em);\n  margin: 0.25em;\n  color: white;\n  pointer-events: none;\n}\n\n.subbutton[_ngcontent-%COMP%] {\n  position: absolute;\n  right: 0;\n  top: 0;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: context-menu;\n  border-radius: 0.5em;\n}\n\n.subbutton[_ngcontent-%COMP%]:hover {\n  background-color: #393939;\n}\n\n.subbutton[_ngcontent-%COMP%]    > mat-icon[_ngcontent-%COMP%] {\n  font-size: min(2vw, 3em);\n  margin: 0;\n}\n\n.highlighted[_ngcontent-%COMP%] {\n  box-shadow: 0px 0px 0px 2px blue inset;\n}"]
   });
   return MenubarButtonComponent;
 })();
@@ -5858,10 +6411,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "Page": () => (/* binding */ Page)
 /* harmony export */ });
-/* harmony import */ var _page_event__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./page-event */ 7558);
-/* harmony import */ var _utils_event_listener__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils/event-listener */ 7345);
-/* harmony import */ var _action_action_handler__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./action/action-handler */ 8098);
-/* harmony import */ var _shape_slide_shape__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./shape/slide.shape */ 9805);
+/* harmony import */ var _Users_sebastianfelger_Documents_TUD_SS22_PSSS_lecturePlayer_node_modules_babel_runtime_helpers_esm_asyncToGenerator_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js */ 5861);
+/* harmony import */ var _page_event__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./page-event */ 7558);
+/* harmony import */ var _utils_event_listener__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/event-listener */ 7345);
+/* harmony import */ var _action_action_handler__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./action/action-handler */ 8098);
+/* harmony import */ var _shape_slide_shape__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./shape/slide.shape */ 9805);
+
 
 
 
@@ -5869,12 +6424,12 @@ __webpack_require__.r(__webpack_exports__);
 
 class Page {
   constructor(document, pageNumber) {
-    this.actionHandler = new _action_action_handler__WEBPACK_IMPORTED_MODULE_2__.ActionHandler(this);
-    this.changeEvent = new _utils_event_listener__WEBPACK_IMPORTED_MODULE_1__.TypedEvent();
+    this.actionHandler = new _action_action_handler__WEBPACK_IMPORTED_MODULE_3__.ActionHandler(this);
+    this.changeEvent = new _utils_event_listener__WEBPACK_IMPORTED_MODULE_2__.TypedEvent();
     this.shapes = [];
     this.document = document;
     this.pageNumber = pageNumber;
-    this.slideShape = new _shape_slide_shape__WEBPACK_IMPORTED_MODULE_3__.SlideShape(this);
+    this.slideShape = new _shape_slide_shape__WEBPACK_IMPORTED_MODULE_4__.SlideShape(this);
     this.slideShape.addChangeListener(this.onSlideTransform.bind(this));
     this.shapeChangeListener = this.onShapeModified.bind(this);
   }
@@ -5900,7 +6455,7 @@ class Page {
 
     if (this.shapes.push(shape) > prevCount) {
       shape.addChangeListener(this.shapeChangeListener);
-      this.firePageEvent(new _page_event__WEBPACK_IMPORTED_MODULE_0__.PageEvent(this, _page_event__WEBPACK_IMPORTED_MODULE_0__.PageChangeType.ShapeAdded, shape));
+      this.firePageEvent(new _page_event__WEBPACK_IMPORTED_MODULE_1__.PageEvent(this, _page_event__WEBPACK_IMPORTED_MODULE_1__.PageChangeType.ShapeAdded, shape));
     }
   }
 
@@ -5912,7 +6467,7 @@ class Page {
 
       if (deleted.length > 0) {
         shape.removeChangeListener(this.shapeChangeListener);
-        this.firePageEvent(new _page_event__WEBPACK_IMPORTED_MODULE_0__.PageEvent(this, _page_event__WEBPACK_IMPORTED_MODULE_0__.PageChangeType.ShapeRemoved, shape));
+        this.firePageEvent(new _page_event__WEBPACK_IMPORTED_MODULE_1__.PageEvent(this, _page_event__WEBPACK_IMPORTED_MODULE_1__.PageChangeType.ShapeRemoved, shape));
       }
     }
   }
@@ -5944,23 +6499,35 @@ class Page {
   clear() {
     this.actionHandler.clear();
     this.shapes.length = 0;
-    this.firePageEvent(new _page_event__WEBPACK_IMPORTED_MODULE_0__.PageEvent(this, _page_event__WEBPACK_IMPORTED_MODULE_0__.PageChangeType.Clear, undefined));
+    this.firePageEvent(new _page_event__WEBPACK_IMPORTED_MODULE_1__.PageEvent(this, _page_event__WEBPACK_IMPORTED_MODULE_1__.PageChangeType.Clear, undefined));
   }
 
   getPageNumber() {
     return this.pageNumber;
   }
 
+  getDocument() {
+    return this.document;
+  }
+
   onSlideTransform(event) {
-    this.firePageEvent(new _page_event__WEBPACK_IMPORTED_MODULE_0__.PageEvent(this, _page_event__WEBPACK_IMPORTED_MODULE_0__.PageChangeType.PageTransform, event.shape, event.dirtyRegion));
+    this.firePageEvent(new _page_event__WEBPACK_IMPORTED_MODULE_1__.PageEvent(this, _page_event__WEBPACK_IMPORTED_MODULE_1__.PageChangeType.PageTransform, event.shape, event.dirtyRegion));
   }
 
   onShapeModified(event) {
-    this.firePageEvent(new _page_event__WEBPACK_IMPORTED_MODULE_0__.PageEvent(this, _page_event__WEBPACK_IMPORTED_MODULE_0__.PageChangeType.ShapeModified, event.shape, event.dirtyRegion));
+    this.firePageEvent(new _page_event__WEBPACK_IMPORTED_MODULE_1__.PageEvent(this, _page_event__WEBPACK_IMPORTED_MODULE_1__.PageChangeType.ShapeModified, event.shape, event.dirtyRegion));
   }
 
   firePageEvent(event) {
     this.changeEvent.publish(event);
+  }
+
+  getPageBounds() {
+    var _this = this;
+
+    return (0,_Users_sebastianfelger_Documents_TUD_SS22_PSSS_lecturePlayer_node_modules_babel_runtime_helpers_esm_asyncToGenerator_js__WEBPACK_IMPORTED_MODULE_0__["default"])(function* () {
+      return yield _this.document.getPageBounds(_this.pageNumber);
+    })();
   }
 
 }
@@ -5983,8 +6550,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Users_sebastianfelger_Documents_TUD_SS22_PSSS_lecturePlayer_node_modules_babel_runtime_helpers_esm_asyncToGenerator_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js */ 5861);
 /* harmony import */ var _page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./page */ 4570);
 /* harmony import */ var _document__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./document */ 8079);
-/* harmony import */ var _render_pdf_renderer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../render/pdf.renderer */ 5050);
-/* harmony import */ var _render_pdf_text_renderer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../render/pdf.text.renderer */ 9319);
+/* harmony import */ var _geometry_rectangle__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../geometry/rectangle */ 7723);
+/* harmony import */ var _render_pdf_renderer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../render/pdf.renderer */ 5050);
+/* harmony import */ var _render_pdf_text_renderer__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../render/pdf.text.renderer */ 9319);
+
 
 
 
@@ -5995,16 +6564,26 @@ class PdfJsDocument extends _document__WEBPACK_IMPORTED_MODULE_2__.SlideDocument
   constructor(document) {
     super();
     this.document = document;
-    this.renderer = new _render_pdf_renderer__WEBPACK_IMPORTED_MODULE_3__.PdfRenderer();
-    this.textRenderer = new _render_pdf_text_renderer__WEBPACK_IMPORTED_MODULE_4__.PdfTextRenderer();
+    this.renderer = new _render_pdf_renderer__WEBPACK_IMPORTED_MODULE_4__.PdfRenderer();
+    this.textRenderer = new _render_pdf_text_renderer__WEBPACK_IMPORTED_MODULE_5__.PdfTextRenderer();
     this.loadPages(document);
   }
 
-  getPageText(pageNumber) {
+  getPageBounds(pageNumber) {
     var _this = this;
 
     return (0,_Users_sebastianfelger_Documents_TUD_SS22_PSSS_lecturePlayer_node_modules_babel_runtime_helpers_esm_asyncToGenerator_js__WEBPACK_IMPORTED_MODULE_0__["default"])(function* () {
-      const page = yield _this.document.getPage(pageNumber + 1);
+      const page = yield _this.getPdfPage(pageNumber);
+      const bounds = page.view;
+      return new _geometry_rectangle__WEBPACK_IMPORTED_MODULE_3__.Rectangle(bounds[0], bounds[1], bounds[2], bounds[3]);
+    })();
+  }
+
+  getPageText(pageNumber) {
+    var _this2 = this;
+
+    return (0,_Users_sebastianfelger_Documents_TUD_SS22_PSSS_lecturePlayer_node_modules_babel_runtime_helpers_esm_asyncToGenerator_js__WEBPACK_IMPORTED_MODULE_0__["default"])(function* () {
+      const page = yield _this2.document.getPage(pageNumber + 1);
       const content = yield page.getTextContent();
       return content.items.map(function (s) {
         return s.str;
@@ -6013,22 +6592,22 @@ class PdfJsDocument extends _document__WEBPACK_IMPORTED_MODULE_2__.SlideDocument
   }
 
   renderPage(pageNumber, context, viewRect, dirtyRegion) {
-    var _this2 = this;
+    var _this3 = this;
 
     return (0,_Users_sebastianfelger_Documents_TUD_SS22_PSSS_lecturePlayer_node_modules_babel_runtime_helpers_esm_asyncToGenerator_js__WEBPACK_IMPORTED_MODULE_0__["default"])(function* () {
-      const pageProxy = yield _this2.getPdfPage(pageNumber); // @ts-ignore
+      const pageProxy = yield _this3.getPdfPage(pageNumber); // @ts-ignore
 
-      return _this2.renderer.render(pageProxy, context, viewRect, dirtyRegion);
+      return _this3.renderer.render(pageProxy, context, viewRect, dirtyRegion);
     })();
   }
 
   renderPageText(pageNumber, root, size, viewRect) {
-    var _this3 = this;
+    var _this4 = this;
 
     return (0,_Users_sebastianfelger_Documents_TUD_SS22_PSSS_lecturePlayer_node_modules_babel_runtime_helpers_esm_asyncToGenerator_js__WEBPACK_IMPORTED_MODULE_0__["default"])(function* () {
-      const pageProxy = yield _this3.getPdfPage(pageNumber);
+      const pageProxy = yield _this4.getPdfPage(pageNumber);
 
-      _this3.textRenderer.render(pageProxy, root, size, viewRect);
+      _this4.textRenderer.render(pageProxy, root, size, viewRect);
     })();
   }
 
@@ -6572,6 +7151,7 @@ class PenShape extends _stroke_shape__WEBPACK_IMPORTED_MODULE_0__.StrokeShape {
     this.stroke.addPoint(point);
     this.updateBounds();
     this.fireShapeEvent(new _shape_event__WEBPACK_IMPORTED_MODULE_2__.ShapeEvent(this, this.bounds));
+    console.log('I added a point.', this.bounds, point);
     return true;
   }
 
@@ -7367,6 +7947,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./page */ 4570);
 /* harmony import */ var _document__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./document */ 8079);
 /* harmony import */ var _render_whiteboard_renderer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../render/whiteboard.renderer */ 6578);
+/* harmony import */ var _geometry_rectangle__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../geometry/rectangle */ 7723);
+
 
 
 
@@ -7377,6 +7959,12 @@ class WhiteboardDocument extends _document__WEBPACK_IMPORTED_MODULE_2__.SlideDoc
     super();
     this.renderer = new _render_whiteboard_renderer__WEBPACK_IMPORTED_MODULE_3__.WhiteboardRenderer();
     this.loadPages();
+  }
+
+  getPageBounds(pageNumber) {
+    return new Promise(resolve => {
+      resolve(new _geometry_rectangle__WEBPACK_IMPORTED_MODULE_4__.Rectangle(0, 0, 640, 480));
+    });
   }
 
   getPageText(pageNumber) {
@@ -7490,13 +8078,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _model_playback_model__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../../model/playback-model */ 90);
 /* harmony import */ var _components_document_view_document_view_component__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../../components/document-view/document-view.component */ 3144);
 /* harmony import */ var _components_settings_settings_component__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../../components/settings/settings.component */ 6577);
-/* harmony import */ var _angular_common_http__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! @angular/common/http */ 520);
 /* harmony import */ var _model_document_type__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ../../model/document.type */ 8538);
 /* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! @angular/core */ 5000);
 /* harmony import */ var _services_janus_janus_service__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ../../services/janus/janus.service */ 465);
-/* harmony import */ var _angular_router__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! @angular/router */ 4202);
+/* harmony import */ var _angular_router__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! @angular/router */ 4202);
 /* harmony import */ var _services_select_overlay_service__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ../../services/select-overlay.service */ 6148);
-/* harmony import */ var _ngneat_dialog__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! @ngneat/dialog */ 9087);
+/* harmony import */ var _ngneat_dialog__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! @ngneat/dialog */ 9087);
+/* harmony import */ var _angular_common_http__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! @angular/common/http */ 520);
 /* harmony import */ var _angular_common__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! @angular/common */ 9808);
 /* harmony import */ var _components_gallery_view_gallery_view_component__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../../components/gallery-view/gallery-view.component */ 8149);
 /* harmony import */ var _components_speaker_view_speaker_view_component__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ../../components/speaker-view/speaker-view.component */ 9662);
@@ -7504,7 +8092,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_menubar_menubar_buttongroup_menubar_buttongroup_component__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ../../components/menubar/menubar-buttongroup/menubar-buttongroup.component */ 7703);
 /* harmony import */ var _components_menubar_menubar_button_menubar_button_component__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ../../components/menubar/menubar-button/menubar-button.component */ 6604);
 /* harmony import */ var _components_select_overlay_select_overlay_component__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ../../components/select-overlay/select-overlay.component */ 8726);
-
 
 
 
@@ -7707,6 +8294,10 @@ let PlayerComponent = /*#__PURE__*/(() => {
               _this.janusService.sendData(docSelParsed);
 
               _this.chosenViewMode = 'document';
+              /*const testAction = new PointerAction(0, new Brush(new Color(0,0,0,0), 1));
+                   console.log("Created ZoomAction", testAction);
+                   const ajwhdhbvujawdhj = ActionParser.parseActionToBinary(testAction);
+              this.janusService.sendData(ajwhdhbvujawdhj);*/
             } else if (selectedOption.key.includes('opendoc')) {
               const docId = selectedOption.key.split('_')[1];
 
@@ -7846,11 +8437,11 @@ let PlayerComponent = /*#__PURE__*/(() => {
         const formData = new FormData();
         formData.append("file", selectedFile, selectedFile.name);
 
-        _this2.http.post('/api/publisher/file/upload', formData, {
-          responseType: 'text',
-          headers: new _angular_common_http__WEBPACK_IMPORTED_MODULE_25__.HttpHeaders({
-            "ApiKey": "aLGqWijpp1zkouMCZsMuO9Oo41qqEQ6f"
-          })
+        _this2.http.post('/course/file/upload', formData, {
+          responseType: 'text' // headers: new HttpHeaders({
+          //     "ApiKey": "4W3ImBmZoJbyDx4LfjVZXYkreYjLoCLO"
+          // })
+
         }).subscribe(ret => {
           console.log('Gotten link: ', ret);
           const documentCreateAction = new _action_stream_document_created_action__WEBPACK_IMPORTED_MODULE_7__.StreamDocumentCreatedAction(BigInt(0), _model_document_type__WEBPACK_IMPORTED_MODULE_15__.DocumentType.PDF, selectedFile.name, ret);
@@ -7966,7 +8557,7 @@ let PlayerComponent = /*#__PURE__*/(() => {
   }
 
   PlayerComponent.ɵfac = function PlayerComponent_Factory(t) {
-    return new (t || PlayerComponent)(_angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_services_janus_janus_service__WEBPACK_IMPORTED_MODULE_16__.JanusService), _angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_angular_router__WEBPACK_IMPORTED_MODULE_26__.Router), _angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_services_select_overlay_service__WEBPACK_IMPORTED_MODULE_17__.SelectOverlayService), _angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_angular_router__WEBPACK_IMPORTED_MODULE_26__.ActivatedRoute), _angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_ngneat_dialog__WEBPACK_IMPORTED_MODULE_27__.DialogService), _angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_angular_common_http__WEBPACK_IMPORTED_MODULE_25__.HttpClient));
+    return new (t || PlayerComponent)(_angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_services_janus_janus_service__WEBPACK_IMPORTED_MODULE_16__.JanusService), _angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_angular_router__WEBPACK_IMPORTED_MODULE_25__.Router), _angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_services_select_overlay_service__WEBPACK_IMPORTED_MODULE_17__.SelectOverlayService), _angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_angular_router__WEBPACK_IMPORTED_MODULE_25__.ActivatedRoute), _angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_ngneat_dialog__WEBPACK_IMPORTED_MODULE_26__.DialogService), _angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdirectiveInject"](_angular_common_http__WEBPACK_IMPORTED_MODULE_27__.HttpClient));
   };
 
   PlayerComponent.ɵcmp = /*@__PURE__*/_angular_core__WEBPACK_IMPORTED_MODULE_24__["ɵɵdefineComponent"]({
@@ -8056,7 +8647,7 @@ let PlayerComponent = /*#__PURE__*/(() => {
       }
     },
     directives: [_angular_common__WEBPACK_IMPORTED_MODULE_28__.NgIf, _components_gallery_view_gallery_view_component__WEBPACK_IMPORTED_MODULE_18__.GalleryViewComponent, _components_speaker_view_speaker_view_component__WEBPACK_IMPORTED_MODULE_19__.SpeakerViewComponent, _components_document_view_document_view_component__WEBPACK_IMPORTED_MODULE_13__.DocumentViewComponent, _components_menubar_menubar_component__WEBPACK_IMPORTED_MODULE_20__.MenubarComponent, _components_menubar_menubar_buttongroup_menubar_buttongroup_component__WEBPACK_IMPORTED_MODULE_21__.MenubarButtongroupComponent, _components_menubar_menubar_button_menubar_button_component__WEBPACK_IMPORTED_MODULE_22__.MenubarButtonComponent, _components_select_overlay_select_overlay_component__WEBPACK_IMPORTED_MODULE_23__.SelectOverlayComponent, _angular_common__WEBPACK_IMPORTED_MODULE_28__.NgForOf],
-    styles: ["body[_ngcontent-%COMP%] {\n  background: #222222;\n  overflow: hidden;\n}\n\n.conferenceContainer[_ngcontent-%COMP%] {\n  background-color: #333;\n  display: flex;\n  flex-direction: column;\n  justify-content: space-between;\n  overflow: hidden;\n  max-height: 100vh;\n  height: 100%;\n  width: 100%;\n}\n\n.videoFeedContainer[_ngcontent-%COMP%] {\n  background: #222222;\n  flex: 1;\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(min(33.3333333333%, max(64px, 20%)), 1fr));\n  grid-auto-columns: min-content;\n  align-items: center;\n  max-height: 90vh;\n}\n\n.videoContainer[_ngcontent-%COMP%] {\n  display: flex;\n  justify-content: center;\n  aspect-ratio: 4/3;\n}\n\nvideo[_ngcontent-%COMP%] {\n  object-fit: contain;\n  border-radius: 0.75em;\n  overflow: hidden;\n  max-height: 90vh;\n  border: 2px solid transparent;\n}\n\n.isTalking[_ngcontent-%COMP%] {\n  border-color: lawngreen;\n}"]
+    styles: ["body[_ngcontent-%COMP%] {\n  background: #222222;\n  overflow: hidden;\n}\n\n.conferenceContainer[_ngcontent-%COMP%] {\n  background-color: #333;\n  display: flex;\n  flex-direction: column;\n  justify-content: space-between;\n  overflow: hidden;\n  max-height: 100vh;\n  height: 100%;\n  width: 100%;\n}\n\n.videoFeedContainer[_ngcontent-%COMP%] {\n  background: #222222;\n  flex: 1;\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(min(33.3333333333%, max(64px, 20%)), 1fr));\n  grid-auto-columns: min-content;\n  align-items: center;\n  max-height: 90vh;\n}\n\n.videoContainer[_ngcontent-%COMP%] {\n  display: flex;\n  justify-content: center;\n  aspect-ratio: 4/3;\n}\n\nvideo[_ngcontent-%COMP%] {\n  object-fit: contain;\n  border-radius: 0.75em;\n  overflow: hidden;\n  max-height: 90vh;\n  border: 2px solid transparent;\n}\n\n.isTalking[_ngcontent-%COMP%] {\n  border-color: lawngreen;\n}\n\n.not-rendered[_ngcontent-%COMP%] {\n  visibility: hidden;\n  display: none;\n}"]
   });
   return PlayerComponent;
 })();
@@ -8950,12 +9541,15 @@ class RenderController {
     }
 
     this.page = page;
+    this.updateSurfaceSize(page).then(() => {
+      if (!this.seek) {
+        this.enableRendering();
+      }
 
-    if (!this.seek) {
-      this.enableRendering();
-    }
-
-    this.renderAllLayers();
+      this.renderAllLayers();
+    }).catch(error => {
+      console.error(error);
+    });
   }
 
   setSeek(seek) {
@@ -8995,6 +9589,15 @@ class RenderController {
 
   setTextLayerSurface(textLayerSurface) {
     this.textLayerSurface = textLayerSurface;
+  }
+
+  updateSurfaceSize(page) {
+    return page.getPageBounds().then(bounds => {
+      this.slideRenderSurface.setPageSize(bounds);
+      this.actionRenderSurface.setPageSize(bounds);
+      this.volatileRenderSurface.setPageSize(bounds);
+      this.textLayerSurface.setPageSize(bounds);
+    });
   }
 
   beginBulkRender() {
@@ -9280,6 +9883,25 @@ class RenderSurface {
     this.fireSizeEvent(new _event_size_event__WEBPACK_IMPORTED_MODULE_1__.SizeEvent(this.size));
   }
 
+  setPageSize(bounds) {
+    let width = this.canvas.clientWidth;
+    let height = this.canvas.clientHeight;
+    const slideRatio = bounds.width / bounds.height;
+    const viewRatio = width / height;
+
+    if (viewRatio > slideRatio) {
+      width = height * slideRatio;
+    } else {
+      height = width / slideRatio;
+    }
+
+    if (width === 0 || height === 0) {
+      return;
+    }
+
+    this.setSize(width, height);
+  }
+
   setTransform(transform) {
     this.transform.setTransform(transform);
   }
@@ -9505,6 +10127,25 @@ class TextLayerSurface {
     this.root.style.height = height + "px";
   }
 
+  setPageSize(bounds) {
+    let width = this.root.clientWidth;
+    let height = this.root.clientHeight;
+    const slideRatio = bounds.width / bounds.height;
+    const viewRatio = width / height;
+
+    if (viewRatio > slideRatio) {
+      width = height * slideRatio;
+    } else {
+      height = width / slideRatio;
+    }
+
+    if (width === 0 || height === 0) {
+      return;
+    }
+
+    this.setSize(width, height);
+  }
+
 }
 
 
@@ -9623,6 +10264,225 @@ class ZoomRenderer {
 }
 
 
+
+/***/ }),
+
+/***/ 9698:
+/*!************************************************!*\
+  !*** ./src/app/services/annotation.service.ts ***!
+  \************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "AnnotationService": () => (/* binding */ AnnotationService)
+/* harmony export */ });
+/* harmony import */ var _paint_color__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../paint/color */ 6428);
+/* harmony import */ var _action_action_type__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../action/action-type */ 7653);
+/* harmony import */ var _action_pointer_action__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../action/pointer.action */ 3448);
+/* harmony import */ var _playback_service__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./playback.service */ 8818);
+/* harmony import */ var _action_parser_action_parser__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../action/parser/action.parser */ 7758);
+/* harmony import */ var _action_tool_begin_action__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../action/tool-begin.action */ 7479);
+/* harmony import */ var _geometry_pen_point__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../geometry/pen-point */ 7578);
+/* harmony import */ var _action_tool_execute_action__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../action/tool-execute.action */ 2656);
+/* harmony import */ var _action_tool_end_action__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../action/tool-end.action */ 1100);
+/* harmony import */ var _action_pen_action__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../action/pen.action */ 1373);
+/* harmony import */ var _paint_brush__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../paint/brush */ 5035);
+/* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! @angular/core */ 5000);
+/* harmony import */ var _janus_janus_service__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./janus/janus.service */ 465);
+
+
+
+
+
+
+
+
+
+
+
+
+
+let AnnotationService = /*#__PURE__*/(() => {
+  class AnnotationService {
+    constructor(janusService) {
+      this.janusService = janusService;
+      this.availableColors = [new _paint_color__WEBPACK_IMPORTED_MODULE_0__.Color(0, 0, 0, 1), new _paint_color__WEBPACK_IMPORTED_MODULE_0__.Color(255, 0, 0, 1), new _paint_color__WEBPACK_IMPORTED_MODULE_0__.Color(0, 255, 0, 1), new _paint_color__WEBPACK_IMPORTED_MODULE_0__.Color(0, 0, 255, 1)];
+      this.currentColorId = 0;
+      this.isMouseDown = false;
+    }
+
+    setColor(colorId) {
+      this.currentColorId = colorId;
+      this.setTool(this.currentTool);
+    }
+
+    setTool(tool) {
+      this.currentTool = tool;
+      let action = undefined;
+
+      switch (this.currentTool) {
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.CLEAR_SHAPES:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.UNDO:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.REDO:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.KEY:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.PEN:
+          console.log('MAKING A BRUSH WITH COLOR ID ', this.currentColorId, ' which is ', this.availableColors[this.currentColorId]);
+          action = new _action_pen_action__WEBPACK_IMPORTED_MODULE_9__.PenAction(1, new _paint_brush__WEBPACK_IMPORTED_MODULE_10__.Brush(this.availableColors[this.currentColorId], 0.01));
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.HIGHLIGHTER:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.POINTER:
+          action = new _action_pointer_action__WEBPACK_IMPORTED_MODULE_2__.PointerAction(0);
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.ARROW:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.LINE:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.RECTANGLE:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.ELLIPSE:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.CLONE:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.SELECT:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.SELECT_GROUP:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.LATEX:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.LATEX_FONT_CHANGE:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TEXT:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TEXT_CHANGE:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TEXT_FONT_CHANGE:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TEXT_LOCATION_CHANGE:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TEXT_REMOVE:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TEXT_SELECTION_EXT:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TOOL_BEGIN:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TOOL_EXECUTE:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.TOOL_END:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.PANNING:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.EXTEND_VIEW:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.ZOOM:
+          if (length < 1) {} else {}
+
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.ZOOM_OUT:
+          break;
+
+        case _action_action_type__WEBPACK_IMPORTED_MODULE_1__.ActionType.RUBBER_EXT:
+          break;
+      }
+
+      if (action) {
+        _playback_service__WEBPACK_IMPORTED_MODULE_3__.PlaybackService.getInstance().addAction(action); // Send
+
+        const parsedAction = _action_parser_action_parser__WEBPACK_IMPORTED_MODULE_4__.ActionParser.parseActionToBinary(action);
+        this.janusService.sendData(parsedAction);
+      }
+    }
+
+    mouseDown(event) {
+      console.log('MOUSE DOWN!', event);
+      this.isMouseDown = true;
+      const toolBeginAction = new _action_tool_begin_action__WEBPACK_IMPORTED_MODULE_5__.ToolBeginAction(this.eventToPenPoint(event));
+      _playback_service__WEBPACK_IMPORTED_MODULE_3__.PlaybackService.getInstance().addAction(toolBeginAction); // Send
+
+      const parsedAction = _action_parser_action_parser__WEBPACK_IMPORTED_MODULE_4__.ActionParser.parseActionToBinary(toolBeginAction);
+      this.janusService.sendData(parsedAction);
+    }
+
+    drag(event) {
+      if (this.isMouseDown) {
+        console.log('MOUSE DRAG!', event);
+        const toolExecuteAction = new _action_tool_execute_action__WEBPACK_IMPORTED_MODULE_7__.ToolExecuteAction(this.eventToPenPoint(event));
+        _playback_service__WEBPACK_IMPORTED_MODULE_3__.PlaybackService.getInstance().addAction(toolExecuteAction); // Send
+
+        const parsedAction = _action_parser_action_parser__WEBPACK_IMPORTED_MODULE_4__.ActionParser.parseActionToBinary(toolExecuteAction);
+        this.janusService.sendData(parsedAction);
+      }
+    }
+
+    mouseUp(event) {
+      if (this.isMouseDown) {
+        this.isMouseDown = false;
+        console.log('MOUSE UP!', event);
+        const toolEndAction = new _action_tool_end_action__WEBPACK_IMPORTED_MODULE_8__.ToolEndAction(this.eventToPenPoint(event));
+        _playback_service__WEBPACK_IMPORTED_MODULE_3__.PlaybackService.getInstance().addAction(toolEndAction); // Send
+
+        const parsedAction = _action_parser_action_parser__WEBPACK_IMPORTED_MODULE_4__.ActionParser.parseActionToBinary(toolEndAction);
+        this.janusService.sendData(parsedAction);
+      }
+    }
+
+    eventToPenPoint(event) {
+      const rect = event.target.getBoundingClientRect();
+      const realX = event.clientX - rect.left;
+      const realY = event.clientY - rect.top;
+      console.log(event);
+      console.log('REAL: ', realX / rect.width, realY / rect.height); // return new PenPoint(1, 0.5, 1);
+
+      return new _geometry_pen_point__WEBPACK_IMPORTED_MODULE_6__.PenPoint(realX / rect.width, realY / rect.height, 1);
+    }
+
+  }
+
+  AnnotationService.ɵfac = function AnnotationService_Factory(t) {
+    return new (t || AnnotationService)(_angular_core__WEBPACK_IMPORTED_MODULE_12__["ɵɵinject"](_janus_janus_service__WEBPACK_IMPORTED_MODULE_11__.JanusService));
+  };
+
+  AnnotationService.ɵprov = /*@__PURE__*/_angular_core__WEBPACK_IMPORTED_MODULE_12__["ɵɵdefineInjectable"]({
+    token: AnnotationService,
+    factory: AnnotationService.ɵfac,
+    providedIn: 'root'
+  });
+  return AnnotationService;
+})();
 
 /***/ }),
 
@@ -10664,11 +11524,7 @@ let JanusService = /*#__PURE__*/(() => {
         if (!_this.screenshareJanusHandle) {
           _this.attachScreenshareHandle();
         } else {
-          const displayMedia = yield navigator.mediaDevices.getDisplayMedia({
-            video: true,
-            audio: false
-          });
-
+          // const displayMedia = await navigator.mediaDevices.getDisplayMedia({video: true, audio: false});
           _this.screenshareJanusHandle.createOffer({
             media: {
               audioRecv: false,
@@ -10678,7 +11534,6 @@ let JanusService = /*#__PURE__*/(() => {
               video: "screen",
               screenshareFrameRate: 25
             },
-            stream: displayMedia,
             simulcast: _this.doSimulcast,
             success: jsep => {
               janus_gateway__WEBPACK_IMPORTED_MODULE_1__.Janus.debug("Got a publisher SDP!", jsep);
@@ -10946,6 +11801,7 @@ class PlaybackService {
   }
 
   initialize(slideView, courseState, documents, startTime) {
+    this._slideView = slideView;
     documents.forEach(doc => {
       this.addDocument(doc);
     });
@@ -11001,6 +11857,8 @@ class PlaybackService {
   }
 
   selectDocument(docId) {
+    this._slideView.repaint();
+
     const document = this.documents.get(BigInt(docId));
 
     if (document) {
