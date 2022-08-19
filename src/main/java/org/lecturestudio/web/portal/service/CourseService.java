@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
-import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseForm;
 import org.lecturestudio.web.portal.model.CoursePrivilege;
@@ -272,21 +271,26 @@ public class CourseService {
 		return users;
 	}
 
-	public boolean isAuthorized(long courseId, Authentication authentication, String operation)
-			throws UnauthorizedException {
+	public boolean isAuthorized(long courseId, Authentication authentication, String operation) {
 		UserDetails details = (UserDetails) authentication.getDetails();
+
+		if (isNull(details)) {
+			details = (UserDetails) authentication.getPrincipal();
+		}
+		if (isNull(details)) {
+			return false;
+		}
+
 		String username = details.getUsername();
 
 		return isAuthorized(courseId, username, operation);
 	}
 
-	public boolean isAuthorized(long courseId, Principal principal, String operation)
-			throws UnauthorizedException {
+	public boolean isAuthorized(long courseId, Principal principal, String operation) {
 		return isAuthorized(courseId, principal.getName(), operation);
 	}
 
-	private boolean isAuthorized(long courseId, String userId, String operation)
-			throws UnauthorizedException {
+	public boolean isAuthorized(long courseId, String userId, String operation) {
 		Course course = findById(courseId).orElse(null);
 
 		if (isNull(course)) {
@@ -299,6 +303,14 @@ public class CourseService {
 			return false;
 		}
 
+		return isAuthorized(user, course, operation);
+	}
+
+	public boolean isAuthorized(User user, Course course, String operation) {
+		if (isNull(user) || isNull(course)) {
+			return false;
+		}
+
 		for (CourseRegistration registration : course.getRegistrations()) {
 			if (registration.getUser().equals(user)) {
 				// User is the owner of the course and thereby has all privileges.
@@ -308,7 +320,7 @@ public class CourseService {
 
 		Set<CourseRole> courseRoles = course.getRoles();
 		Set<Role> userRoles = new HashSet<>(user.getRoles());
-		userRoles.addAll(findAllRoles(courseId, user.getUserId()));
+		userRoles.addAll(findAllRoles(course.getId(), user.getUserId()));
 
 		for (CourseRole courseRole : courseRoles) {
 			if (userRoles.contains(courseRole.getRole())) {

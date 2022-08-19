@@ -34,7 +34,6 @@ import org.lecturestudio.web.api.message.MessengerMessage;
 import org.lecturestudio.web.api.message.QuizAnswerMessage;
 import org.lecturestudio.web.api.message.SpeechCancelMessage;
 import org.lecturestudio.web.api.message.SpeechRequestMessage;
-import org.lecturestudio.web.api.message.WebMessage;
 import org.lecturestudio.web.api.model.Message;
 import org.lecturestudio.web.api.model.quiz.QuizAnswer;
 import org.lecturestudio.web.api.stream.model.CourseFeatureResponse;
@@ -381,10 +380,6 @@ public class CourseSubscriberController {
 	@MessageMapping("/message/{courseId}")
     @SendTo("/topic/course/{courseId}/chat")
     public void sendMessage(@Payload org.springframework.messaging.Message<Message> message, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
-		if (!courseService.isAuthorized(courseId, authentication, "CHAT_WRITE")) {
-			throw new UnauthorizedException();
-		}
-
 		CourseMessageFeature feature = (CourseMessageFeature) courseFeatureService.findMessageByCourseId(courseId)
 				.orElseThrow(() -> new FeatureNotFoundException());
 
@@ -399,11 +394,19 @@ public class CourseSubscriberController {
 
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
+		if (isNull(details)) {
+			details = (LectUserDetails) authentication.getPrincipal();
+		}
+
 		StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 		String recipient = accessor.getFirstNativeHeader("recipient");
 
 		if (recipient.equals("public")) {
-			WebMessage chatMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
+			if (!courseService.isAuthorized(courseId, authentication, "CHAT_WRITE")) {
+				throw new UnauthorizedException();
+			}
+
+			MessengerMessage chatMessage = new MessengerMessage(payload, details.getUsername(), ZonedDateTime.now());
 			chatMessage.setFirstName(details.getFirstName());
 			chatMessage.setFamilyName(details.getFamilyName());
 

@@ -3,24 +3,19 @@ package org.lecturestudio.web.portal.controller;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.lecturestudio.web.api.message.MessengerDirectMessage;
-import org.lecturestudio.web.api.message.MessengerMessage;
-import org.lecturestudio.web.api.message.MessengerReplyMessage;
-import org.lecturestudio.web.api.message.WebMessage;
 import org.lecturestudio.web.api.model.quiz.Quiz;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
+import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeature;
@@ -33,11 +28,13 @@ import org.lecturestudio.web.portal.model.CourseSpeechEvent;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.model.Privilege;
 import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.CourseFeatureDto;
 import org.lecturestudio.web.portal.model.dto.CourseQuizFeatureDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
+import org.lecturestudio.web.portal.model.dto.UserPrivilegesDto;
 import org.lecturestudio.web.portal.property.SimpProperties;
 import org.lecturestudio.web.portal.service.FileStorageService;
 import org.lecturestudio.web.portal.service.UserService;
@@ -51,10 +48,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -98,9 +91,6 @@ public class CoursePublisherController {
 	@Autowired
 	private SimpEmitter simpEmitter;
 
-	@Autowired
-	private ObjectMapper objectMapper;
-
 
 	@GetMapping("/user")
 	public UserDto getUser(Authentication authentication) {
@@ -116,6 +106,17 @@ public class CoursePublisherController {
 		return userDto;
 	}
 
+	@GetMapping("/user/privileges/{courseId}")
+	public UserPrivilegesDto getUserPrivileges(@PathVariable("courseId") long courseId, Authentication authentication) {
+		Set<Privilege> privileges = courseService.getUserPrivileges(courseId, authentication.getName());
+
+		UserPrivilegesDto privilegesDto = UserPrivilegesDto.builder()
+				.privileges(privileges)
+				.build();
+
+		return privilegesDto;
+	}
+
 	@GetMapping("/courses")
 	public List<CourseDto> getCourses(Authentication authentication) {
 		User user = userService.findById(authentication.getName())
@@ -128,20 +129,22 @@ public class CoursePublisherController {
 		courses.addAll(courseService.findAllCourses(user.getUserId()));
 
 		courses.forEach(course -> {
-			coursesDto.add(CourseDto.builder()
-					.id(course.getId())
-					.roomId(course.getRoomId())
-					.title(course.getTitle())
-					.description(course.getDescription())
-					.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
-					.build());
+			if (courseService.isAuthorized(user, course, "COURSE_STREAM")) {
+				coursesDto.add(CourseDto.builder()
+						.id(course.getId())
+						.roomId(course.getRoomId())
+						.title(course.getTitle())
+						.description(course.getDescription())
+						.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
+						.build());
+			}
 		});
 
 		return coursesDto;
 	}
 
 	@PostMapping("/file/upload")
-	public ResponseEntity<String> uploadFile(@RequestPart("file") MultipartFile file) {
+	public ResponseEntity<String> uploadFile(@RequestPart("file") MultipartFile file, Authentication authentication) {
 		String fileName = fileStorageService.save(file);
 
 		String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -153,7 +156,7 @@ public class CoursePublisherController {
 	}
 
 	@PostMapping("/speech/accept/{requestId}")
-	public ResponseEntity<Void> acceptSpeech(@PathVariable("requestId") long requestId) {
+	public ResponseEntity<Void> acceptSpeech(@PathVariable("requestId") long requestId, Authentication authentication) {
 		Optional<CourseSpeechRequest> speechRequestOpt = speechRequestService.findByRequestId(requestId);
 
 		if (speechRequestOpt.isEmpty()) {
@@ -162,6 +165,10 @@ public class CoursePublisherController {
 
 		CourseSpeechRequest speechRequest = speechRequestOpt.get();
 		long courseId = speechRequest.getCourseId();
+
+		if (!courseService.isAuthorized(courseId, authentication, "COURSE_STREAM")) {
+			throw new UnauthorizedException();
+		}
 
 		CourseSpeechEvent courseEvent = CourseSpeechEvent.builder()
 			.courseId(courseId)
@@ -175,7 +182,7 @@ public class CoursePublisherController {
 	}
 
 	@PostMapping("/speech/reject/{requestId}")
-	public ResponseEntity<Void> rejectSpeech(@PathVariable("requestId") long requestId) {
+	public ResponseEntity<Void> rejectSpeech(@PathVariable("requestId") long requestId, Authentication authentication) {
 		Optional<CourseSpeechRequest> speechRequestOpt = speechRequestService.findByRequestId(requestId);
 
 		if (speechRequestOpt.isEmpty()) {
@@ -184,6 +191,10 @@ public class CoursePublisherController {
 
 		CourseSpeechRequest speechRequest = speechRequestOpt.get();
 		long courseId = speechRequest.getCourseId();
+
+		if (!courseService.isAuthorized(courseId, authentication, "COURSE_STREAM")) {
+			throw new UnauthorizedException();
+		}
 
 		speechRequestService.deleteById(speechRequest.getId());
 
@@ -200,7 +211,11 @@ public class CoursePublisherController {
 
 	@PostMapping("/course/recorded/{courseId}/{recorded}")
 	public ResponseEntity<Void> setCourseRecordingState(@PathVariable("courseId") long courseId,
-			@PathVariable("recorded") boolean isRecorded) {
+			@PathVariable("recorded") boolean isRecorded, Authentication authentication) {
+		if (!courseService.isAuthorized(courseId, authentication, "COURSE_STREAM")) {
+			throw new UnauthorizedException();
+		}
+
 		courseService.findById(courseId)
 				.orElseThrow(() -> new CourseNotFoundException());
 
@@ -220,68 +235,28 @@ public class CoursePublisherController {
 
 	@PostMapping("/messenger/start/{courseId}")
 	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId, Authentication authentication) {
+		if (!courseService.isAuthorized(courseId, authentication, "COURSE_STREAM")) {
+			throw new UnauthorizedException();
+		}
+
 		return startFeature(courseId, new CourseMessageFeature(), new CourseFeatureDto(), authentication);
 	}
 
 	@PostMapping("/messenger/stop/{courseId}")
-	public ResponseEntity<String> stopMessenger(@PathVariable("courseId") long courseId) {
-		return stopFeature(courseId, CourseMessageFeature.class);
-	}
-
-	@MessageMapping("/message/publisher/{courseId}")
-	@SendTo("/topic/course/{courseId}/chat")
-	public void sendMessage(@Payload String messageString, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
-		JsonNode jsonNode = this.objectMapper.readTree(messageString);
-		String type = jsonNode.get("type").asText();
-		WebMessage message;
-
-		switch (type) {
-			case "MessengerMessage":
-				message = this.objectMapper.readValue(messageString, MessengerMessage.class);
-
-				String userId = message.getUserId();
-
-				if (isNull(userId)) {
-					return;
-				}
-
-				User user = userService.findById(userId).orElse(null);
-
-				if (isNull(user)) {
-					return;
-				}
-
-				message.setFamilyName(user.getFamilyName());
-				message.setFirstName(user.getFirstName());
-
-				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
-
-				simpEmitter.emmitChatMessage(courseId, message);
-				break;
-				
-			case "MessengerReplyMessage":
-				message = this.objectMapper.readValue(messageString, MessengerReplyMessage.class);
-
-				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
-
-				simpEmitter.emmitChatMessage(courseId, message);
-				break;
-
-			case "MessengerDirectMessage":
-				message = this.objectMapper.readValue(messageString, MessengerDirectMessage.class);
-				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
-				MessengerDirectMessage mdm = (MessengerDirectMessage) message;
-
-				simpEmitter.emmitChatMessageToUser(courseId, message, mdm.getRecipient());
-				break;
-
-			default:
-				return; // To-DO give useful output
+	public ResponseEntity<String> stopMessenger(@PathVariable("courseId") long courseId, Authentication authentication) {
+		if (!courseService.isAuthorized(courseId, authentication, "COURSE_STREAM")) {
+			throw new UnauthorizedException();
 		}
+
+		return stopFeature(courseId, CourseMessageFeature.class);
 	}
 
 	@PostMapping("/quiz/start/{courseId}")
 	public ResponseEntity<String> startQuiz(@PathVariable("courseId") long courseId, @RequestBody Quiz quiz, Authentication authentication, HttpServletRequest request) {
+		if (!courseService.isAuthorized(courseId, authentication, "COURSE_STREAM")) {
+			throw new UnauthorizedException();
+		}
+
 		String baseUri = request.getScheme() + "://" + request.getServerName();
 
 		CourseQuizFeature feature = new CourseQuizFeature();
@@ -303,7 +278,12 @@ public class CoursePublisherController {
 		consumes = { MediaType.MULTIPART_FORM_DATA_VALUE }
 	)
 	public ResponseEntity<String> startQuiz(HttpServletRequest request, @PathVariable("courseId") long courseId,
-			@RequestPart("quiz") Quiz quiz, @RequestPart("files") Optional<MultipartFile[]> files, Authentication authentication) {
+			@RequestPart("quiz") Quiz quiz, @RequestPart("files") Optional<MultipartFile[]> files,
+			Authentication authentication) {
+		if (!courseService.isAuthorized(courseId, authentication, "COURSE_STREAM")) {
+			throw new UnauthorizedException();
+		}
+
 		String baseUri = request.getScheme() + "://" + request.getServerName();
 		CourseQuizFeature feature = new CourseQuizFeature();
 		List<CourseQuizResource> resources = new ArrayList<>();
@@ -341,7 +321,11 @@ public class CoursePublisherController {
 	}
 
 	@PostMapping("/quiz/stop/{courseId}")
-	public ResponseEntity<String> stopQuiz(@PathVariable("courseId") long courseId, Authentication authenticatio) {
+	public ResponseEntity<String> stopQuiz(@PathVariable("courseId") long courseId, Authentication authentication) {
+		if (!courseService.isAuthorized(courseId, authentication, "COURSE_STREAM")) {
+			throw new UnauthorizedException();
+		}
+
 		return stopFeature(courseId, CourseQuizFeature.class);
 	}
 
