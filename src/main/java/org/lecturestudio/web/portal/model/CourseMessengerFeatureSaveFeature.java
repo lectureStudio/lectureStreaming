@@ -1,18 +1,17 @@
 package org.lecturestudio.web.portal.model;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.lecturestudio.web.api.message.MessengerDirectMessage;
 import org.lecturestudio.web.api.message.MessengerMessage;
-import org.lecturestudio.web.api.message.MessengerReplyMessage;
 import org.lecturestudio.web.api.message.WebMessage;
 
 public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener {
@@ -27,16 +26,12 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
 		if (message instanceof MessengerMessage || message instanceof MessengerDirectMessage) {
 			this.onFeatureMessengerMessage(courseId, message);
 		}
-		else if (message instanceof MessengerReplyMessage) {
-			MessengerReplyMessage mReplyMessage = (MessengerReplyMessage) message;
-			this.onFeaturMessengerReplyMessage(courseId, mReplyMessage);
-		}
 	}
 
 	private void onFeatureMessengerMessage(long courseId, WebMessage message) {
 		StompCourseWebMessageIdProvider courseMessengerIdProvider = courseMessengerIdProviders.get(courseId);
 
-		if (Objects.isNull(courseMessengerIdProvider)) {
+		if (isNull(courseMessengerIdProvider)) {
 			courseMessengerIdProvider = new StompCourseWebMessageIdProvider(courseId);
 			courseMessengerIdProviders.put(courseId, courseMessengerIdProvider);
 		}
@@ -44,36 +39,14 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
 
 		List<WebMessage> messengerHistory = messengerMessageHistories.get(courseId);
 
-		if (Objects.isNull(messengerHistory)) {
-			List<WebMessage> futureHistory = Collections.synchronizedList(new LinkedList<WebMessage>());
+		if (isNull(messengerHistory)) {
+			List<WebMessage> futureHistory = Collections.synchronizedList(new LinkedList<>());
 			futureHistory.add(message);
 			messengerMessageHistories.put(courseId, futureHistory);
 		}
 		else {
 			List<WebMessage> synchronizedMessengerHistory = Collections.synchronizedList(messengerHistory);
 			synchronizedMessengerHistory.add(message);
-		}
-	}
-
-	private void onFeaturMessengerReplyMessage(long courseId, MessengerReplyMessage mReplyMessage) {
-		List<WebMessage> messengerHistory = messengerMessageHistories.get(courseId);
-
-		if (!Objects.isNull(messengerHistory)) {
-			List<WebMessage> synchronizedMessengerHistory = Collections.synchronizedList(messengerHistory);
-			List<WebMessage> repliedMessages = synchronizedMessengerHistory.stream().filter((message) -> {
-				if (message instanceof MessengerMessage || message instanceof MessengerDirectMessage) {
-					return message.getMessageId().equals(mReplyMessage.getRepliedMessageId());
-				}
-				return false;
-			}).toList();
-
-			repliedMessages.forEach((message) -> {
-				if (message instanceof MessengerMessage) {
-					((MessengerMessage) message).setReply(true);
-				} else if (message instanceof MessengerDirectMessage) {
-					((MessengerDirectMessage) message).setReply(true);
-				}
-			});
 		}
 	}
 
@@ -88,8 +61,7 @@ public class CourseMessengerFeatureSaveFeature implements CourseFeatureListener 
 		courseMessengerIdProviders.remove(courseId);
 	}
 
-	public List<WebMessage> getMessengerHistoryOfCourse(long courseId, User user) {
-		String userId = user.getUserId();
+	public List<WebMessage> getMessengerHistoryOfCourse(long courseId, String userId) {
 		List<WebMessage> historyList = messengerMessageHistories.get(courseId);
 
 		if (nonNull(historyList)) {

@@ -1,6 +1,8 @@
 package org.lecturestudio.web.portal.model;
 
-import java.util.Objects;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,8 +21,7 @@ public class StompCourseWebMessageIdProvider implements CourseWebMessageIdProvid
 
     @Override
     public void setMessageId(WebMessage webMessage) {
-
-        if (!Objects.isNull(webMessage.getUserId())) {
+        if (nonNull(webMessage.getUserId())) {
             StringBuilder sb = new StringBuilder();
             sb.append(courseId);
             sb.append("-");
@@ -34,7 +35,7 @@ public class StompCourseWebMessageIdProvider implements CourseWebMessageIdProvid
 
     private Long getNextUserMessageIdPostfix(String username) {
         AtomicLong currUserPostId = userMessageIdPostfix.get(username);
-        if (Objects.isNull(currUserPostId)) {
+        if (isNull(currUserPostId)) {
             currUserPostId = new AtomicLong();
             userMessageIdPostfix.put(username, currUserPostId);
         }

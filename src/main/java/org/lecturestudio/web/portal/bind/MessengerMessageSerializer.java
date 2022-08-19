@@ -23,7 +23,6 @@ public class MessengerMessageSerializer extends JsonSerializer<MessengerMessage>
 		generator.writeStringField("familyName", message.getFamilyName());
 		generator.writeStringField("userId", message.getUserId());
 		generator.writeStringField("messageId", message.getMessageId());
-		generator.writeBooleanField("reply", message.getReply());
 		generator.writeEndObject();
 	}
 }

@@ -20,7 +20,7 @@ public class MessengerDirectMessageDeserializer extends JsonDeserializer<Messeng
     @Override
     public MessengerDirectMessage deserialize(JsonParser p, DeserializationContext ctxt)
             throws IOException, JsonProcessingException {
-                MessengerDirectMessage message = new MessengerDirectMessage(null);
+                MessengerDirectMessage message = new MessengerDirectMessage();
 
                 JsonNode treeNode = p.getCodec().readTree(p);
 
@@ -44,9 +44,6 @@ public class MessengerDirectMessageDeserializer extends JsonDeserializer<Messeng
                 }
                 if (treeNode.hasNonNull("message")) {
                     message.setMessage(new Message(treeNode.get("message").asText()));
-                }
-                if (treeNode.hasNonNull("reply")) {
-                    message.setReply(treeNode.get("reply").asBoolean());
                 }
 
                 return message;

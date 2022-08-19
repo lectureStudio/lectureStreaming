@@ -76,7 +76,6 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -280,12 +279,7 @@ public class CourseSubscriberController {
 			return new CourseMessengerHistoryDto(List.of());
 		}
 
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		User user = userService.findById(details.getUsername())
-				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
-
-		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId, user));
+		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId, authentication.getName()));
 	}
 
 	@PostMapping(value = "/speech/{courseId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -425,7 +419,6 @@ public class CourseSubscriberController {
 			chatMessage.setFamilyName(details.getFamilyName());
 			chatMessage.setMessage(payload);
 			chatMessage.setDate(ZonedDateTime.now());
-			chatMessage.setReply(false);
 
 			messengerFeatureSaveFeature.onFeatureMessage(courseId, chatMessage);
 
@@ -434,6 +427,12 @@ public class CourseSubscriberController {
 
 			// Send to all (co-)organisators.
 			for (String userId : courseService.getOrganisators(courseId)) {
+				if (userId.equals(details.getUsername())) {
+					// Do not send to the sender itself.
+					continue;
+				}
+
+				chatMessage = new MessengerDirectMessage(chatMessage);
 				chatMessage.setRecipient(userId);
 
 				simpEmitter.emmitChatMessageToUser(courseId, chatMessage, userId);
@@ -457,7 +456,6 @@ public class CourseSubscriberController {
 			chatMessage.setFamilyName(details.getFamilyName());
 			chatMessage.setMessage(payload);
 			chatMessage.setDate(ZonedDateTime.now());
-			chatMessage.setReply(false);
 
 			messengerFeatureSaveFeature.onFeatureMessage(courseId, chatMessage);
 

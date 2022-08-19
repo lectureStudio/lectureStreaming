@@ -49,10 +49,6 @@ public class MessengerMessageDeserializer extends JsonDeserializer<MessengerMess
             message.setMessage(new Message(treeNode.get("message").asText()));
         }
 
-        if (treeNode.hasNonNull("reply")) {
-            message.setReply(treeNode.get("reply").asBoolean());
-        }
-
         return message;
     }
 
