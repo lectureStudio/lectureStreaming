@@ -118,10 +118,17 @@ public class CoursePublisherController {
 
 	@GetMapping("/courses")
 	public List<CourseDto> getCourses(Authentication authentication) {
-		List<CourseDto> courses = new ArrayList<>();
+		User user = userService.findById(authentication.getName())
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
 
-		courseService.findAllByUserId(authentication.getName()).forEach(course -> {
-			courses.add(CourseDto.builder()
+		List<Course> courses = new ArrayList<>();
+		List<CourseDto> coursesDto = new ArrayList<>();
+
+		courseService.findAllByUserId(user.getUserId()).forEach(courses::add);
+		courses.addAll(courseService.findAllCourses(user.getUserId()));
+
+		courses.forEach(course -> {
+			coursesDto.add(CourseDto.builder()
 					.id(course.getId())
 					.roomId(course.getRoomId())
 					.title(course.getTitle())
@@ -130,7 +137,7 @@ public class CoursePublisherController {
 					.build());
 		});
 
-		return courses;
+		return coursesDto;
 	}
 
 	@PostMapping("/file/upload")

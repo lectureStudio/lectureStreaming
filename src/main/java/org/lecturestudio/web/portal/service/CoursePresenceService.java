@@ -65,15 +65,14 @@ public class CoursePresenceService {
 	}
 
 	public CourseParticipantType getCourseParticipantType(User user, Long courseId) {
-		Set<Role> userRoles = new HashSet<>(user.getRoles());
-		userRoles.addAll(courseService.findAllRoles(courseId, user.getUserId()));
-
 		for (var registration : user.getRegistrations()) {
 			if (registration.getCourse().getId() == courseId) {
-				userRoles.add(roleRepository.findByName("organisator"));
-				break;
+				return CourseParticipantType.ORGANISATOR;
 			}
 		}
+
+		Set<Role> userRoles = new HashSet<>(user.getRoles());
+		userRoles.addAll(courseService.findAllRoles(courseId, user.getUserId()));
 
 		CourseParticipantType pType = CourseParticipantType.PARTICIPANT;
 

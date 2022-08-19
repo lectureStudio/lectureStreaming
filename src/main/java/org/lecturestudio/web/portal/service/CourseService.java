@@ -97,6 +97,10 @@ public class CourseService {
 		return repository.findAll();
 	}
 
+	public List<Course> findAllCourses(String username) {
+		return courseUserRoleRepository.findAllCourses(username);
+	}
+
 	public List<Privilege> getAllPossiblePrivileges() {
 		return privilegeRepository.findAll();
 	}
@@ -303,7 +307,7 @@ public class CourseService {
 		}
 
 		Set<CourseRole> courseRoles = course.getRoles();
-		Set<Role> userRoles = user.getRoles();
+		Set<Role> userRoles = new HashSet<>(user.getRoles());
 		userRoles.addAll(findAllRoles(courseId, user.getUserId()));
 
 		for (CourseRole courseRole : courseRoles) {
