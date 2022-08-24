@@ -4,7 +4,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Locale;
 
-import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
+import org.lecturestudio.web.portal.model.ChatHistoryService;
 import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.model.ScopedCoursePrivileges;
 import org.springframework.context.annotation.Bean;
@@ -23,8 +23,8 @@ public class ApplicationConfig {
 
 
 	@Bean
-	public CourseMessengerFeatureSaveFeature courseMessengerFeatureSaveFeature() {
-		return new CourseMessengerFeatureSaveFeature();
+	public ChatHistoryService courseMessengerFeatureSaveFeature() {
+		return new ChatHistoryService();
 	}
 
 	@Bean

@@ -44,7 +44,7 @@ import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
-import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
+import org.lecturestudio.web.portal.model.ChatHistoryService;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseQuizResource;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
@@ -105,7 +105,7 @@ public class CourseSubscriberController {
 	private CourseQuizResourceService courseQuizResourceService;
 
 	@Autowired
-	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
+	private ChatHistoryService chatHistoryService;
 
 	@Autowired
 	private CourseParticipantService participantService;
@@ -279,7 +279,7 @@ public class CourseSubscriberController {
 			return new CourseMessengerHistoryDto(List.of());
 		}
 
-		return new CourseMessengerHistoryDto(messengerFeatureSaveFeature.getMessengerHistoryOfCourse(courseId, authentication.getName()));
+		return new CourseMessengerHistoryDto(chatHistoryService.getCourseHistory(courseId, authentication.getName()));
 	}
 
 	@PostMapping(value = "/speech/{courseId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -404,7 +404,7 @@ public class CourseSubscriberController {
 			chatMessage.setFirstName(details.getFirstName());
 			chatMessage.setFamilyName(details.getFamilyName());
 
-			messengerFeatureSaveFeature.onFeatureMessage(courseId, chatMessage);
+			chatHistoryService.addMessage(courseId, chatMessage);
 
 			simpEmitter.emmitChatMessage(courseId, chatMessage);
 		}
@@ -420,7 +420,7 @@ public class CourseSubscriberController {
 			chatMessage.setMessage(payload);
 			chatMessage.setDate(ZonedDateTime.now());
 
-			messengerFeatureSaveFeature.onFeatureMessage(courseId, chatMessage);
+			chatHistoryService.addMessage(courseId, chatMessage);
 
 			// Send back to the sender.
 			simpEmitter.emmitChatMessageToUser(courseId, chatMessage, details.getUsername());
@@ -434,6 +434,8 @@ public class CourseSubscriberController {
 
 				chatMessage = new MessengerDirectMessage(chatMessage);
 				chatMessage.setRecipient(userId);
+
+				chatHistoryService.addMessage(courseId, chatMessage, userId);
 
 				simpEmitter.emmitChatMessageToUser(courseId, chatMessage, userId);
 			}
@@ -457,7 +459,7 @@ public class CourseSubscriberController {
 			chatMessage.setMessage(payload);
 			chatMessage.setDate(ZonedDateTime.now());
 
-			messengerFeatureSaveFeature.onFeatureMessage(courseId, chatMessage);
+			chatHistoryService.addMessage(courseId, chatMessage);
 
 			// Send back to the sender.
 			simpEmitter.emmitChatMessageToUser(courseId, chatMessage, details.getUsername());

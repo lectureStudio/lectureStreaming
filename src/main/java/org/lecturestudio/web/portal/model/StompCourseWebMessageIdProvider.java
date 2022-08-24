@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.lecturestudio.web.api.message.WebMessage;
 
-public class StompCourseWebMessageIdProvider implements CourseWebMessageIdProvider {
+public class StompCourseWebMessageIdProvider {
 
     private final Long courseId;
 
@@ -19,7 +19,6 @@ public class StompCourseWebMessageIdProvider implements CourseWebMessageIdProvid
         this.courseId = courseId;
     }
 
-    @Override
     public void setMessageId(WebMessage webMessage) {
         if (nonNull(webMessage.getUserId())) {
             StringBuilder sb = new StringBuilder();

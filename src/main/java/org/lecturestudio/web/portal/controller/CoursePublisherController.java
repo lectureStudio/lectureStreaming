@@ -21,7 +21,7 @@ import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeature;
 import org.lecturestudio.web.portal.model.CourseFeatureEvent;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
-import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
+import org.lecturestudio.web.portal.model.ChatHistoryService;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseQuizResource;
 import org.lecturestudio.web.portal.model.CourseSpeechEvent;
@@ -77,7 +77,7 @@ public class CoursePublisherController {
 	private CourseSpeechRequestService speechRequestService;
 
 	@Autowired
-	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
+	private ChatHistoryService chatHistoryService;
 
 	@Autowired
 	private UserService userService;
@@ -338,27 +338,32 @@ public class CoursePublisherController {
 				.filter(s -> s.getClass().equals(feature.getClass()))
 				.findFirst().orElse(null);
 
-		if (isNull(courseFeature)) {
-			User initiator = userService.findById(authentication.getName())
+		if (nonNull(courseFeature)) {
+			// Delete and override feature.
+			course.getFeatures().remove(courseFeature);
+
+			courseFeatureService.deleteById(courseFeature.getId());
+		}
+
+		User initiator = userService.findById(authentication.getName())
 				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
 
-			feature.setInitiator(initiator);
-			feature.setCourse(course);
-			feature.setFeatureId(Long.toString(new SecureRandom().nextLong()));
+		feature.setInitiator(initiator);
+		feature.setCourse(course);
+		feature.setFeatureId(Long.toString(new SecureRandom().nextLong()));
 
-			dto.setFeatureId(feature.getFeatureId());
+		dto.setFeatureId(feature.getFeatureId());
 
-			course.getFeatures().add(feature);
+		course.getFeatures().add(feature);
 
-			courseService.saveCourse(course);
+		courseService.saveCourse(course);
 
-			if (feature instanceof CourseMessageFeature) {
-				messengerFeatureSaveFeature.addCourseHistory(courseId);
-			}
-
-			// Send feature state event.
-			sendFeatureState(course.getId(), dto, feature.getName(), true);
+		if (feature instanceof CourseMessageFeature) {
+			chatHistoryService.createCourseHistory(courseId);
 		}
+
+		// Send feature state event.
+		sendFeatureState(course.getId(), dto, feature.getName(), true);
 
 		return ResponseEntity.status(HttpStatus.OK).body(feature.getFeatureId());
 	}
@@ -382,7 +387,7 @@ public class CoursePublisherController {
 		courseFeatureService.deleteById(courseFeature.getId());
 
 		if (courseFeature instanceof CourseMessageFeature) {
-			messengerFeatureSaveFeature.removeCourseHistory(courseId);
+			chatHistoryService.removeCourseHistory(courseId);
 		}
 
 		// Send feature state event.
