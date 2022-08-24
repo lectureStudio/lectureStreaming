@@ -432,9 +432,6 @@ public class CourseSubscriberController {
 					continue;
 				}
 
-				chatMessage = new MessengerDirectMessage(chatMessage);
-				chatMessage.setRecipient(userId);
-
 				chatHistoryService.addMessage(courseId, chatMessage, userId);
 
 				simpEmitter.emmitChatMessageToUser(courseId, chatMessage, userId);
