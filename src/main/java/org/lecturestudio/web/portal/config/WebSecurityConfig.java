@@ -234,6 +234,7 @@ public class WebSecurityConfig {
 			http
 				.authorizeRequests()
 					.antMatchers("/").permitAll()
+					.antMatchers("/p2p-demo").permitAll()
 					.antMatchers("/contact").permitAll()
 					.antMatchers("/sponsors").permitAll()
 					.antMatchers("/imprint").permitAll()

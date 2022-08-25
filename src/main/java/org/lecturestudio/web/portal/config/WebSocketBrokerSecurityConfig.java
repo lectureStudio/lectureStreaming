@@ -1,6 +1,5 @@
 package org.lecturestudio.web.portal.config;
 
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.messaging.MessageSecurityMetadataSourceRegistry;
 import org.springframework.security.config.annotation.web.socket.AbstractSecurityWebSocketMessageBrokerConfigurer;
 
@@ -11,8 +10,6 @@ public class WebSocketBrokerSecurityConfig extends AbstractSecurityWebSocketMess
 	protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
 		messages
 				.nullDestMatcher().authenticated()
-				// users cannot send to these broker destinations, only the application can
-				// .simpMessageDestMatchers("**").denyAll()
 				.simpSubscribeDestMatchers("/topic/**", "/queue/**", "/user/**").permitAll()
 				.simpDestMatchers("/app/**").permitAll()
 				.anyMessage().denyAll();

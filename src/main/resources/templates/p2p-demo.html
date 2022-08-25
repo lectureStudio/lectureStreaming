@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout}">
+
+<head>
+	<title>P2P Demo</title>
+	
+	<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@5.0.0/bundles/stomp.umd.min.js" crossorigin="anonymous"></script>
+
+	<style>
+		input[type="number"] {
+			width: 120px;
+		}
+
+		#network {
+			border: 1px solid lightgray;
+		}
+	</style>
+</head>
+
+<body>
+	<th:block layout:fragment="content">
+		<form autocomplete="off" id="p2p-demo-form" th:action="@{/p2p-demo}" th:object="${demoForm}" method="post" class="mb-2">
+			<div class="d-flex flex-row">
+				<div class="">
+					<h6 for="num-peers" class="form-label">Peers</h6>
+					<div class="p-2">
+						<input type="number" min="1" max="10000" class="form-control" id="num-peers" th:field="*{numPeers}" th:errorclass="is-invalid" aria-describedby="num-peers-feedback">
+						<div id="num-peers-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('numPeers')}" th:errors="${demoForm.numPeers}"></div>
+					</div>
+				</div>
+				<div class="">
+					<h6 for="num-super-peers" class="form-label">Super Peers</h6>
+					<div class="p-2">
+						<input type="number" min="1" max="100" class="form-control" id="num-super-peers" th:field="*{numSuperPeers}" th:errorclass="is-invalid" aria-describedby="num-super-peers-feedback">
+						<div id="num-super-peers-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('numSuperPeers')}" th:errors="${demoForm.numSuperPeers}"></div>
+					</div>
+				</div>
+			</div>
+			
+			<div class="col-12">
+				<button type="submit" class="btn btn-outline-primary btn-sm">Start</button>
+			</div>
+		</form>
+
+		<div id="demo-container" class="row">
+			<div id="network" class="col-8"></div>
+			<div id="demo-log" class="col-4"></div>
+		</div>
+
+		<template id="client-entry">
+			<div class="row mb-3">
+				<div>
+					<strong id="event-id"></strong>
+				</div>
+				<div class="col">
+					<span id="client-id"></span>
+				</div>
+			</div>
+		</template>
+			
+		<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+		<script src="/js/p2p-demo.js"></script>
+	</th:block>
+</body>
+
+</html>

@@ -32,6 +32,7 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		registry.addEndpoint(simpProperties.getEndpoints().getPublisher()).addInterceptors(stompHandshakeInterceptor());
 		registry.addEndpoint(simpProperties.getEndpoints().getState()).addInterceptors(stompHandshakeInterceptor());
+		registry.addEndpoint("/p2p").addInterceptors(stompHandshakeInterceptor());
 	}
 
 	@Bean
