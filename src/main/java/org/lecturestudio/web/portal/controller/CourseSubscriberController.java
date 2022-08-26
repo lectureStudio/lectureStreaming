@@ -413,10 +413,11 @@ public class CourseSubscriberController {
 				throw new UnauthorizedException();
 			}
 
-			MessengerDirectMessage chatMessage = new MessengerDirectMessage(recipient);
+			MessengerDirectMessage chatMessage = new MessengerDirectMessage();
 			chatMessage.setUserId(details.getUsername());
 			chatMessage.setFirstName(details.getFirstName());
 			chatMessage.setFamilyName(details.getFamilyName());
+			chatMessage.setRecipientId(recipient);
 			chatMessage.setMessage(payload);
 			chatMessage.setDate(ZonedDateTime.now());
 
@@ -449,10 +450,13 @@ public class CourseSubscriberController {
 				return;
 			}
 
-			MessengerDirectMessage chatMessage = new MessengerDirectMessage(recipient);
+			MessengerDirectMessage chatMessage = new MessengerDirectMessage();
 			chatMessage.setUserId(details.getUsername());
 			chatMessage.setFirstName(details.getFirstName());
 			chatMessage.setFamilyName(details.getFamilyName());
+			chatMessage.setRecipientId(recipient);
+			chatMessage.setRecipientFirstName(destUser.getFirstName());
+			chatMessage.setRecipientFamilyName(destUser.getFamilyName());
 			chatMessage.setMessage(payload);
 			chatMessage.setDate(ZonedDateTime.now());
 
@@ -487,7 +491,7 @@ public class CourseSubscriberController {
 
 			courseFeatureService.save(feature);
 
-			QuizAnswerMessage qMessage = new QuizAnswerMessage(quizAnswer, "", ZonedDateTime.now());
+			QuizAnswerMessage qMessage = new QuizAnswerMessage(quizAnswer, ZonedDateTime.now());
 
 			for (String userId : courseService.getOrganisators(courseId)) {
 				simpEmitter.emmitEventToUser(courseId, simpProperties.getEvents().getQuiz(), qMessage, userId);

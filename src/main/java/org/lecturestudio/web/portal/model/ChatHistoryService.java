@@ -79,7 +79,7 @@ public class ChatHistoryService {
 					MessengerDirectMessage directMessage = (MessengerDirectMessage) message;
 
 					// Return only private messages that we have sent or received.
-					return directMessage.getUserId().equals(userId) || directMessage.getRecipient().equals(userId);
+					return directMessage.getUserId().equals(userId) || directMessage.getRecipientId().equals(userId);
 				}
 
 				return true;

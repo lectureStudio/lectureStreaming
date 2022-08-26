@@ -17,39 +17,39 @@ import org.springframework.boot.jackson.JsonComponent;
 @JsonComponent
 public class MessengerMessageDeserializer extends JsonDeserializer<MessengerMessage> {
 
-    @Override
-    public MessengerMessage deserialize(JsonParser p, DeserializationContext ctxt)
-            throws IOException, JsonProcessingException {
+	@Override
+	public MessengerMessage deserialize(JsonParser p, DeserializationContext ctxt)
+			throws IOException, JsonProcessingException {
 
-        MessengerMessage message = new MessengerMessage();
+		MessengerMessage message = new MessengerMessage();
 
-        JsonNode treeNode = p.getCodec().readTree(p);
+		JsonNode treeNode = p.getCodec().readTree(p);
 
-        if (treeNode.hasNonNull("firstName")) {
-            message.setFirstName(treeNode.get("firstName").textValue());
-        }
+		if (treeNode.hasNonNull("firstName")) {
+			message.setFirstName(treeNode.get("firstName").textValue());
+		}
 
-        if (treeNode.hasNonNull("familyName")) {
-            message.setFamilyName(treeNode.get("familyName").textValue());
-        }
+		if (treeNode.hasNonNull("familyName")) {
+			message.setFamilyName(treeNode.get("familyName").textValue());
+		}
 
-        if (treeNode.hasNonNull("userId")) {
-            message.setUserId(treeNode.get("userId").textValue());
-        }
+		if (treeNode.hasNonNull("userId")) {
+			message.setUserId(treeNode.get("userId").textValue());
+		}
 
-        if (treeNode.hasNonNull("date")) {
-            message.setDate(ZonedDateTime.parse(treeNode.get("date").asText()));
-        }
+		if (treeNode.hasNonNull("date")) {
+			message.setDate(ZonedDateTime.parse(treeNode.get("date").asText()));
+		}
 
-        if (treeNode.hasNonNull("messageId")) {
-            message.setMessageId(treeNode.get("messageId").asText());
-        }
+		if (treeNode.hasNonNull("messageId")) {
+			message.setMessageId(treeNode.get("messageId").asText());
+		}
 
-        if (treeNode.hasNonNull("message")) {
-            message.setMessage(new Message(treeNode.get("message").asText()));
-        }
+		if (treeNode.hasNonNull("message")) {
+			message.setMessage(new Message(treeNode.get("message").asText()));
+		}
 
-        return message;
-    }
+		return message;
+	}
 
 }

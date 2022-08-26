@@ -19,8 +19,6 @@ public class QuizAnswerSerializer extends JsonSerializer<QuizAnswerMessage> {
 		generator.writeStringField("_type", message.getClass().getSimpleName());
 		generator.writeObjectField("answer", message.getQuizAnswer());
 		generator.writeObjectField("time", message.getDate());
-		generator.writeStringField("firstName", message.getFirstName());
-		generator.writeStringField("familyName", message.getFamilyName());
 		generator.writeEndObject();
 	}
 }

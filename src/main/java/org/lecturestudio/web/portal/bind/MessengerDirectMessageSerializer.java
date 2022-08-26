@@ -11,21 +11,22 @@ import org.lecturestudio.web.api.message.MessengerDirectMessage;
 import org.springframework.boot.jackson.JsonComponent;
 
 @JsonComponent
-public class MessengerDirectMessageSerializer extends JsonSerializer<MessengerDirectMessage>{
+public class MessengerDirectMessageSerializer extends JsonSerializer<MessengerDirectMessage> {
 
-    @Override
-    public void serialize(MessengerDirectMessage message, JsonGenerator generator, SerializerProvider serializers)
-            throws IOException {
-                generator.writeStartObject();
-                generator.writeStringField("_type", MessengerDirectMessage.class.getSimpleName());
-                generator.writeStringField("recipient", message.getRecipient());
-                generator.writeStringField("text", message.getMessage().getText());
-                generator.writeObjectField("time", message.getDate());
-                generator.writeStringField("firstName", message.getFirstName());
-                generator.writeStringField("familyName", message.getFamilyName());
-                generator.writeStringField("userId", message.getUserId());
-                generator.writeStringField("messageId", message.getMessageId());
-                generator.writeEndObject();
-    }
+	@Override
+	public void serialize(MessengerDirectMessage message, JsonGenerator generator, SerializerProvider serializers) throws IOException {
+		generator.writeStartObject();
+		generator.writeStringField("_type", MessengerDirectMessage.class.getSimpleName());
+		generator.writeStringField("text", message.getMessage().getText());
+		generator.writeObjectField("time", message.getDate());
+		generator.writeStringField("firstName", message.getFirstName());
+		generator.writeStringField("familyName", message.getFamilyName());
+		generator.writeStringField("userId", message.getUserId());
+		generator.writeStringField("recipientFirstName", message.getRecipientFirstName());
+		generator.writeStringField("recipientFamilyName", message.getRecipientFamilyName());
+		generator.writeStringField("recipientId", message.getRecipientId());
+		generator.writeStringField("messageId", message.getMessageId());
+		generator.writeEndObject();
+	}
 
 }
