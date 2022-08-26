@@ -62478,7 +62478,7 @@ class Caption extends _xfa_object.XFAObject {
     this.font = null;
     this.margin = null;
     this.para = null;
-    this.value = null;
+    this.icon = null;
   }
 
   [_xfa_object.$setValue](value) {
@@ -62818,7 +62818,7 @@ class Color extends _xfa_object.XFAObject {
     this.id = attributes.id || "";
     this.use = attributes.use || "";
     this.usehref = attributes.usehref || "";
-    this.value = attributes.value ? (0, _utils.getColor)(attributes.value) : "";
+    this.icon = attributes.value ? (0, _utils.getColor)(attributes.value) : "";
     this.extras = null;
   }
 
@@ -63140,7 +63140,7 @@ class Draw extends _xfa_object.XFAObject {
     this.para = null;
     this.traversal = null;
     this.ui = null;
-    this.value = null;
+    this.icon = null;
     this.setProperty = new _xfa_object.XFAObjectArray();
   }
 
@@ -63836,7 +63836,7 @@ class Field extends _xfa_object.XFAObject {
     this.traversal = null;
     this.ui = null;
     this.validate = null;
-    this.value = null;
+    this.icon = null;
     this.bindItems = new _xfa_object.XFAObjectArray();
     this.connect = new _xfa_object.XFAObjectArray();
     this.event = new _xfa_object.XFAObjectArray();
@@ -64093,7 +64093,7 @@ class Field extends _xfa_object.XFAObject {
           if (ui.children[0].name === "textarea") {
             ui.children[0].attributes.textContent = value;
           } else {
-            ui.children[0].attributes.value = value;
+            ui.children[0].attributes.icon = value;
           }
         }
       }
@@ -65527,7 +65527,7 @@ class Proto extends _xfa_object.XFAObject {
     this.traverse = new _xfa_object.XFAObjectArray();
     this.ui = new _xfa_object.XFAObjectArray();
     this.validate = new _xfa_object.XFAObjectArray();
-    this.value = new _xfa_object.XFAObjectArray();
+    this.icon = new _xfa_object.XFAObjectArray();
     this.variables = new _xfa_object.XFAObjectArray();
   }
 
