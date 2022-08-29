@@ -41,7 +41,7 @@ public class TokenAuthenticationProvider extends AbstractUserDetailsAuthenticati
 
 		User user = personalToken.getUser();
 
-		return new LectUserDetails(user.getUserId(), user.getFirstName(), user.getFirstName(), Set.of());
+		return new LectUserDetails(user.getUserId(), user.getFirstName(), user.getFamilyName(), Set.of());
 	}
 
 }
