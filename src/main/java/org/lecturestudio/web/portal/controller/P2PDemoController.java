@@ -23,10 +23,15 @@ public class P2PDemoController {
 	@GetMapping(value = "/p2p-demo")
 	public String p2pDemo(Model model) {
 		P2PDemoForm demoForm = new P2PDemoForm();
+		demoForm.setServerBandwidth(1000);
+		demoForm.setSuperPeerBandwidthThreshold(100);
 		demoForm.setNumServers(1);
 		demoForm.setNumPeers(5);
 		demoForm.setNumSuperPeers(2);
+		demoForm.setMaxSuperPeersClients(3);
+		demoForm.setDocumentSize(1);
 
+		
 		model.addAttribute("demoForm", demoForm);
 
 		return "p2p-demo";
@@ -37,6 +42,8 @@ public class P2PDemoController {
 		if (result.hasErrors()) {
 			return "p2p-demo";
 		}
+
+		model.addAttribute("demoForm", demoForm);
 
 		p2pDemoService.start(authentication.getName(), demoForm);
 

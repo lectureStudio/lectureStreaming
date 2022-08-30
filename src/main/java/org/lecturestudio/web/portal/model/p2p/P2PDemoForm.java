@@ -11,10 +11,18 @@ import lombok.Setter;
 @AllArgsConstructor
 public class P2PDemoForm {
 
+	private Integer serverBandwidth;
+
+	private Integer superPeerBandwidthThreshold;
+
 	private Integer numServers;
 
 	private Integer numPeers;
 
 	private Integer numSuperPeers;
+
+	private Integer maxSuperPeersClients;
+
+	private Integer documentSize;
 
 }

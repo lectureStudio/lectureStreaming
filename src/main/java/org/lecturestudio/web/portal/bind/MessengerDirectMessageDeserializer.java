@@ -24,8 +24,8 @@ public class MessengerDirectMessageDeserializer extends JsonDeserializer<Messeng
 
                 JsonNode treeNode = p.getCodec().readTree(p);
 
-                if (treeNode.hasNonNull("recipient")) {
-                    message.setRecipient(treeNode.get("recipient").textValue());
+                if (treeNode.hasNonNull("recipientId")) {
+                    message.setRecipientId(treeNode.get("recipientId").textValue());
                 }
                 if (treeNode.hasNonNull("firstName")) {
                     message.setFirstName(treeNode.get("firstName").textValue());

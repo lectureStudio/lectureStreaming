@@ -10,8 +10,10 @@ class P2PDemo {
 
 	initialize() {
 		this.nodes = new vis.DataSet([{
-			id: 0,
-			label: "S"
+			id: "19ba501f-cd70-42ad-855b-8423d0b5c4a2",
+			label: "S",
+			color: "#F472B6",
+			level: 0
 		}]);
 
 		this.edges = new vis.DataSet([]);
@@ -30,6 +32,22 @@ class P2PDemo {
 			nodes: {
 				shape: "dot",
 			},
+			layout: {
+				randomSeed: undefined,
+				improvedLayout: true,
+				clusterThreshold: 150,
+				hierarchical: {
+					enabled: false,
+					levelSeparation: 150,
+					nodeSpacing: 100,
+					treeSpacing: 200,
+					blockShifting: true,
+					edgeMinimization: true,
+					parentCentralization: true,
+					sortMethod: 'hubsize',  // hubsize, directed
+					shakeTowards: 'leaves'  // roots, leaves
+				}
+			}
 		};
 		const network = new vis.Network(container, data, options);
 
@@ -50,6 +68,11 @@ class P2PDemo {
 
 				this.onLeft(client);
 			});
+			client.subscribe("/topic/p2p/document/done", (message) => {
+				const client = JSON.parse(message.body);
+
+				this.onDocumentLoaded(client);
+			});
 		};
 		client.activate();
 
@@ -61,25 +84,26 @@ class P2PDemo {
 	onJoined(client) {
 		console.log("joined", client);
 
-		const log = document.querySelector("#demo-log");
-		const template = document.querySelector("#client-entry");
-		const logElement = template.content.cloneNode(true);
-
-		logElement.querySelector("#event-id").textContent = "Joined";
-		logElement.querySelector("#client-id").textContent = client.uid;
-
-		log.appendChild(logElement);
-
 		this.nodes.add({
-			id: this.nodes.length,
-			label: "C"
+			id: client.uid,
+			label: client.type === "SUPER_PEER" ? "SP" : "P",
+			level: client.type === "SUPER_PEER" ? 1 : 2,
+			color: {
+				border: client.type === "SUPER_PEER" ? "#A78BFA" : "#60A5FA",
+				background: client.type === "SUPER_PEER" ? "#A78BFA" : "#60A5FA",
+			}
 		});
-		this.edges.add({
-			from: 0,
-			to: this.nodes.length - 1,
-			value: client.bandwidth,
-			title: "Bandwidth: " + client.bandwidth
-		});
+
+		for (const server of client.servers) {
+			const bandwidth = Math.min(client.bandwidth, server.bandwidth);
+
+			this.edges.add({
+				from: client.uid,
+				to: server.uid,
+				value: bandwidth,
+				title: "Bandwidth: " + bandwidth
+			});
+		}
 	}
 
 	onLeft(client) {
@@ -95,6 +119,28 @@ class P2PDemo {
 		log.appendChild(logElement);
 
 		this.nodes.remove(this.nodes.length - 1);
+	}
+
+	onDocumentLoaded(client) {
+		console.log("loaded", this.nodes.get(client.uid));
+
+		const node = this.nodes.get(client.uid);
+		node.color = {
+			border: "#059669",
+		};
+
+		this.nodes.update(node);
+	}
+
+	logClient(client) {
+		const log = document.querySelector("#demo-log");
+		const template = document.querySelector("#client-entry");
+		const logElement = template.content.cloneNode(true);
+
+		logElement.querySelector("#event-id").textContent = "Joined";
+		logElement.querySelector("#client-id").textContent = client.uid;
+
+		log.appendChild(logElement);
 	}
 }
 

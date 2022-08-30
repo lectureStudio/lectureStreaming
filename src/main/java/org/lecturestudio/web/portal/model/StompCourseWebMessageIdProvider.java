@@ -6,7 +6,7 @@ import static java.util.Objects.nonNull;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.lecturestudio.web.api.message.WebMessage;
+import org.lecturestudio.web.api.message.MessengerMessage;
 
 public class StompCourseWebMessageIdProvider {
 
@@ -19,7 +19,7 @@ public class StompCourseWebMessageIdProvider {
         this.courseId = courseId;
     }
 
-    public void setMessageId(WebMessage webMessage) {
+    public void setMessageId(MessengerMessage webMessage) {
         if (nonNull(webMessage.getUserId())) {
             StringBuilder sb = new StringBuilder();
             sb.append(courseId);

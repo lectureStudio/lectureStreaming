@@ -20,33 +20,61 @@
 
 <body>
 	<th:block layout:fragment="content">
-		<form autocomplete="off" id="p2p-demo-form" th:action="@{/p2p-demo}" th:object="${demoForm}" method="post" class="mb-2">
-			<div class="d-flex flex-row">
-				<div class="">
-					<h6 for="num-peers" class="form-label">Peers</h6>
-					<div class="p-2">
-						<input type="number" min="1" max="10000" class="form-control" id="num-peers" th:field="*{numPeers}" th:errorclass="is-invalid" aria-describedby="num-peers-feedback">
-						<div id="num-peers-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('numPeers')}" th:errors="${demoForm.numPeers}"></div>
-					</div>
-				</div>
-				<div class="">
-					<h6 for="num-super-peers" class="form-label">Super Peers</h6>
-					<div class="p-2">
-						<input type="number" min="1" max="100" class="form-control" id="num-super-peers" th:field="*{numSuperPeers}" th:errorclass="is-invalid" aria-describedby="num-super-peers-feedback">
-						<div id="num-super-peers-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('numSuperPeers')}" th:errors="${demoForm.numSuperPeers}"></div>
-					</div>
-				</div>
-			</div>
-			
-			<div class="col-12">
-				<button type="submit" class="btn btn-outline-primary btn-sm">Start</button>
-			</div>
-		</form>
-
 		<div id="demo-container" class="row">
 			<div id="network" class="col-8"></div>
-			<div id="demo-log" class="col-4"></div>
+			<form autocomplete="off" id="p2p-demo-form" th:action="@{/p2p-demo}" th:object="${demoForm}" method="post" class="col-4 mb-2">
+				<div class="d-flex flex-column">
+					<div class="">
+						<h6 for="server-bandwidth" class="form-label">Server Bandwidth (MBit/s)</h6>
+						<div class="p-2">
+							<input type="number" min="1" max="1000000" class="form-control" id="server-bandwidth" th:field="*{serverBandwidth}" th:errorclass="is-invalid" aria-describedby="server-bandwidth-feedback">
+							<div id="server-bandwidth-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('serverBandwidth')}" th:errors="${demoForm.serverBandwidth}"></div>
+						</div>
+					</div>
+					<div class="">
+						<h6 for="num-peers" class="form-label">Peers</h6>
+						<div class="p-2">
+							<input type="number" min="1" max="10000" class="form-control" id="num-peers" th:field="*{numPeers}" th:errorclass="is-invalid" aria-describedby="num-peers-feedback">
+							<div id="num-peers-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('numPeers')}" th:errors="${demoForm.numPeers}"></div>
+						</div>
+					</div>
+					<div class="">
+						<h6 for="num-super-peers" class="form-label">Super-Peers</h6>
+						<div class="p-2">
+							<input type="number" min="1" max="100" class="form-control" id="num-super-peers" th:field="*{numSuperPeers}" th:errorclass="is-invalid" aria-describedby="num-super-peers-feedback">
+							<div id="num-super-peers-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('numSuperPeers')}" th:errors="${demoForm.numSuperPeers}"></div>
+						</div>
+					</div>
+					<!-- <div class="">
+						<h6 for="num-peers-super-peers" class="form-label">Super-Peer max Peers</h6>
+						<div class="p-2">
+							<input type="number" min="1" max="100" class="form-control" id="num-peers-super-peers" th:field="*{maxSuperPeersClients}" th:errorclass="is-invalid" aria-describedby="num-peers-super-peers-feedback">
+							<div id="num-peers-super-peers-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('maxSuperPeersClients')}" th:errors="${demoForm.maxSuperPeersClients}"></div>
+						</div>
+					</div> -->
+					<div class="">
+						<h6 for="super-peer-bandwidth-threshold" class="form-label">Super-Peer Bandwidth Threshold (MBit/s)</h6>
+						<div class="p-2">
+							<input type="number" min="1" max="1000000" class="form-control" id="super-peer-bandwidth-threshold" th:field="*{superPeerBandwidthThreshold}" th:errorclass="is-invalid" aria-describedby="super-peer-bandwidth-threshold-feedback">
+							<div id="super-peer-bandwidth-threshold-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('superPeerBandwidthThreshold')}" th:errors="${demoForm.superPeerBandwidthThreshold}"></div>
+						</div>
+					</div>
+					<div class="">
+						<h6 for="document-size" class="form-label">Document Size (MB)</h6>
+						<div class="p-2">
+							<input type="number" min="1" max="1000000" class="form-control" id="document-size" th:field="*{documentSize}" th:errorclass="is-invalid" aria-describedby="document-size-feedback">
+							<div id="document-size-feedback" class="invalid-feedback" th:if="${#fields.hasErrors('documentSize')}" th:errors="${demoForm.documentSize}"></div>
+						</div>
+					</div>
+				</div>
+				
+				<div class="col-12">
+					<button type="submit" class="btn btn-outline-primary btn-sm">Start</button>
+				</div>
+			</form>
 		</div>
+
+		<div id="demo-log" class="col-12"></div>
 
 		<template id="client-entry">
 			<div class="row mb-3">
