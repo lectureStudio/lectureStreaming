@@ -13,7 +13,6 @@ import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.lecturestudio.web.portal.saml.LectSAMLUserDetailsService;
 import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
-
 import org.opensaml.saml2.metadata.provider.AbstractReloadingMetadataProvider;
 import org.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;

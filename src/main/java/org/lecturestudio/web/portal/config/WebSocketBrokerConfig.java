@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -23,7 +25,9 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
 
 	@Override
 	public void configureMessageBroker(MessageBrokerRegistry config) {
-		config.enableSimpleBroker(simpProperties.getPrefixes().getBroker());
+		config.enableSimpleBroker(simpProperties.getPrefixes().getBroker())
+			.setTaskScheduler(heartBeatScheduler())
+			.setHeartbeatValue(new long[] { 25000, 25000 });
 		config.setApplicationDestinationPrefixes(simpProperties.getPrefixes().getApp());
 		config.setUserDestinationPrefix(simpProperties.getPrefixes().getUser());
 	}
@@ -42,6 +46,11 @@ public class WebSocketBrokerConfig implements WebSocketMessageBrokerConfigurer {
 	@Bean
 	public StompInboundInterceptor stompInboundInterceptor() {
 		return new StompInboundInterceptor();
+	}
+
+	@Bean
+	public TaskScheduler heartBeatScheduler() {
+		return new ThreadPoolTaskScheduler();
 	}
 
 	@Override
