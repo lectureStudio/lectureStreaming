@@ -1,7 +1,9 @@
 package org.lecturestudio.web.portal.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.transaction.Transactional;
@@ -28,17 +30,17 @@ public class RoleSystemLoader implements ApplicationListener<ContextRefreshedEve
 	};
 
 	private static final Privilege[] PRIVILEGES = {
-			new Privilege(null, "COURSE_ALTER_PRIVILEGES", "privilege.course.alter.privileges"),
-			new Privilege(null, "COURSE_EDIT", "privilege.course.edit"),
-			new Privilege(null, "COURSE_DELETE", "privilege.course.delete"),
-			new Privilege(null, "COURSE_STREAM", "privilege.course.stream"),
-			new Privilege(null, "CHAT_READ", "privilege.chat.read"),
-			new Privilege(null, "CHAT_WRITE", "privilege.chat.write"),
-			new Privilege(null, "CHAT_WRITE_TO_ORGANISATOR", "privilege.chat.write.to.organisator"),
-			new Privilege(null, "CHAT_WRITE_PRIVATELY", "privilege.chat.write.privately"),
-			new Privilege(null, "PARTICIPANTS_VIEW", "privilege.participants.view"),
-			new Privilege(null, "QUIZ_PARTICIPATION", "privilege.quiz.participation"),
-			new Privilege(null, "SPEECH", "privilege.speech"),
+			new Privilege(null, "COURSE_ALTER_PRIVILEGES", "privilege.course.alter.privileges", null),
+			new Privilege(null, "COURSE_EDIT", "privilege.course.edit", null),
+			new Privilege(null, "COURSE_DELETE", "privilege.course.delete", null),
+			new Privilege(null, "COURSE_STREAM", "privilege.course.stream", null),
+			new Privilege(null, "CHAT_READ", "privilege.chat.read", null),
+			new Privilege(null, "CHAT_WRITE", "privilege.chat.write", null),
+			new Privilege(null, "CHAT_WRITE_TO_ORGANISATOR", "privilege.chat.write.to.organisator", null),
+			new Privilege(null, "CHAT_WRITE_PRIVATELY", "privilege.chat.write.privately", null),
+			new Privilege(null, "PARTICIPANTS_VIEW", "privilege.participants.view", null),
+			new Privilege(null, "QUIZ_PARTICIPATION", "privilege.quiz.participation", null),
+			new Privilege(null, "SPEECH", "privilege.speech", null),
 	};
 
 	private final AtomicBoolean done = new AtomicBoolean();
@@ -64,6 +66,8 @@ public class RoleSystemLoader implements ApplicationListener<ContextRefreshedEve
 				createPrivilegeIfNotFound(privilege);
 			}
 
+			createPrivilegeDependencies();
+
 			createDefaultRolePrivileges(roleRepository.findByName("organisator"),
 					List.of());
 			createDefaultRolePrivileges(roleRepository.findByName("co-organisator"),
@@ -71,6 +75,15 @@ public class RoleSystemLoader implements ApplicationListener<ContextRefreshedEve
 			createDefaultRolePrivileges(roleRepository.findByName("participant"),
 					List.of("COURSE_ALTER_PRIVILEGES", "COURSE_EDIT", "COURSE_DELETE", "COURSE_STREAM", "CHAT_WRITE_PRIVATELY"));
 		}
+	}
+
+	@Transactional
+	void createPrivilegeDependencies() {
+		Privilege cwp = privilegeRepository.findByName("CHAT_WRITE_PRIVATELY");
+		cwp.setDependencies(new HashSet<>());
+		cwp.getDependencies().add(privilegeRepository.findByName("PARTICIPANTS_VIEW"));
+
+		privilegeRepository.save(cwp);
 	}
 
 	@Transactional

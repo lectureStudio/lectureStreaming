@@ -59,8 +59,15 @@
 										<div class="form-check form-switch" th:each="formPrivilege,privStat : ${formRole.privileges}">
 											<input type="hidden" th:field="*{roles[__${roleStat.index}__].privileges[__${privStat.index}__].privilege}" th:value="${formPrivilege.privilege}">
 
+											<input th:each="formPrivilegeDep : ${formPrivilege.privilege.dependencies}" type="hidden" th:name="${formRole.role.id} + '-' + ${formPrivilege.privilege.id}" th:value="${formRole.role.id} + '-' + ${formPrivilegeDep.id}">
+
 											<input th:id="${formRole.role.id} + '-' + ${formPrivilege.privilege.id}" class="form-check-input privilegeCheck" type="checkbox" th:field="*{roles[__${roleStat.index}__].privileges[__${privStat.index}__].selected}" th:checked="${formPrivilege.selected}">
 											<label th:for="${formRole.role.id} + '-' + ${formPrivilege.privilege.id}" class="form-check-label" th:text="#{${formPrivilege.privilege.descriptionKey}}"></label>
+
+											<div th:unless="${#lists.isEmpty(formPrivilege.privilege.dependencies)}" class="d-inline">
+												<i class="bi bi-arrow-right"></i>
+												<span th:each="formPrivilegeDep : ${formPrivilege.privilege.dependencies}" th:text="#{${formPrivilegeDep.descriptionKey}}" class="badge bg-success"></span>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -205,6 +212,34 @@
 				description.value = quill.root.innerHTML;
 				return true;
 			}
+
+
+
+			const checkDependency = (checkbox) => {
+				// Check if there are dependent privileges.
+				const dependentRef = form.querySelector(`input[value="${checkbox.id}"]`);
+
+				if (dependentRef) {
+					const dependentCheckbox = form.querySelector(`input[id="${dependentRef.name}"]`);
+
+					if (dependentCheckbox) {
+						// Un-check dependent checkbox and disable it, if current privilege was un-checked.
+						dependentCheckbox.checked = !checkbox.checked ? false : dependentCheckbox.checked;
+						dependentCheckbox.disabled = !checkbox.checked;
+					}
+				}
+			};
+
+			const privilegeChecked = (event) => {
+				checkDependency(event.currentTarget);
+			};
+
+			const privCheckBoxes = document.querySelectorAll('#role-accordion input[type=checkbox]');
+			privCheckBoxes.forEach(checkbox => {
+				checkDependency(checkbox);
+
+				checkbox.addEventListener("change", privilegeChecked);
+			});
 		</script>
 
 		<style>
