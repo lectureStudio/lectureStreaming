@@ -1,9 +1,8 @@
 package org.lecturestudio.web.portal.service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.transaction.Transactional;
@@ -30,8 +29,8 @@ public class RoleSystemLoader implements ApplicationListener<ContextRefreshedEve
 	};
 
 	private static final Privilege[] PRIVILEGES = {
-			new Privilege(null, "COURSE_ALTER_PRIVILEGES", "privilege.course.alter.privileges", null),
 			new Privilege(null, "COURSE_EDIT", "privilege.course.edit", null),
+			new Privilege(null, "COURSE_ALTER_PRIVILEGES", "privilege.course.alter.privileges", null),
 			new Privilege(null, "COURSE_DELETE", "privilege.course.delete", null),
 			new Privilege(null, "COURSE_STREAM", "privilege.course.stream", null),
 			new Privilege(null, "CHAT_READ", "privilege.chat.read", null),
@@ -79,11 +78,18 @@ public class RoleSystemLoader implements ApplicationListener<ContextRefreshedEve
 
 	@Transactional
 	void createPrivilegeDependencies() {
-		Privilege cwp = privilegeRepository.findByName("CHAT_WRITE_PRIVATELY");
-		cwp.setDependencies(new HashSet<>());
-		cwp.getDependencies().add(privilegeRepository.findByName("PARTICIPANTS_VIEW"));
+		// Name (key) to dependency name (value) mapping.
+		Map<String, String> depMap = Map.of(
+			"CHAT_WRITE_PRIVATELY", "PARTICIPANTS_VIEW",
+			"COURSE_ALTER_PRIVILEGES", "COURSE_EDIT"
+		);
 
-		privilegeRepository.save(cwp);
+		depMap.forEach((key, value) -> {
+			Privilege privilege = privilegeRepository.findByName(key);
+			privilege.getDependencies().add(privilegeRepository.findByName(value));
+
+			privilegeRepository.save(privilege);
+		});
 	}
 
 	@Transactional
