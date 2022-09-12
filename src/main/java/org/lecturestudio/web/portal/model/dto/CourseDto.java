@@ -40,7 +40,7 @@ public class CourseDto {
 
 	CourseQuizFeature quizFeature;
 
-	boolean isConference;
+	boolean conference;
 
 	boolean isProtected;
 

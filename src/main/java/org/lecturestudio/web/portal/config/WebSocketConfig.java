@@ -36,7 +36,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		registry
-			.addHandler(new CourseStateWebSocketHandler(courseStates, objectMapper, userService), "/api/everyonelmao/course-state")
+			.addHandler(new CourseStateWebSocketHandler(courseStates, objectMapper, userService), "/api/wspublic/course-state")
 				.setAllowedOrigins("*");
 		registry
 			.addHandler(new CourseFeatureWebSocketHandler(courseFeatureState, objectMapper), "/api/publisher/messages")
