@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.lecturestudio.core.input.KeyEvent;
 import org.lecturestudio.web.api.message.CourseParticipantMessage;
 import org.lecturestudio.web.api.message.SpeechBaseMessage;
@@ -81,10 +80,8 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-		final KeycloakAuthenticationToken auth = (KeycloakAuthenticationToken) session.getPrincipal();
+		final UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) session.getPrincipal();
 		final String userName = auth.getName();
-
-		System.out.println("Binary Websocket message received from user " + userName);
 
 		// Clean-up state.
 		sessionBufferMap.remove(session);
@@ -100,10 +97,8 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 	@Override
 	protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
-		final KeycloakAuthenticationToken auth = (KeycloakAuthenticationToken) session.getPrincipal();
+		final UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) session.getPrincipal();
 		final String userName = auth.getName();
-
-		System.out.println("Binary Websocket message received from user " + userName);
 
 		ByteBuffer buffer = message.getPayload();
 		List<ByteBuffer> buffers = sessionBufferMap.get(session);
@@ -400,8 +395,6 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 			actionData = new byte[dataLength];
 			buffer.get(actionData);
 		}
-
-		System.out.println("I received " + dataLength + " bytes.");
 
 		return StreamActionFactory.createAction(type, actionData);
 	}
