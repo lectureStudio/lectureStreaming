@@ -1,16 +1,13 @@
 package org.lecturestudio.web.portal.model;
 
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 
 import java.math.BigInteger;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 
-import org.lecturestudio.web.api.message.CourseParticipantMessage;
-import org.lecturestudio.web.api.message.SpeechBaseMessage;
 import org.lecturestudio.web.portal.service.UserService;
 
 public class CourseState {
@@ -19,13 +16,9 @@ public class CourseState {
 
 	private final long courseId;
 
-	private final BiConsumer<Long, SpeechBaseMessage> speechListener;
-
-	private final BiConsumer<Long, CourseParticipantMessage> connectedListener;
-
 	private final long timestamp;
 
-	private final Map<String, BigInteger> participantMap = new ConcurrentHashMap<>();
+	private final Map<String, Set<BigInteger>> participantMap = new ConcurrentHashMap<>();
 
 	private final Map<Long, CourseStateDocument> documentMap = new ConcurrentHashMap<>();
 
@@ -34,16 +27,10 @@ public class CourseState {
 	private boolean isRecorded;
 
 
-	public CourseState(UserService userService, long courseId, BiConsumer<Long, SpeechBaseMessage> speechListener, BiConsumer<Long, CourseParticipantMessage> connectedListener) {
+	public CourseState(UserService userService, long courseId) {
 		this.userService = userService;
 		this.courseId = courseId;
-		this.speechListener = speechListener;
-		this.connectedListener = connectedListener;
 		timestamp = System.currentTimeMillis();
-	}
-
-	public void postSpeechMessage(Long courseId, SpeechBaseMessage message) {
-		speechListener.accept(courseId, message);
 	}
 
 	public long getCreatedTimestamp() {
@@ -64,32 +51,34 @@ public class CourseState {
 	 * @param participantId The unique participant ID.
 	 * @param sessionId     The unique streaming session ID.
 	 */
-	public void setParticipantSession(String participantId, BigInteger sessionId) {
+	public synchronized void setParticipantSession(String participantId, BigInteger sessionId) {
 		if (isNull(participantId)) {
 			return;
 		}
 
-		if (nonNull(participantMap.get(participantId))) {
-			// Already joined.
-			return;
+		Set<BigInteger> openSessions = participantMap.get(participantId);
+		if (isNull(openSessions)) {
+			openSessions = new HashSet<>();
+			participantMap.put(participantId, openSessions);
 		}
 
-		participantMap.put(participantId, sessionId);
+		if (openSessions.isEmpty()) {
+			// Optional<User> user = userService.findById(participantId);
 
-		// Optional<User> user = userService.findById(participantId);
+			// Send notification of arrival.
+			// CourseParticipantMessage participantMessage = new CourseParticipantMessage();
+			// participantMessage.setConnected(true);
 
-		// if (!user.isPresent()) {
-		// 	// TODO: kick participant from course?
-		// 	return;
-		// }
+			// if (user.isPresent()) {
+			// 	participantMessage.setFirstName(user.get().getFirstName());
+			// 	participantMessage.setFamilyName(user.get().getFamilyName());
+			// 	participantMessage.setUserName(user.get().getUserId());
+			// }
 
-		// Send notification of arrival.
-		CourseParticipantMessage participantMessage = new CourseParticipantMessage();
-		participantMessage.setConnected(true);
-		// participantMessage.setFirstName(user.get().getFirstName());
-		// participantMessage.setFamilyName(user.get().getFamilyName());
+			// postParticipantMessage(courseId, participantMessage);
+		}
 
-		postParticipantMessage(courseId, participantMessage);
+		openSessions.add(sessionId);
 	}
 
 	/**
@@ -97,29 +86,33 @@ public class CourseState {
 	 * 
 	 * @param sessionId The unique streaming session ID.
 	 */
-	public void removeParticipantWithSessionId(BigInteger sessionId) {
+	public synchronized void removeParticipantWithSessionId(BigInteger sessionId) {
 		for (var entry : participantMap.entrySet()) {
-			if (entry.getValue().equals(sessionId)) {
+			if (entry.getValue().contains(sessionId)) {
 				String participantId = entry.getKey();
 
-				participantMap.remove(participantId);
+				entry.getValue().remove(sessionId);
 
-				Optional<User> user = userService.findById(participantId);
+				if (entry.getValue().isEmpty()) {
+					// Optional<User> user = userService.findById(participantId);
 
-				// Send notification of departure.
-				CourseParticipantMessage participantMessage = new CourseParticipantMessage();
-				participantMessage.setConnected(false);
+					// // Send notification of departure.
+					// CourseParticipantMessage participantMessage = new CourseParticipantMessage();
+					// participantMessage.setConnected(false);
 
-				if (user.isPresent()) {
-					participantMessage.setFirstName(user.get().getFirstName());
-					participantMessage.setFamilyName(user.get().getFamilyName());
+					// if (user.isPresent()) {
+					// 	participantMessage.setFirstName(user.get().getFirstName());
+					// 	participantMessage.setFamilyName(user.get().getFamilyName());
+					// 	participantMessage.setUserName(user.get().getUserId());
+					// }
+
+					// postParticipantMessage(courseId, participantMessage);
 				}
 
-				postParticipantMessage(courseId, participantMessage);
 				break;
 			}
 		}
-	}
+		}
 
 	public CourseStateDocument getActiveDocument() {
 		return avtiveDocument;
@@ -143,9 +136,5 @@ public class CourseState {
 
 	public void removeCourseStateDocument(CourseStateDocument stateDoc) {
 		documentMap.remove(stateDoc.getDocumentId());
-	}
-
-	private void postParticipantMessage(Long courseId, CourseParticipantMessage message) {
-		connectedListener.accept(courseId, message);
 	}
 }

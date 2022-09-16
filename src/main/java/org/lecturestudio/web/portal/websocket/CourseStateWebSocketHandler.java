@@ -13,11 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.lecturestudio.core.input.KeyEvent;
-import org.lecturestudio.web.api.message.CourseParticipantMessage;
-import org.lecturestudio.web.api.message.SpeechBaseMessage;
 import org.lecturestudio.web.api.stream.action.StreamAction;
 import org.lecturestudio.web.api.stream.action.StreamActionFactory;
 import org.lecturestudio.web.api.stream.action.StreamActionType;
@@ -36,7 +32,6 @@ import org.lecturestudio.web.portal.service.UserService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
@@ -52,14 +47,11 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 	private final CourseStates courseStates;
 
-	private final ObjectMapper objectMapper;
-
 	private final UserService userService;
 
 
-	public CourseStateWebSocketHandler(CourseStates courseStates, ObjectMapper objectMapper, UserService userService) {
+	public CourseStateWebSocketHandler(CourseStates courseStates, UserService userService) {
 		this.courseStates = courseStates;
-		this.objectMapper = objectMapper;
 		this.userService = userService;
 	}
 
@@ -206,44 +198,6 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		}
 	}
 
-	private void onSpeechMessage(Long courseId, SpeechBaseMessage message) {
-		WebSocketSession session = userSockets.entrySet().stream()
-			.filter(entry -> entry.getValue() == courseId)
-			.findFirst()
-			.map(Map.Entry::getKey)
-			.orElse(null);
-
-		if (isNull(session)) {
-			throw new RuntimeException("Course not available");
-		}
-
-		try {
-			session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void onParticipantMessage(Long courseId, CourseParticipantMessage message) {
-		WebSocketSession session = userSockets.entrySet().stream()
-			.filter(entry -> entry.getValue() == courseId)
-			.findFirst()
-			.map(Map.Entry::getKey)
-			.orElse(null);
-
-		if (isNull(session)) {
-			throw new RuntimeException("Course not available");
-		}
-
-		try {
-			session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	private void sessionInit(WebSocketSession session, String userName, StreamInitAction initAction) {
 		long courseId = initAction.getCourseId();
 
@@ -252,7 +206,7 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		userSockets.put(session, courseId);
 
 		// Bind course state to the course ID.
-		initStates.put(courseId, new CourseState(userService, courseId, this::onSpeechMessage, this::onParticipantMessage));
+		initStates.put(courseId, new CourseState(userService, courseId));
 	}
 
 	private void sessionStart(StreamStartAction startAction) {

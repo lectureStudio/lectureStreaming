@@ -4,11 +4,12 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Locale;
 
-import org.lecturestudio.web.portal.model.CourseFeatureState;
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseStates;
-
+import org.lecturestudio.web.portal.model.ScopedCoursePrivileges;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 
@@ -22,13 +23,19 @@ public class ApplicationConfig {
 
 
 	@Bean
+	public CourseMessengerFeatureSaveFeature courseMessengerFeatureSaveFeature() {
+		return new CourseMessengerFeatureSaveFeature();
+	}
+
+	@Bean
 	public CourseStates courseStates() {
 		return new CourseStates();
 	}
 
 	@Bean
-	public CourseFeatureState courseFeatureState() {
-		return new CourseFeatureState();
+	@RequestScope
+	public ScopedCoursePrivileges scopedCoursePrivileges() {
+		return new ScopedCoursePrivileges();
 	}
 
 	@Bean

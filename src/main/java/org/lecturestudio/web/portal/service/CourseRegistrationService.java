@@ -2,6 +2,7 @@ package org.lecturestudio.web.portal.service;
 
 import java.util.Optional;
 
+import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseRegistration;
 import org.lecturestudio.web.portal.repository.CourseRegistrationRepository;
 
@@ -17,5 +18,9 @@ public class CourseRegistrationService {
 
 	public Optional<CourseRegistration> findByCourseAndUserId(Long courseId, String userId) {
 		return registrationRepository.findByCourseAndUserId(courseId, userId);
+	}
+
+	public Optional<CourseRegistration> findByCourse(Course course) {
+		return registrationRepository.findByCourse(course);
 	}
 }

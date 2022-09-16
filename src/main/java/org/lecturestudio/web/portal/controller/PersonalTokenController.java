@@ -14,6 +14,7 @@ import org.lecturestudio.web.portal.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,7 +35,7 @@ public class PersonalTokenController {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		User user = userService.findById(details.getUsername())
-			.orElseThrow(() -> new IllegalArgumentException("User is not present"));
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
 
 		String token = RandomStringUtils.random(32, true, true);
 
@@ -68,7 +69,7 @@ public class PersonalTokenController {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		User user = userService.findById(details.getUsername())
-			.orElseThrow(() -> new IllegalArgumentException("User is not present"));
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
 
 		PersonalToken personalToken = user.getToken();
 

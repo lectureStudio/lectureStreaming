@@ -1,14 +1,18 @@
 package org.lecturestudio.web.portal.saml;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import org.lecturestudio.web.portal.config.WebSecurityConfig;
+import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
+import org.lecturestudio.web.portal.service.RoleService;
 import org.lecturestudio.web.portal.service.UserService;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -21,9 +25,12 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 
 	private final UserService userService;
 
+	private final RoleService roleService;
 
-	public LectSAMLUserDetailsService(UserService userService) {
+
+	public LectSAMLUserDetailsService(UserService userService, RoleService roleService) {
 		this.userService = userService;
+		this.roleService = roleService;
 	}
 
 	@Override
@@ -31,7 +38,7 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 		String firstName = null;
 		String familyName = null;
 		String username = null;
-		List<GrantedAuthority> authorities = new ArrayList<>();
+		Set<GrantedAuthority> authorities = new HashSet<>();
 		Map<String, String> attributeMap = WebSecurityConfig.SSO_REQUESTED_ATTRIBUTES;
 
 		for (var attr : credential.getAttributes()) {
@@ -47,20 +54,30 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 				username = credential.getAttributeAsString(name);
 			}
 			else if (name.equals(attributeMap.get("eduPersonAffiliation"))) {
+				GrantedAuthority member = new SimpleGrantedAuthority("ROLE_MEMBER");
+				GrantedAuthority student = new SimpleGrantedAuthority("ROLE_STUDENT");
+
 				for (String affiliation : credential.getAttributeAsStringArray(name)) {
 					// Map person affiliations to roles. Higher roles go first.
-					if (affiliation.equals("faculty")) {
-						authorities.add(new SimpleGrantedAuthority("ROLE_FACULTY"));
+					switch (affiliation) {
+						case "faculty":
+						case "employee":
+						case "member":
+							authorities.add(member);
+							break;
+
+						case "student":
+							authorities.add(student);
+							break;
 					}
-					else if (affiliation.equals("employee")) {
-						authorities.add(new SimpleGrantedAuthority("ROLE_EMPLOYEE"));
-					}
-					else if (affiliation.equals("member")) {
-						authorities.add(new SimpleGrantedAuthority("ROLE_MEMBER"));
-					}
-					else if (affiliation.equals("affiliate")) {
-						authorities.add(new SimpleGrantedAuthority("ROLE_AFFILIATE"));
-					}
+				}
+
+				if (authorities.isEmpty()) {
+					authorities.add(student);
+				}
+				else if (authorities.contains(student)) {
+					// Students may have the "MEMBER" affiliation.
+					authorities.remove(member);
 				}
 			}
 		}
@@ -72,10 +89,21 @@ public class LectSAMLUserDetailsService implements SAMLUserDetailsService {
 		Optional<User> userOpt = userService.findById(username);
 
 		if (userOpt.isEmpty()) {
+			// Generate anonymous user-id.
+			UUID uuid = UUID.randomUUID();
+
+			while (userService.hasUser(uuid)) {
+				uuid = UUID.randomUUID();
+			}
+
+			Role defaultRole = roleService.findByName("participant");
+
 			userService.saveUser(User.builder()
 				.userId(username)
+				.anonymousUserId(uuid)
 				.firstName(firstName)
 				.familyName(familyName)
+				.roles(nonNull(defaultRole) ? Set.of(defaultRole) : Set.of())
 				.build());
 		}
 

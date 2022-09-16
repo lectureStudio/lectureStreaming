@@ -3,6 +3,9 @@ package org.lecturestudio.web.portal.controller;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -11,6 +14,10 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.lecturestudio.web.api.message.MessengerDirectMessage;
+import org.lecturestudio.web.api.message.MessengerMessage;
+import org.lecturestudio.web.api.message.MessengerReplyMessage;
+import org.lecturestudio.web.api.message.WebMessage;
 import org.lecturestudio.web.api.model.quiz.Quiz;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
@@ -19,16 +26,22 @@ import org.lecturestudio.web.portal.model.CourseEvent;
 import org.lecturestudio.web.portal.model.CourseFeature;
 import org.lecturestudio.web.portal.model.CourseFeatureEvent;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
+import org.lecturestudio.web.portal.model.CourseMessengerFeatureSaveFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseQuizResource;
 import org.lecturestudio.web.portal.model.CourseSpeechEvent;
 import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.model.User;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.CourseFeatureDto;
 import org.lecturestudio.web.portal.model.dto.CourseQuizFeatureDto;
+import org.lecturestudio.web.portal.model.dto.UserDto;
+import org.lecturestudio.web.portal.property.SimpProperties;
 import org.lecturestudio.web.portal.service.FileStorageService;
+import org.lecturestudio.web.portal.service.UserService;
+import org.lecturestudio.web.portal.util.SimpEmitter;
 import org.lecturestudio.web.portal.util.StringUtils;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
@@ -38,8 +51,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -67,11 +84,37 @@ public class CoursePublisherController {
 	private CourseSpeechRequestService speechRequestService;
 
 	@Autowired
+	private CourseMessengerFeatureSaveFeature messengerFeatureSaveFeature;
+
+	@Autowired
+	private UserService userService;
+
+	@Autowired
 	private FileStorageService fileStorageService;
 
 	@Autowired
-	private SimpMessagingTemplate simpMessagingTemplate;
+	private SimpProperties simpProperties;
 
+	@Autowired
+	private SimpEmitter simpEmitter;
+
+	@Autowired
+	private ObjectMapper objectMapper;
+
+
+	@GetMapping("/user")
+	public UserDto getUser(Authentication authentication) {
+		User user = userService.findById(authentication.getName())
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
+
+		UserDto userDto = UserDto.builder()
+				.userId(authentication.getName())
+				.familyName(user.getFamilyName())
+				.firstName(user.getFirstName())
+				.build();
+
+		return userDto;
+	}
 
 	@GetMapping("/courses")
 	public List<CourseDto> getCourses(Authentication authentication) {
@@ -79,12 +122,12 @@ public class CoursePublisherController {
 
 		courseService.findAllByUserId(authentication.getName()).forEach(course -> {
 			courses.add(CourseDto.builder()
-				.id(course.getId())
-				.roomId(course.getRoomId())
-				.title(course.getTitle())
-				.description(course.getDescription())
-				.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
-				.build());
+					.id(course.getId())
+					.roomId(course.getRoomId())
+					.title(course.getTitle())
+					.description(course.getDescription())
+					.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
+					.build());
 		});
 
 		return courses;
@@ -119,8 +162,7 @@ public class CoursePublisherController {
 			.accepted(true)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course-state/all/speech", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/speech", courseEvent);
+		simpEmitter.emmitEventAndAll(courseId, simpProperties.getEvents().getSpeech(), courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -144,8 +186,7 @@ public class CoursePublisherController {
 			.accepted(false)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course-state/all/speech", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/speech", courseEvent);
+		simpEmitter.emmitEventAndAll(courseId, simpProperties.getEvents().getSpeech(), courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -165,15 +206,14 @@ public class CoursePublisherController {
 				.started(isRecorded)
 				.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course-state/all/recording", courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/recording", courseEvent);
+		simpEmitter.emmitEventAndAll(courseId, simpProperties.getEvents().getRecording(), courseEvent);
 
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
 
 	@PostMapping("/messenger/start/{courseId}")
-	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId) {
-		return startFeature(courseId, new CourseMessageFeature(), new CourseFeatureDto());
+	public ResponseEntity<String> startMessenger(@PathVariable("courseId") long courseId, Authentication authentication) {
+		return startFeature(courseId, new CourseMessageFeature(), new CourseFeatureDto(), authentication);
 	}
 
 	@PostMapping("/messenger/stop/{courseId}")
@@ -181,8 +221,60 @@ public class CoursePublisherController {
 		return stopFeature(courseId, CourseMessageFeature.class);
 	}
 
+	@MessageMapping("/message/publisher/{courseId}")
+	@SendTo("/topic/course/{courseId}/chat")
+	public void sendMessage(@Payload String messageString, @DestinationVariable Long courseId, Authentication authentication) throws Exception {
+		JsonNode jsonNode = this.objectMapper.readTree(messageString);
+		String type = jsonNode.get("type").asText();
+		WebMessage message;
+
+		switch (type) {
+			case "MessengerMessage":
+				message = this.objectMapper.readValue(messageString, MessengerMessage.class);
+
+				String userId = message.getUserId();
+
+				if (isNull(userId)) {
+					return;
+				}
+
+				User user = userService.findById(userId).orElse(null);
+
+				if (isNull(user)) {
+					return;
+				}
+
+				message.setFamilyName(user.getFamilyName());
+				message.setFirstName(user.getFirstName());
+
+				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
+
+				simpEmitter.emmitChatMessage(courseId, message);
+				break;
+				
+			case "MessengerReplyMessage":
+				message = this.objectMapper.readValue(messageString, MessengerReplyMessage.class);
+
+				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
+
+				simpEmitter.emmitChatMessage(courseId, message);
+				break;
+
+			case "MessengerDirectMessage":
+				message = this.objectMapper.readValue(messageString, MessengerDirectMessage.class);
+				messengerFeatureSaveFeature.onFeatureMessage(courseId, message);
+				MessengerDirectMessage mdm = (MessengerDirectMessage) message;
+
+				simpEmitter.emmitChatMessageToUser(courseId, message, mdm.getRecipient());
+				break;
+
+			default:
+				return; // To-DO give useful output
+		}
+	}
+
 	@PostMapping("/quiz/start/{courseId}")
-	public ResponseEntity<String> startQuiz(@PathVariable("courseId") long courseId, @RequestBody Quiz quiz, HttpServletRequest request) {
+	public ResponseEntity<String> startQuiz(@PathVariable("courseId") long courseId, @RequestBody Quiz quiz, Authentication authentication, HttpServletRequest request) {
 		String baseUri = request.getScheme() + "://" + request.getServerName();
 
 		CourseQuizFeature feature = new CourseQuizFeature();
@@ -196,7 +288,7 @@ public class CoursePublisherController {
 				.options(feature.getOptions())
 				.build();
 
-		return startFeature(courseId, feature, dto);
+		return startFeature(courseId, feature, dto, authentication);
 	}
 
 	@PostMapping(
@@ -204,7 +296,7 @@ public class CoursePublisherController {
 		consumes = { MediaType.MULTIPART_FORM_DATA_VALUE }
 	)
 	public ResponseEntity<String> startQuiz(HttpServletRequest request, @PathVariable("courseId") long courseId,
-			@RequestPart("quiz") Quiz quiz, @RequestPart("files") Optional<MultipartFile[]> files) {
+			@RequestPart("quiz") Quiz quiz, @RequestPart("files") Optional<MultipartFile[]> files, Authentication authentication) {
 		String baseUri = request.getScheme() + "://" + request.getServerName();
 		CourseQuizFeature feature = new CourseQuizFeature();
 		List<CourseQuizResource> resources = new ArrayList<>();
@@ -238,15 +330,15 @@ public class CoursePublisherController {
 				.options(feature.getOptions())
 				.build();
 
-		return startFeature(courseId, feature, dto);
+		return startFeature(courseId, feature, dto, authentication);
 	}
 
 	@PostMapping("/quiz/stop/{courseId}")
-	public ResponseEntity<String> stopQuiz(@PathVariable("courseId") long courseId) {
+	public ResponseEntity<String> stopQuiz(@PathVariable("courseId") long courseId, Authentication authenticatio) {
 		return stopFeature(courseId, CourseQuizFeature.class);
 	}
 
-	ResponseEntity<String> startFeature(long courseId, CourseFeature feature, CourseFeatureDto dto) {
+	ResponseEntity<String> startFeature(long courseId, CourseFeature feature, CourseFeatureDto dto, Authentication authentication) {
 		Course course = courseService.findById(courseId)
 				.orElseThrow(() -> new CourseNotFoundException());
 
@@ -256,6 +348,10 @@ public class CoursePublisherController {
 				.findFirst().orElse(null);
 
 		if (isNull(courseFeature)) {
+			User initiator = userService.findById(authentication.getName())
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
+
+			feature.setInitiator(initiator);
 			feature.setCourse(course);
 			feature.setFeatureId(Long.toString(new SecureRandom().nextLong()));
 
@@ -264,6 +360,10 @@ public class CoursePublisherController {
 			course.getFeatures().add(feature);
 
 			courseService.saveCourse(course);
+
+			if (feature instanceof CourseMessageFeature) {
+				messengerFeatureSaveFeature.addCourseHistory(courseId);
+			}
 
 			// Send feature state event.
 			sendFeatureState(course.getId(), dto, feature.getName(), true);
@@ -290,6 +390,10 @@ public class CoursePublisherController {
 
 		courseFeatureService.deleteById(courseFeature.getId());
 
+		if (courseFeature instanceof CourseMessageFeature) {
+			messengerFeatureSaveFeature.removeCourseHistory(courseId);
+		}
+
 		// Send feature state event.
 		CourseFeatureDto dto = new CourseFeatureDto();
 		dto.setFeatureId(courseFeature.getFeatureId());
@@ -306,7 +410,6 @@ public class CoursePublisherController {
 			.feature(feature)
 			.build();
 
-		simpMessagingTemplate.convertAndSend("/topic/course-state/all/" + name, courseEvent);
-		simpMessagingTemplate.convertAndSend("/topic/course-state/" + courseId + "/" + name, courseEvent);
+		simpEmitter.emmitEventAndAll(courseId, name, courseEvent);
 	}
 }

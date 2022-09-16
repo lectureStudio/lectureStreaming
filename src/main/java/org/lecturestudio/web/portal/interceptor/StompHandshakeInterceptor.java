@@ -1,0 +1,40 @@
+package org.lecturestudio.web.portal.interceptor;
+
+import java.util.Map;
+
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.server.HandshakeInterceptor;
+
+public class StompHandshakeInterceptor implements HandshakeInterceptor {
+
+	@Value("${simp.session.header.endpoint}")
+	private String endpointHeader;
+
+
+	@Override
+	public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
+			WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+		if (request instanceof ServletServerHttpRequest) {
+			ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
+			HttpSession session = servletRequest.getServletRequest().getSession(true);
+
+			if (session != null) {
+				attributes.put(endpointHeader, request.getURI().getPath());
+			}
+		}
+
+		return true;
+	}
+
+	@Override
+	public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
+			WebSocketHandler wsHandler, Exception exception) {
+	}
+
+}

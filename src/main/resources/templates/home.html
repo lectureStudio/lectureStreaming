@@ -9,6 +9,9 @@
 <body>
 
 	<th:block layout:fragment="content">
+		<div class="mb-3 theme-nav-head" sec:authorize="hasAnyRole('MEMBER')">
+			<a class="" th:href="@{/course/add}" th:text="#{home.add.course}"></a>
+		</div>
 		<div class="list-group bg-light border rounded-3 p-4">
 			<div th:each="course: ${courses}" class="list-group-item" aria-current="true">
 				<a th:href="@{/course/{id}(id=${course.id})}" class="overlay-link"></a>
@@ -34,12 +37,12 @@
 								<i class="bi bi-clipboard"></i>
 							</button>
 						</div>
-						<form th:if="${course.canEdit}" class="list-inline-item" th:action="@{/course/edit/{id}(id=${course.id})}" method="get">
+						<form th:if="${course.canEdit}" class="list-inline-item" th:action="@{/course/{id}/edit(id=${course.id})}" method="get">
 							<button class="btn btn-outline-primary btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" th:title="#{course.edit}">
 								<i class="bi bi-pencil-square"></i>
 							</button>
 						</form>
-						<form th:if="${course.canDelete}" class="list-inline-item" th:action="@{/course/delete/{id}(id=${course.id})}" method="post">
+						<form th:if="${course.canDelete}" class="list-inline-item" th:action="@{/course/{id}/delete(id=${course.id})}" method="post">
 							<button class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" th:title="#{course.delete}">
 								<i class="bi bi-trash3"></i>
 							</button>

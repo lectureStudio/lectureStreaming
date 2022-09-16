@@ -1,37 +1,52 @@
 package org.lecturestudio.web.portal.controller;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.lecturestudio.web.portal.exception.UnauthorizedException;
+
+import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseCredentials;
+import org.lecturestudio.web.portal.model.CourseForm;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
+import org.lecturestudio.web.portal.model.CoursePrivilege;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseRegistration;
+import org.lecturestudio.web.portal.model.CourseRole;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStates;
+import org.lecturestudio.web.portal.model.CourseUserRole;
 import org.lecturestudio.web.portal.model.User;
+import org.lecturestudio.web.portal.model.CourseForm.CourseFormPrivilege;
+import org.lecturestudio.web.portal.model.CourseForm.CourseFormRole;
+import org.lecturestudio.web.portal.model.CourseForm.CourseFormUser;
 import org.lecturestudio.web.portal.model.dto.CourseDto;
 import org.lecturestudio.web.portal.model.dto.UserDto;
 import org.lecturestudio.web.portal.saml.LectUserDetails;
-import org.lecturestudio.web.portal.service.CourseRegistrationService;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.UserService;
 import org.lecturestudio.web.portal.util.StringUtils;
+import org.lecturestudio.web.portal.validator.CourseUserRoleValidator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -52,10 +67,10 @@ public class CourseController {
 	private CourseService courseService;
 
 	@Autowired
-	private CourseRegistrationService registrationService;
+	private CourseStates courseStates;
 
 	@Autowired
-	private CourseStates courseStates;
+	private CourseUserRoleValidator courseFormValidator;
 
 	@Autowired
 	private MessageSource messageSource;
@@ -64,7 +79,7 @@ public class CourseController {
 	@RequestMapping("/{id}")
 	public String showCourse(@PathVariable("id") long id, @RequestParam(required = false) String pass, Authentication authentication, Model model) {
 		Course course = courseService.findById(id)
-				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
+				.orElseThrow(() -> new CourseNotFoundException());
 
 		boolean isProtected = nonNull(course.getPasscode()) && !course.getPasscode().isEmpty();
 
@@ -160,38 +175,85 @@ public class CourseController {
 		return "redirect:/course/{id}";
 	}
 
-	@RequestMapping("/new")
+	@RequestMapping("/add")
 	public String addCourse(Authentication authentication, Model model) {
-		model.addAttribute("course", new Course());
+		CourseForm courseForm = courseService.createCourseForm();
+
+		model.addAttribute("courseForm", courseForm);
 		model.addAttribute("edit", false);
+		model.addAttribute("canAlterPrivileges", true);
 
 		return "course-form";
 	}
 
-	@PostMapping("/new")
-	public String newCourse(Authentication authentication, HttpServletRequest request, @Valid Course course, BindingResult result, Model model) {
+	@PostMapping("/add")
+	public String addCourse(Authentication authentication, HttpServletRequest request, @Valid CourseForm courseForm, BindingResult result, Model model) {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
 
 		if (result.hasErrors()) {
 			model.addAttribute("edit", false);
+			model.addAttribute("canAlterPrivileges", true);
 
 			return "course-form";
 		}
 
 		String baseUri = request.getScheme() + "://" + request.getServerName();
 
+		Course course = new Course();
 		course.setRoomId(RandomStringUtils.randomAlphanumeric(17));
-		course.setDescription(StringUtils.cleanHtml(course.getDescription(), baseUri));
+		course.setDescription(StringUtils.cleanHtml(courseForm.getDescription(), baseUri));
+		course.setTitle(courseForm.getTitle());
+		course.setPasscode(courseForm.getPasscode());
+
+		Set<CourseRole> courseRoles = new HashSet<>();
+
+		for (CourseFormRole formRole : courseForm.getRoles()) {
+			Set<CoursePrivilege> coursePrivileges = new HashSet<>();
+
+			for (CourseFormPrivilege formPrivilege : formRole.getPrivileges()) {
+				if (formPrivilege.isSelected()) {
+					coursePrivileges.add(CoursePrivilege.builder()
+							.privilege(formPrivilege.getPrivilege())
+							.build());
+				}
+			}
+
+			courseRoles.add(CourseRole.builder()
+					.course(course)
+					.role(formRole.getRole())
+					.privileges(coursePrivileges)
+					.build());
+		}
+
+		course.setRoles(courseRoles);
+
+		List<CourseFormUser> privilegedUsers = courseForm.getPrivilegedUsers();
+
+		if (isNull(privilegedUsers)) {
+			privilegedUsers = List.of();
+		}
+
+		Set<CourseUserRole> userRoles = privilegedUsers.stream()
+				.map(formUser -> {
+					return CourseUserRole.builder()
+							.course(course)
+							.userId(formUser.getUsername())
+							.role(formUser.getRole())
+							.build();
+				})
+				.collect(Collectors.toSet());
+
+		course.setUserRoles(userRoles);
 
 		User user = userService.findById(details.getUsername())
-			.orElseThrow(() -> new IllegalArgumentException("User is not present"));
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
 
 		CourseRegistration registration = CourseRegistration.builder()
-			.user(user)
-			.course(course)
-			.build();
+				.user(user)
+				.course(course)
+				.build();
 
-		course.getRegistrations().add(registration);
+		course.setRegistrations(Set.of(registration));
 		user.getRegistrations().add(registration);
 
 		courseService.saveCourse(course);
@@ -200,30 +262,32 @@ public class CourseController {
 		return "redirect:/";
 	}
 
-	@RequestMapping("/edit/{id}")
+	@RequestMapping("/{id}/edit")
+	@PreAuthorize("hasPrivilege('COURSE_EDIT')")
 	public String editCourse(@PathVariable("id") long id, Authentication authentication, Model model) {
 		Course course = courseService.findById(id)
-				.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
+				.orElseThrow(() -> new CourseNotFoundException());
 
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
+		boolean canAlterPrivileges = courseService.isAuthorized(id, authentication, "COURSE_ALTER_PRIVILEGES");
 
-		checkAuthorization(course.getId(), details);
+		CourseForm courseForm = courseService.createCourseForm(course);
 
-		model.addAttribute("course", course);
+		model.addAttribute("courseForm", courseForm);
 		model.addAttribute("edit", true);
+		model.addAttribute("canAlterPrivileges", canAlterPrivileges);
 
 		return "course-form";
 	}
 
-	@PostMapping("/edit/{id}")
-	public String updateCourse(Authentication authentication, HttpServletRequest request, @PathVariable("id") long id, @Valid Course course,
+	@PostMapping("/{id}/edit")
+	@PreAuthorize("hasPrivilege('COURSE_EDIT')")
+	public String updateCourse(Authentication authentication, HttpServletRequest request, @PathVariable("id") long id, @Valid CourseForm courseForm,
 			BindingResult result, Model model) {
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		checkAuthorization(course.getId(), details);
+		boolean canAlterPrivileges = courseService.isAuthorized(id, authentication, "COURSE_ALTER_PRIVILEGES");
 
 		if (result.hasErrors()) {
 			model.addAttribute("edit", true);
+			model.addAttribute("canAlterPrivileges", canAlterPrivileges);
 
 			return "course-form";
 		}
@@ -231,29 +295,123 @@ public class CourseController {
 		String baseUri = request.getScheme() + "://" + request.getServerName();
 
 		Course dbCourse = courseService.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("Invalid course Id: " + id));
-		dbCourse.setTitle(course.getTitle());
-		dbCourse.setDescription(StringUtils.cleanHtml(course.getDescription(), baseUri));
-		dbCourse.setPasscode(course.getPasscode());
+				.orElseThrow(() -> new CourseNotFoundException());
+		dbCourse.setTitle(courseForm.getTitle());
+		dbCourse.setDescription(StringUtils.cleanHtml(courseForm.getDescription(), baseUri));
+		dbCourse.setPasscode(courseForm.getPasscode());
+
+		if (canAlterPrivileges) {
+			Set<CourseRole> courseRoles = dbCourse.getRoles();
+
+			for (CourseFormRole formRole : courseForm.getRoles()) {
+				// Find the corresponding course-role.
+				CourseRole courseRole = courseRoles.stream()
+						.filter(r -> r.getRole().equals(formRole.getRole()))
+						.findFirst().orElse(null);
+
+				if (isNull(courseRole)) {
+					continue;
+				}
+
+				Set<CoursePrivilege> coursePrivileges = courseRole.getPrivileges();
+
+				for (CourseFormPrivilege formPrivilege : formRole.getPrivileges()) {
+					CoursePrivilege coursePrivilege = coursePrivileges.stream()
+							.filter(p -> p.getPrivilege().equals(formPrivilege.getPrivilege()))
+							.findFirst().orElse(null);
+
+					if (isNull(coursePrivilege)) {
+						// Privilege not assigned to the course-role yet.
+						if (formPrivilege.isSelected()) {
+							// Update privileges of the course-role.
+							coursePrivileges.add(CoursePrivilege.builder()
+									.privilege(formPrivilege.getPrivilege())
+									.build());
+						}
+					}
+					else {
+						if (!formPrivilege.isSelected()) {
+							// Remove privilege from the course-role.
+							coursePrivileges.remove(coursePrivilege);
+						}
+					}
+				}
+			}
+
+			dbCourse.setRoles(courseRoles);
+
+			List<CourseFormUser> privilegedUsers = courseForm.getPrivilegedUsers();
+
+			if (isNull(privilegedUsers)) {
+				privilegedUsers = List.of();
+			}
+
+			Set<CourseUserRole> userRoles = privilegedUsers.stream()
+					.map(formUser -> {
+						return CourseUserRole.builder()
+								.course(dbCourse)
+								.userId(formUser.getUsername())
+								.role(formUser.getRole())
+								.build();
+					})
+					.collect(Collectors.toSet());
+
+			dbCourse.getUserRoles().clear();
+			dbCourse.getUserRoles().addAll(userRoles);
+		}
 
 		courseService.saveCourse(dbCourse);
 
 		return "redirect:/";
 	}
 
-	@PostMapping("/delete/{id}")
+	@PostMapping("/{id}/delete")
+	@PreAuthorize("hasPrivilege('COURSE_DELETE')")
 	public String deleteCourse(Authentication authentication, @PathVariable("id") long id, Model model) {
-		LectUserDetails details = (LectUserDetails) authentication.getDetails();
-
-		checkAuthorization(id, details);
-
 		courseService.deleteById(id);
 
 		return "redirect:/";
 	}
 
-	private void checkAuthorization(Long courseId, LectUserDetails details) {
-		registrationService.findByCourseAndUserId(courseId, details.getUsername())
-				.orElseThrow(() -> new UnauthorizedException());
+	@PostMapping(path = { "/add/user" }, params = "addUser")
+	public String addUser(@Valid CourseForm courseForm, BindingResult result, Model model,
+			Authentication authentication) {
+		courseFormValidator.validateNewUser(courseForm, authentication, result);
+
+		if (result.hasErrors()) {
+			return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";
+		}
+
+		CourseFormUser newUser = courseForm.getNewUser();
+		Optional<User> user = userService.findById(newUser.getUsername());
+
+		if (user.isPresent()) {
+			newUser.setFirstName(user.get().getFirstName());
+			newUser.setFamilyName(user.get().getFamilyName());
+		}
+
+		courseForm.getPrivilegedUsers().add(newUser);
+		courseForm.getPrivilegedUsers().sort(CourseFormUser::compareByUserName);
+		courseForm.setNewUser(new CourseFormUser());
+
+		model.addAttribute("courseForm", courseForm);
+
+		return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";
+	}
+
+	@PostMapping(path = { "/remove/user" }, params = "removeUser")
+	public String removeUser(CourseForm courseForm, @RequestParam("removeUser") int index, BindingResult result,
+			Model model, Authentication authentication) {
+		courseFormValidator.validateRemoveUser(courseForm, authentication, result, index);
+
+		if (result.hasErrors()) {
+			return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";
+		}
+
+		courseForm.getPrivilegedUsers().remove(index);
+
+		model.addAttribute("courseForm", courseForm);
+
+		return "course-form :: course-form-users(newUser='newUser', userRoles='userRoles')";
 	}
 }
