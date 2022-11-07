@@ -43,6 +43,9 @@
 					<li class="nav-item">
 						<a class="nav-link active" aria-current="page" th:text="#{home.courses}" th:href="@{/}"></a>
 					</li>
+					<li class="nav-item">
+						<a class="nav-link" aria-current="page" th:text="#{home.settings}" th:href="@{/settings}"></a>
+					</li>
 
 					<li class="nav-item dropdown">
 						<a th:text="|${user.firstName} ${user.familyName}|" class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button"
@@ -50,9 +53,6 @@
 						<ul class="dropdown-menu dropdown-menu-end text-small" aria-labelledby="navbarDropdown">
 							<li sec:authorize="hasAnyRole('MEMBER')">
 								<a class="dropdown-item" th:href="@{/course/add}" th:text="#{home.add.course}"></a>
-							</li>
-							<li>
-								<a class="dropdown-item" th:href="@{/settings}" th:text="#{home.settings}">Settings</a>
 							</li>
 							<li>
 								<hr class="dropdown-divider" />
