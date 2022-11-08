@@ -165,7 +165,7 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 					break;
 
 				case STREAM_DOCUMENT_CLOSED:
-					
+					deleteDocumentState(courseState, (StreamDocumentAction) action);
 					break;
 
 				case STREAM_DOCUMENT_SELECTED:
@@ -219,17 +219,36 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 	}
 
 	private static void updateDocumentState(CourseState courseState, StreamDocumentAction action) {
-		CourseStateDocument stateDocument = CourseStateDocument.builder()
-				.documentId(action.getDocumentId())
-				.type(action.getDocumentType().toString())
-				.documentName(action.getDocumentTitle())
-				.documentFile(action.getDocumentFile())
-				.pages(new ConcurrentHashMap<>())
-				.build();
+		CourseStateDocument stateDocument = courseState.getCourseStateDocument(action.getDocumentId());
 
-		// System.out.println("doc: " + action.getDocumentId());
+		if (nonNull(stateDocument)) {
+			stateDocument.setDocumentFile(action.getDocumentFile());
 
-		courseState.addCourseStateDocument(stateDocument);
+			//System.out.println("doc found: " + action.getDocumentId());
+		}
+		else {
+			stateDocument = CourseStateDocument.builder()
+					.documentId(action.getDocumentId())
+					.type(action.getDocumentType().toString())
+					.documentName(action.getDocumentTitle())
+					.documentFile(action.getDocumentFile())
+					.pages(new ConcurrentHashMap<>())
+					.build();
+
+			courseState.addCourseStateDocument(stateDocument);
+		}
+
+		//System.out.println("doc: " + action.getDocumentId());
+	}
+
+	private static void deleteDocumentState(CourseState courseState, StreamDocumentAction action) {
+		CourseStateDocument stateDocument = courseState.getCourseStateDocument(action.getDocumentId());
+
+		if (nonNull(stateDocument)) {
+			courseState.removeCourseStateDocument(stateDocument);
+
+			//System.out.println("doc removed: " + action.getDocumentId());
+		}
 	}
 
 	private static void updateActiveDocumentState(CourseState courseState, StreamDocumentAction action) {
