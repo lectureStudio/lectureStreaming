@@ -43,6 +43,7 @@ import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
 import org.lecturestudio.web.portal.exception.UnauthorizedException;
 import org.lecturestudio.web.portal.model.Course;
 import org.lecturestudio.web.portal.model.CourseEvent;
+import org.lecturestudio.web.portal.model.CourseMediaState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.ChatHistoryService;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
@@ -202,11 +203,14 @@ public class CourseSubscriberController {
 			.userPrivileges(userPrivileges);
 
 		if (nonNull(courseState)) {
+			CourseMediaState courseMediaState = courseState.getCourseMediaState();
+
 			builder
 				.timeStarted(nonNull(courseState) ? courseState.getCreatedTimestamp() : null)
 				.isRecorded(nonNull(courseState) ? courseState.getRecordedState() : false)
 				.activeDocument(courseState.getActiveDocument())
-				.documentMap(courseState.getAllCourseStateDocuments());
+				.documentMap(courseState.getAllCourseStateDocuments())
+				.mediaState(courseMediaState);
 		}
 
 		return builder.build();

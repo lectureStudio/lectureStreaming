@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import org.lecturestudio.web.portal.model.CourseMediaState;
 import org.lecturestudio.web.portal.model.CourseMessageFeature;
 import org.lecturestudio.web.portal.model.CourseQuizFeature;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
@@ -43,5 +44,7 @@ public class CourseStateDto {
 	CourseStateDocument activeDocument;
 
 	Set<CoursePrivilegeDto> userPrivileges;
+
+	CourseMediaState mediaState;
 
 }

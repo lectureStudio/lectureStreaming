@@ -19,6 +19,7 @@ import org.lecturestudio.web.api.stream.action.StreamActionFactory;
 import org.lecturestudio.web.api.stream.action.StreamActionType;
 import org.lecturestudio.web.api.stream.action.StreamDocumentAction;
 import org.lecturestudio.web.api.stream.action.StreamInitAction;
+import org.lecturestudio.web.api.stream.action.StreamMediaChangeAction;
 import org.lecturestudio.web.api.stream.action.StreamPageAction;
 import org.lecturestudio.web.api.stream.action.StreamPageActionsAction;
 import org.lecturestudio.web.api.stream.action.StreamPagePlaybackAction;
@@ -192,6 +193,12 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 					updatePageActionsState(courseState, (StreamPageActionsAction) action);
 					break;
 
+				case STREAM_CAMERA_CHANGE:
+				case STREAM_MICROPHONE_CHANGE:
+				case STREAM_SCREEN_SHARE_CHANGE:
+					updateMediaState(courseState, (StreamMediaChangeAction) action);
+					break;
+
 				default:
 					throw new InvalidObjectException("Action with type " + action.getType() + " does not exist");
 			}
@@ -297,6 +304,20 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		// System.out.println("doc: " + action.getDocumentId() + ", page: " + action.getRecordedPage().getNumber());
 
 		statePage.getActions().addAll(action.getRecordedPage().getPlaybackActions());
+	}
+
+	private static void updateMediaState(CourseState courseState, StreamMediaChangeAction action) {
+		switch (action.getType()) {
+			case STREAM_CAMERA_CHANGE:
+				courseState.getCourseMediaState().setCameraActive(action.isEnabled());
+				break;
+			case STREAM_MICROPHONE_CHANGE:
+				courseState.getCourseMediaState().setMicrophoneActive(action.isEnabled());
+				break;
+			case STREAM_SCREEN_SHARE_CHANGE:
+				courseState.getCourseMediaState().setScreenActive(action.isEnabled());
+				break;
+		}
 	}
 
 	private static CourseStateDocument getCourseStateDocument(CourseState courseState, long documentId) {

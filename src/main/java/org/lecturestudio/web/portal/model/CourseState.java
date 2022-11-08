@@ -24,6 +24,8 @@ public class CourseState {
 
 	private final Map<Long, CourseStateDocument> documentMap = new ConcurrentHashMap<>();
 
+	private final CourseMediaState mediaState = new CourseMediaState();
+
 	private CourseStateDocument avtiveDocument;
 
 	private boolean isRecorded;
@@ -41,6 +43,10 @@ public class CourseState {
 
 	public boolean getRecordedState() {
 		return isRecorded;
+	}
+
+	public CourseMediaState getCourseMediaState() {
+		return mediaState;
 	}
 
 	public void setRecordedState(boolean recorded) {
