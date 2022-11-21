@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -162,7 +163,7 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 			switch (action.getType()) {
 				case STREAM_DOCUMENT_CREATED:
-					updateDocumentState(courseState, (StreamDocumentAction) action);
+					updateDocumentCreated(courseState, (StreamDocumentAction) action);
 					break;
 
 				case STREAM_DOCUMENT_CLOSED:
@@ -225,13 +226,11 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		}
 	}
 
-	private static void updateDocumentState(CourseState courseState, StreamDocumentAction action) {
+	private static void updateDocumentCreated(CourseState courseState, StreamDocumentAction action) {
 		CourseStateDocument stateDocument = courseState.getCourseStateDocument(action.getDocumentId());
 
-		if (nonNull(stateDocument)) {
+		if (nonNull(stateDocument) && Objects.equals(action.getDocumentChecksum(), stateDocument.getDocumentChecksum())) {
 			stateDocument.setDocumentFile(action.getDocumentFile());
-
-			//System.out.println("doc found: " + action.getDocumentId());
 		}
 		else {
 			stateDocument = CourseStateDocument.builder()
@@ -239,13 +238,14 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 					.type(action.getDocumentType().toString())
 					.documentName(action.getDocumentTitle())
 					.documentFile(action.getDocumentFile())
+					.documentChecksum(action.getDocumentChecksum())
 					.pages(new ConcurrentHashMap<>())
 					.build();
 
 			courseState.addCourseStateDocument(stateDocument);
 		}
 
-		//System.out.println("doc: " + action.getDocumentId());
+		//System.out.println("doc: " + action.getDocumentId() + " " + action.getDocumentChecksum());
 	}
 
 	private static void deleteDocumentState(CourseState courseState, StreamDocumentAction action) {

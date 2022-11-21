@@ -21,6 +21,8 @@ public class CourseStateDocument {
 
 	private String documentFile;
 
+	private String documentChecksum;
+
 	private String type;
 
 	private CourseStatePage activePage;

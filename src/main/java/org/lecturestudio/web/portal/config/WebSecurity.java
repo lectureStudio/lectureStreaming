@@ -23,6 +23,8 @@ public class WebSecurity {
 
 
 	public boolean checkCourseId(Authentication authentication, Long courseId) {
+		// System.out.printf("checkCourseId: %d, %s%n", courseId, authentication.getName());
+
 		try {
 			final Set<Privilege> userPrivileges = courseService.getUserPrivileges(courseId, authentication.getName());
 
