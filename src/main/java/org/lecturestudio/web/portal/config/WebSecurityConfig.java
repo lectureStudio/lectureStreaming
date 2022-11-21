@@ -38,6 +38,7 @@ import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -79,6 +80,7 @@ public class WebSecurityConfig {
 	@Configuration
 	@Order(0)
 	@ComponentScan(basePackageClasses = KeycloakSecurityComponents.class)
+	@ConditionalOnProperty(name = "keycloak.enabled", havingValue = "true", matchIfMissing = false)
 	public static class KeycloakSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
 
 		@Autowired
@@ -333,7 +335,20 @@ public class WebSecurityConfig {
 					.anyRequest().authenticated();
 
 			http
-				.logout().disable();
+				.logout()
+				.logoutUrl("/logout")
+				.logoutSuccessUrl("/") 
+				.invalidateHttpSession(true)
+				.deleteCookies("JSESSIONID")
+					.addLogoutHandler((request, response, auth) -> {
+						try {
+							request.logout();
+						}
+						catch (ServletException e) {
+							e.printStackTrace();
+						}
+					});
+				//.logout().disable();
 		}
 
 		@Override
