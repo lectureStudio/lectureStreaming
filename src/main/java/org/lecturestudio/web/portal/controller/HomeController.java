@@ -111,6 +111,7 @@ public class HomeController {
 				.messageFeature(messageFeature)
 				.quizFeature(quizFeature)
 				.url(uri)
+				.isConference(course.isConference())
 				.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
 				.isLive(nonNull(state))
 				.isRecorded(nonNull(state) ? state.getRecordedState() : false)

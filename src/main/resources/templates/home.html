@@ -16,7 +16,7 @@
 			<div th:each="course: ${courses}" class="list-group-item" aria-current="true">
 				<a th:href="@{/course/{id}(id=${course.id})}" class="overlay-link"></a>
 				<div class="d-flex w-100 justify-content-between">
-					<h6 th:text="${course.title}" class="mb-1"></h6>
+					<h6 th:text="${course.conference ? course.title + ' - Conference' : course.title}" class="mb-1"></h6>
 				</div>
 				<div class="d-flex w-100">
 					<small>

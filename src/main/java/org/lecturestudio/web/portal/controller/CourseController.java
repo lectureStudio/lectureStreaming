@@ -120,6 +120,7 @@ public class CourseController {
 			.authors(authors)
 			.messageFeature(messageFeature)
 			.quizFeature(quizFeature)
+			.isConference(course.isConference())
 			.isLive(nonNull(state))
 			.isRecorded(nonNull(state) ? state.getRecordedState() : false)
 			.isProtected(isProtected)
@@ -204,6 +205,7 @@ public class CourseController {
 		course.setDescription(StringUtils.cleanHtml(courseForm.getDescription(), baseUri));
 		course.setTitle(courseForm.getTitle());
 		course.setPasscode(courseForm.getPasscode());
+		course.setConference(courseForm.getIsConference());
 
 		Set<CourseRole> courseRoles = new HashSet<>();
 
@@ -299,6 +301,7 @@ public class CourseController {
 		dbCourse.setTitle(courseForm.getTitle());
 		dbCourse.setDescription(StringUtils.cleanHtml(courseForm.getDescription(), baseUri));
 		dbCourse.setPasscode(courseForm.getPasscode());
+		dbCourse.setConference(courseForm.getIsConference());
 
 		if (canAlterPrivileges) {
 			Set<CourseRole> courseRoles = dbCourse.getRoles();

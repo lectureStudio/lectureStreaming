@@ -9,7 +9,13 @@
 	<script src="/js/portal.js"></script>
 
 	<script src="/js/pdf.worker.js"></script>
-	<script src="/js/main.js"></script>
+	<script th:if="${!course.isConference()}" src="/js/main.js"></script>
+	<script th:if="${course.isConference()}" src="/angular/runtime.js" type="module"></script>
+	<script th:if="${course.isConference()}" src="/angular/polyfills.js" type="module"></script>
+	<script th:if="${course.isConference()}" src="/angular/main.js" type="module"></script>
+	<link rel="stylesheet" th:if="${course.isConference()}" href="/angular/styles.css">
+	<link th:if="${course.isConference()}" href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<base th:if="${course.isConference()}" href="/">
 	<style>
 		html {
 			scroll-behavior: smooth;
@@ -27,7 +33,13 @@
 
 <body>
 	<th:block layout:fragment="content">
-		<lecture-player th:courseId="${course.id}" th:description="${course.description}" th:isLive="${course.isLive}"></lecture-player>
+		<th:block th:if="${!course.isConference()}">
+			<lecture-player th:courseId="${course.id}" th:description="${course.description}" th:isLive="${course.isLive}"></lecture-player>
+		</th:block>
+
+		<th:block th:if="${course.isConference()}">
+			<app-root th:userdisplayname="${userFirstAndLastName}"></app-root>
+		</th:block>
 	</th:block>
 </body>
 

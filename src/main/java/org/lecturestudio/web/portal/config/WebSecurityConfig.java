@@ -141,7 +141,7 @@ public class WebSecurityConfig {
 
 			http
 					.logout()
-					.logoutUrl("/saml/logout")
+					.logoutUrl("/logout")
 					.invalidateHttpSession(true);
 		}
 	}

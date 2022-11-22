@@ -32,6 +32,8 @@ public class CourseForm {
 
 	private String passcode;
 
+	private Boolean isConference;
+
 	private List<CourseFormRole> roles;
 
 	private List<CourseFormRole> userRoles;

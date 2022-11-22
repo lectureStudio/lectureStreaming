@@ -44,6 +44,10 @@
 					<div th:text="#{course.form.passcode.description}" id="pinHelpBlock" class="form-text"></div>
 				</div>
 
+				<div class="mb-3">
+					<input type="checkbox" for="conference" id="conference" th:field="*{isConference}" th:text="#{course.form.conference.description}">
+				</div>
+
 				<div th:if="${canAlterPrivileges}">
 					<h5 for="role-accordion" class="form-label" th:text="#{course.form.role.title}"></h5>
 					<div class="mb-4 p-2">
