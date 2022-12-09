@@ -200,6 +200,7 @@ public class CourseSubscriberController {
 			.messageFeature(messageFeature)
 			.quizFeature(quizFeature)
 			.isProtected(isProtected)
+			.isConference(course.isConference())
 			.userPrivileges(userPrivileges);
 
 		if (nonNull(courseState)) {

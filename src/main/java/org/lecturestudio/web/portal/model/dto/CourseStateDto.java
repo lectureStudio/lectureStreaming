@@ -39,6 +39,8 @@ public class CourseStateDto {
 
 	boolean isRecorded;
 
+	boolean isConference;
+
 	Map<Long, CourseStateDocument> documentMap;
 
 	CourseStateDocument activeDocument;
