@@ -4,7 +4,9 @@ import static java.util.Objects.nonNull;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.lecturestudio.web.api.message.CoursePresenceMessage;
 import org.lecturestudio.web.api.stream.model.CourseParticipantType;
@@ -12,24 +14,23 @@ import org.lecturestudio.web.api.stream.model.CoursePresence;
 import org.lecturestudio.web.api.stream.model.CoursePresenceType;
 import org.lecturestudio.web.portal.model.Role;
 import org.lecturestudio.web.portal.model.User;
-import org.lecturestudio.web.portal.repository.RoleRepository;
 import org.lecturestudio.web.portal.util.SimpEmitter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CoursePresenceService {
+
+	private final Map<Pair<String, Long>, CoursePresenceType> presenceTypeMap = new ConcurrentHashMap<>();
 
 	@Autowired
 	private CourseService courseService;
 
 	@Autowired
 	private UserService userService;
-
-	@Autowired
-	private RoleRepository roleRepository;
 
 	@Autowired
 	private SimpEmitter simpEmitter;
@@ -50,6 +51,13 @@ public class CoursePresenceService {
 		CoursePresenceMessage message = createMessage(presence, presenceType, user, courseId);
 
 		simpEmitter.emmitEvent(courseId, presenceEvent, message);
+
+		if (presence == CoursePresence.CONNECTED) {
+			presenceTypeMap.put(Pair.of(user.getUserId(), courseId), presenceType);
+		}
+		else {
+			presenceTypeMap.remove(Pair.of(user.getUserId(), courseId));
+		}
 	}
 
 	public void sendCoursePresenceToOrganisers(CoursePresence presence, CoursePresenceType presenceType, String userId, Long courseId) {
@@ -86,6 +94,10 @@ public class CoursePresenceService {
 		}
 
 		return pType;
+	}
+
+	public CoursePresenceType getPresenceType(User user, Long courseId) {
+		return presenceTypeMap.getOrDefault(Pair.of(user.getUserId(), courseId), CoursePresenceType.CLASSROOM);
 	}
 
 	private CoursePresenceMessage createMessage(CoursePresence presence, CoursePresenceType presenceType, User user, Long courseId) {

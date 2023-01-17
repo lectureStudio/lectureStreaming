@@ -1,6 +1,7 @@
 package org.lecturestudio.web.portal.model.dto;
 
 import org.lecturestudio.web.api.stream.model.CourseParticipantType;
+import org.lecturestudio.web.api.stream.model.CoursePresenceType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,5 +25,7 @@ public class UserDto {
 	String familyName;
 
 	CourseParticipantType participantType;
+
+	CoursePresenceType presenceType;
 
 }

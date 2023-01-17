@@ -13,6 +13,7 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import org.lecturestudio.web.api.model.quiz.Quiz;
+import org.lecturestudio.web.api.stream.model.CoursePresenceType;
 import org.lecturestudio.web.portal.exception.CourseNotFoundException;
 import org.lecturestudio.web.portal.exception.FeatureNotFoundException;
 import org.lecturestudio.web.portal.exception.UnauthorizedException;
@@ -43,7 +44,8 @@ import org.lecturestudio.web.portal.util.StringUtils;
 import org.lecturestudio.web.portal.service.CourseService;
 import org.lecturestudio.web.portal.service.CourseSpeechRequestService;
 import org.lecturestudio.web.portal.service.CourseFeatureService;
-
+import org.lecturestudio.web.portal.service.CourseParticipantService;
+import org.lecturestudio.web.portal.service.CoursePresenceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -78,6 +80,12 @@ public class CoursePublisherController {
 
 	@Autowired
 	private ChatHistoryService chatHistoryService;
+
+	@Autowired
+	private CourseParticipantService participantService;
+
+	@Autowired
+	private CoursePresenceService presenceService;
 
 	@Autowired
 	private UserService userService;
@@ -115,6 +123,36 @@ public class CoursePublisherController {
 				.build();
 
 		return privilegesDto;
+	}
+
+	@GetMapping("/participants/{courseId}")
+	public List<UserDto> getParticipants(@PathVariable("courseId") Long courseId, Authentication authentication) {
+		List<UserDto> participants = new ArrayList<>();
+
+		if (!courseService.isAuthorized(courseId, authentication, "PARTICIPANTS_VIEW")) {
+			return participants;
+		}
+
+		participantService.findAllUsersByCourseId(courseId).forEach(user -> {
+			UserDto participant = UserDto.builder()
+					.userId(user.getUserId())
+					.familyName(user.getFamilyName())
+					.firstName(user.getFirstName())
+					.participantType(presenceService.getCourseParticipantType(user, courseId))
+					.build();
+
+			CoursePresenceType pType = presenceService.getPresenceType(user, courseId);
+
+			if (nonNull(pType)) {
+				participant.setPresenceType(pType);
+			}
+
+			if (!participants.contains(participant)) {
+				participants.add(participant);
+			}
+		});
+
+		return participants;
 	}
 
 	@GetMapping("/courses")

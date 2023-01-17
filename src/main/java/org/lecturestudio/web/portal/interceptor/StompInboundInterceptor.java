@@ -68,7 +68,7 @@ public class StompInboundInterceptor implements ChannelInterceptor {
 					checkUserChatPermission(destination, principal);
 				}
 				catch (UnauthorizedException e) {
-					System.out.println(accessor.getUser().getName() + " not authorized for " + destination);
+					//System.out.println(accessor.getUser().getName() + " not authorized for " + destination);
 					return null;
 				}
 			}
