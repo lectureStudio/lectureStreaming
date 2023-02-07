@@ -6,19 +6,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.17">
 <meta name="author" content="Das lectureStudio-Team">
-<title>Anleitung zu lectureStreaming</title>
+<title>Anleitung zu lectureStudio</title>
 <link rel="stylesheet" href="styles/custom.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
-<body class="article">
+<body class="article toc2 toc-left">
 <div id="header">
-<h1>Anleitung zu lectureStreaming</h1>
+<h1>Anleitung zu lectureStudio</h1>
 <div class="details">
 <span id="author" class="author">Das lectureStudio-Team</span><br>
-<span id="revnumber">version 1.3.0,</span>
-<span id="revdate">2022-04-28</span>
+<span id="revnumber">version 1.4.1,</span>
+<span id="revdate">2022-10-21</span>
 </div>
-<div id="toc" class="toc">
+<div id="toc" class="toc2">
 <div id="toctitle">Inhaltsverzeichnis</div>
 <ul class="sectlevel1">
 <li><a href="#_historie">Historie</a></li>
@@ -38,7 +38,11 @@
 <ul class="sectlevel3">
 <li><a href="#_nicht_begonnene_kurse">Nicht begonnene Kurse</a></li>
 <li><a href="#_oberfläche">Oberfläche</a></li>
-<li><a href="#_automatische_wiedergabe_von_medien">Automatische Wiedergabe von Medien</a></li>
+<li><a href="#_automatische_wiedergabe_von_medien">Automatische Wiedergabe von Medien</a>
+<ul class="sectlevel4">
+<li><a href="#_firefox">Firefox</a></li>
+</ul>
+</li>
 <li><a href="#_textnachrichten">Textnachrichten</a></li>
 <li><a href="#quiz-paticipate">Am Quiz teilnehmen</a></li>
 <li><a href="#speech">Sich melden</a></li>
@@ -46,7 +50,12 @@
 </li>
 <li><a href="#settings">Einstellungen</a>
 <ul class="sectlevel3">
-<li><a href="#_medienprofil">Medienprofil</a></li>
+<li><a href="#_medienprofil">Medienprofil</a>
+<ul class="sectlevel4">
+<li><a href="#_zu_hause">Zu Hause</a></li>
+<li><a href="#_hörsaal">Hörsaal</a></li>
+</ul>
+</li>
 <li><a href="#_geräteeinstellungen">Geräteeinstellungen</a></li>
 </ul>
 </li>
@@ -54,16 +63,34 @@
 </li>
 <li><a href="#_dozenteninnen">Dozenten/innen</a>
 <ul class="sectlevel2">
-<li><a href="#_kurs_anbieten">Kurs anbieten</a>
+<li><a href="#create-course">Kurs erstellen</a>
 <ul class="sectlevel3">
-<li><a href="#_kurs_erstellen">Kurs erstellen</a></li>
-<li><a href="#_zugriffstoken">Zugriffstoken</a></li>
-<li><a href="#stream-start">Stream starten</a></li>
+<li><a href="#course-roles">Kursrollen</a>
+<ul class="sectlevel4">
+<li><a href="#_organisatorin">Organisator:in</a></li>
+<li><a href="#_co_organisatorin">Co-Organisator:in</a></li>
+<li><a href="#_teilnehmerin">Teilnehmer:in</a></li>
+<li><a href="#_zusätzliche_kursrollen_zuweisen">Zusätzliche Kursrollen zuweisen</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li><a href="#_zugriffstoken">Zugriffstoken</a></li>
+<li><a href="#lecturePresenter">lecturePresenter</a>
+<ul class="sectlevel3">
+<li><a href="#_vorbereitung">Vorbereitung</a>
+<ul class="sectlevel4">
+<li><a href="#_powerpoint_präsentation_in_ein_pdf_umwandeln">PowerPoint-Präsentation in ein PDF umwandeln</a></li>
+<li><a href="#_digitale_stifteingabe">Digitale Stifteingabe</a></li>
+<li><a href="#_vor_der_präsentation">Vor der Präsentation</a></li>
+</ul>
+</li>
+<li><a href="#_grundlagen_des_arbeitsbereichs">Grundlagen des Arbeitsbereichs</a></li>
+<li><a href="#toolbar-customize">Werkzeugleiste anpassen</a></li>
+<li><a href="#stream-start">Stream starten</a></li>
 <li><a href="#_statusindikatoren">Statusindikatoren</a></li>
 <li><a href="#quizzes">Quizze</a>
-<ul class="sectlevel3">
+<ul class="sectlevel4">
 <li><a href="#_quiz_erstellen">Quiz erstellen</a></li>
 <li><a href="#_quiz_aus_der_quizsammlung_auswählen">Quiz aus der Quizsammlung auswählen</a></li>
 <li><a href="#_quiz_modi">Quiz-Modi</a></li>
@@ -71,6 +98,40 @@
 </li>
 <li><a href="#messages">Empfang von Nachrichten</a></li>
 <li><a href="#speeches">Meldungen</a></li>
+<li><a href="#screen-share">Bildschirmfreigabe</a>
+<ul class="sectlevel4">
+<li><a href="#_bildschirmfreigabe_pausieren">Bildschirmfreigabe pausieren</a></li>
+<li><a href="#_bildschirmfreigabe_beenden">Bildschirmfreigabe beenden</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#lectureEditor">lectureEditor</a>
+<ul class="sectlevel3">
+<li><a href="#_grundlagen_des_arbeitsbereichs_2">Grundlagen des Arbeitsbereichs</a>
+<ul class="sectlevel4">
+<li><a href="#_bearbeitungs_funktionen">Bearbeitungs-Funktionen</a></li>
+<li><a href="#_folienvorschau">Folienvorschau</a></li>
+<li><a href="#_werkzeuge">Werkzeuge</a></li>
+<li><a href="#_annotationen">Annotationen</a></li>
+</ul>
+</li>
+<li><a href="#_schneiden">Schneiden</a>
+<ul class="sectlevel4">
+<li><a href="#_komplette_folie_entfernen">Komplette Folie entfernen</a></li>
+</ul>
+</li>
+<li><a href="#_folie_ersetzen">Folie ersetzen</a></li>
+<li><a href="#_lautstärke_anpassen">Lautstärke anpassen</a></li>
+<li><a href="#_rauschunterdrückung">Rauschunterdrückung</a></li>
+<li><a href="#lectureEditor-video">Video-Export</a>
+<ul class="sectlevel4">
+<li><a href="#_alternativ_mit_experteneinstellungen">Alternativ mit Experteneinstellungen</a></li>
+</ul>
+</li>
+<li><a href="#_tastenbelegung">Tastenbelegung</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -111,6 +172,16 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.4.1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">21. Oktober 2022</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Kapitel <a href="#lecturePresenter">lecturePresenter</a> eingeführt und dazugehörige Abschnitte zusammengeführt. Kapitel <a href="#lectureEditor">lectureEditor</a> neu hinzugefügt.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.4.0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1. Oktober 2022</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Abschnitte <a href="#screen-share">Bildschirmfreigabe</a> und <a href="#course-roles">Kursrollen</a> hinzugefügt.</p></td>
+</tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1.3.0</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4. April 2022</p></td>
@@ -607,13 +678,11 @@ Bei Veranstaltungen mit vielen Teilnehmern kann der Chat schnell unübersichtlic
 <div class="sect1">
 <h2 id="_dozenteninnen">Dozenten/innen</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_kurs_anbieten">Kurs anbieten</h3>
 <div class="paragraph">
 <p>Um einen Kurs mit lecturePresenter streamen zu können, müssen Sie einen Kurs erstellt haben. Es können auch mehrere Kurse erstellt werden, wenn Sie mehrere Lehrveranstaltungen anbieten. Des Weiteren muss ein Zugriffstoken generiert werden, der Ihre lecturePresenter-Instanz gegenüber dem Streamingdienst authentifiziert. Wie Sie das bewältigen wird im Folgenden erklärt.</p>
 </div>
-<div class="sect3">
-<h4 id="_kurs_erstellen">Kurs erstellen</h4>
+<div class="sect2">
+<h3 id="create-course">Kurs erstellen</h3>
 <div class="paragraph">
 <p>Ein Kurs kann in wenigen Schritten erstellt werden.</p>
 </div>
@@ -630,9 +699,134 @@ Bei Veranstaltungen mit vielen Teilnehmern kann der Chat schnell unübersichtlic
 </li>
 </ol>
 </div>
-</div>
 <div class="sect3">
-<h4 id="_zugriffstoken">Zugriffstoken</h4>
+<h4 id="course-roles">Kursrollen</h4>
+<div class="paragraph">
+<p>Für Kurse gibt es drei Rollen, nämlich Organisator:in, Co-Organisator:in und Teilnehmer:in. Die Rollen sind hierarchisch geordnet und können im Kurs dynamisch zugewiesen werden. Jede Rolle erfüllt spezielle Aufgaben und ist mit den entsprechenden Fähigkeiten verknüpft. Jeder Rolle können Privilegien zugewiesen und entzogen werden.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Hinweis"></i>
+</td>
+<td class="content">
+Als Ersteller:in eines Kurses erhalten Sie automatisch alle existierenden Privilegien. Ihnen kann niemand Privilegien für Ihren eigenen Kurs nehmen.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_organisatorin">Organisator:in</h5>
+<div class="paragraph">
+<p>Organisator:innen verfügen über umfassende Privilegien. Diese können administrative Funktionen wie zum Beispiel die Teilnehmerverwaltung übernehmen. Zu den wichtigsten Privilegien dieser Rolle gehören zum Beispiel:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Einstellungen des Kurses ändern</p>
+</li>
+<li>
+<p>Rollen und Privilegien von Teilnehmern ändern</p>
+</li>
+<li>
+<p>Kurs löschen</p>
+</li>
+<li>
+<p>Kurs streamen</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_co_organisatorin">Co-Organisator:in</h5>
+<div class="paragraph">
+<p>Co-Organisator:innen verfügen über eine Teilmenge der Privilegien von Organisator:innen. In der Regel nehmen Kursbetreuer diese Rolle ein. Diese können zum Beispiel selbst einen Vortrag für diesen Kurs streamen oder nehmen an dem Kurs teil und reagieren aktiv auf Chat-Nachrichten.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_teilnehmerin">Teilnehmer:in</h5>
+<div class="paragraph">
+<p>Die Rolle Teilnehmer:in besitzen alle Personen im Portal, sowohl Studierende als auch Lehrende und damit alle, die Ihren Kurs betreten. Weisen Sie hier die Privilegien so zu, um zu bestimmen, ob und wie Teilnehmende mit Ihnen und untereinander kommunizieren können. Zu den wichtigsten Privilegien dieser Rolle gehören beispielsweise:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Chat-Nachrichten lesen</p>
+</li>
+<li>
+<p>Chat-Nachrichten an alle Teilnehmer:innen senden</p>
+</li>
+<li>
+<p>Chat-Nachrichten an (Co)-Organisator:innen senden</p>
+</li>
+<li>
+<p>Chat-Nachrichten an bestimmte Teilnehmer:innen senden</p>
+</li>
+<li>
+<p>Teilnehmer:innen des Kurses sehen</p>
+</li>
+<li>
+<p>An Quizzen teilnehmen</p>
+</li>
+<li>
+<p>Redebeitrag durch Melden starten</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Hinweis"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p><strong>Unidirektionale Kommunikation für Teilnehmende</strong></p>
+</div>
+<div class="paragraph">
+<p>Falls Sie möchten, dass Teilnehmende nur Ihnen und Co-Organisator:innen Chat-Nachrichten senden und an Quizzen teilnehmen können, so weisen Sie die Privilegien wie in <a href="#participants-unidirektional">Abbildung 14</a> dargestellt zu.</p>
+</div>
+<div id="participants-unidirektional" class="imageblock text-center">
+<div class="content">
+<img src="./images/participants-unidirektional.png" alt="participants unidirektional" width="50%">
+</div>
+<div class="title">Abbildung 14. Privilegien für unidirektionale Kommunikation</div>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_zusätzliche_kursrollen_zuweisen">Zusätzliche Kursrollen zuweisen</h5>
+<div class="paragraph">
+<p>Sie können einzelnen Teilnehmenden zusätzliche Kursrollen zuweisen, um die Privilegien dieser Person zu erhöhen. Verwenden Sie dazu die in <a href="#course-roles-assign">Abbildung 15</a> dargestellte Eingabemaske.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In das Feld <em>Benutzername</em> geben Sie die TU-ID des/der Angehörigen der TU Darmstadt ein.</p>
+</li>
+<li>
+<p>Die zusätzliche Kursrolle auswählen. Momentan kann <em>Organisator:in</em> oder <em>Co-Organisator:in</em> ausgewählt werden.</p>
+</li>
+<li>
+<p>Klicken Sie auf <b class="button">Hinzufügen</b>.</p>
+</li>
+</ol>
+</div>
+<div id="course-roles-assign" class="imageblock text-center">
+<div class="content">
+<img src="./images/course-role-assign.png" alt="course role assign" width="50%">
+</div>
+<div class="title">Abbildung 15. Zusätzliche Kursrollen zuweisen</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_zugriffstoken">Zugriffstoken</h3>
 <div class="paragraph">
 <p>Das Zugriffstoken wird benötigt, um lecturePresenter gegenüber dem Streamingdienst zu authentifizieren. Es handelt sich hierbei um eine zufällig generierte Folge von alphanumerischen Zeichen. Einen Zugriffstoken zu verwenden hat den Vorteil, dass Sie sich im Werkzeug lecturePresenter nicht mit Ihren Logindaten (TU-ID und Passwort) einloggen müssen und somit auf sichere Weise geschützte Web-Dienste nutzen können. Das Zugriffstoken verwalten Sie mit folgenden Schritten.</p>
 </div>
@@ -689,6 +883,205 @@ Um zu überprüfen, ob das Zugriffstoken funktioniert, klicken Sie auf den Butto
 <p>Wenn Sie Bedenken hinsichtlich der Verwendung des Zugriffstokens haben, können Sie das Zugriffstoken löschen.</p>
 </div>
 </div>
+<div class="sect2">
+<h3 id="lecturePresenter">lecturePresenter</h3>
+<div class="sect3">
+<h4 id="_vorbereitung">Vorbereitung</h4>
+<div class="paragraph">
+<p>Stellen Sie sicher, dass lectureStudio auf ihrem Gerät installiert ist. Anweisungen für die Installation finden Sie in Abschnitt 2 dieses Dokuments.</p>
+</div>
+<div class="paragraph">
+<p>Erstellen Sie die Vorlesungsfolien in einem Programm ihrer Wahl. Um sie in lectureStudio verwenden zu können, müssen Sie die Folien als PDF exportieren. Es wird empfohlen, die Folien mit dem gleichen
+Seitenverhältnis anzulegen, mit dem sie auch präsentiert werden sollen.</p>
+</div>
+<div class="sect4">
+<h5 id="_powerpoint_präsentation_in_ein_pdf_umwandeln">PowerPoint-Präsentation in ein PDF umwandeln</h5>
+<div class="paragraph">
+<p>Sollten Sie ihre Präsentation mit PowerPoint erstellt haben, dann haben Sie mehrere Möglichkeiten die PowerPoint-Folien in ein PDF umzuwandeln.</p>
+</div>
+<div class="paragraph">
+<p>Hat ihre Präsentation einfache Animationen, dann bietet sich das Werkzeug <a href="http://www.maxonthenet.altervista.org/ppsplit.php" class="external" target="_blank" rel="noopener">PPspliT</a> an. Dazu laden und installieren Sie die neueste Version von PPspliT. Um das Werkzeug zu verwenden, öffnen Sie die
+Präsentation mit PowerPoint und suchen in der Menü-Leiste nach <em>PPspliT</em> (<a href="#ppsplit">Abbildung 16</a>).</p>
+</div>
+<div id="ppsplit" class="imageblock text-center">
+<div class="content">
+<img src="./images/presenter/ppsplit.png" alt="ppsplit" width="40%">
+</div>
+<div class="title">Abbildung 16. PowerPoint-Präsentation mit PPspliT in PDF umwandeln</div>
+</div>
+<div class="paragraph">
+<p>Sollten Sie kein PowerPoint haben, dann können Sie ihre Präsentation mit <a href="https://de.libreoffice.org/download/download/" class="external" target="_blank" rel="noopener">LibreOffice</a> in ein PDF umwandeln. Laden und installieren Sie hierzu die neueste Version von LibreOffice. Als Nächstes öffnen Sie die Präsentation mit LibreOffice und wandeln diese über das Menü <span class="menuseq"><b class="menu">Datei</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Als PDF exportieren</b></span> in PDF um.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_digitale_stifteingabe">Digitale Stifteingabe</h5>
+<div class="paragraph">
+<p>lecturePresenter ist mit dem Ziel entwickelt worden, um mit einem digitalen Stift zu arbeiten. Die digitale Stifteingabe ist zum Beispiel mit Convertibles wie Microsoft Surface Pro oder Lenovo Yoga möglich. Es ist auch möglich ein zum PC zusätzliches Tablet wie <a href="https://www.huion.com/pen_display" class="external" target="_blank" rel="noopener">HUION Kamvas</a> mit Stift zu verwenden.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_vor_der_präsentation">Vor der Präsentation</h5>
+<div class="sect5">
+<h6 id="_mikrofon">Mikrofon</h6>
+<div class="paragraph">
+<p>Schließen Sie das zu verwendende Mikrofon an den Rechner an. Sie können ein externes Headset benutzen, oder – sofern vorhanden – die Hörsaal-Audio-Anlage mit dem Laptop verbinden. Viele Laptops
+besitzen auch ein eingebautes Mikrofon, es wird jedoch von seiner Verwendung abgeraten, da die Audioqualität für gewöhnlich zu wünschen übrig lässt – besonders, wenn sich der Vortragende vom Rechner entfernt.</p>
+</div>
+<div class="paragraph">
+<p>Richten Sie nun das gewünschte Mikrofon ein (<a href="#presenter-mic-settings">Abbildung 17</a>):</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Öffnen Sie die Einstellungen über das Menü <span class="menuseq"><b class="menu">Bearbeiten</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Einstellungen</b></span>.</p>
+</li>
+<li>
+<p>Navigieren Sie zum Tab <strong>Mikrofon</strong>.</p>
+</li>
+<li>
+<p>Wählen Sie das korrekte Mikrofon aus [1].</p>
+</li>
+<li>
+<p>Mit dem Regler [2] können Sie die Lautstärke des Mikrofons anpassen.</p>
+</li>
+<li>
+<p>Alternativ können Sie die Aufnahmelautstärke anpassen, indem Sie den Aufnahmepegel automatisch einstellen lassen [3].</p>
+<div class="paragraph">
+<p>Klicken Sie im Dialog (<a href="#presenter-mic-settings-auto">Abbildung 18</a>) auf <b class="button">Beginnen</b> und sprechen Sie eine Zeit lang in das ausgewählte Mikrofon. Nachdem Sie auf <b class="button">Fertig</b> geklickt haben, wird die Mikrofonlautstärke auf den maximal erreichten Pegel eingestellt.</p>
+</div>
+</li>
+<li>
+<p>Machen Sie eine kurze Aufzeichnung [4] und überprüfen diese auf Rauschen, Nebengeräusche, Hall, usw.</p>
+</li>
+<li>
+<p>Abschließend klicken Sie auf den Button <b class="button">Schließen</b>, um die Einstellungen zu speichern.</p>
+</li>
+</ol>
+</div>
+<div id="presenter-mic-settings" class="imageblock text-center">
+<div class="content">
+<img src="./images/presenter/audio-settings.png" alt="audio settings" width="90%">
+</div>
+<div class="title">Abbildung 17. Mikrofon-Einstellungen</div>
+</div>
+<div id="presenter-mic-settings-auto" class="imageblock text-center">
+<div class="content">
+<img src="./images/presenter/audio-settings-auto.png" alt="audio settings auto" width="90%">
+</div>
+<div class="title">Abbildung 18. Aufnahmepegel automatisch einstellen</div>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_anzeigegeräte">Anzeigegeräte</h6>
+<div class="paragraph">
+<p>Verbinden Sie den Videoausgang des Rechners mit dem Eingang des Anzeigegerätes, und vergewissern Sie sich, dass das Anzeigegerät eingeschaltet ist.</p>
+</div>
+<div class="paragraph">
+<p>Sie können den aktuellen Projektionsmodus einsehen und ändern:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Windows</dt>
+<dd>
+<p>Mit der Tastenkombination <span class="image"><img src="./images/icons/windows.svg" alt="windows" width="25"></span> + P die Projektions-Seitenleiste öffnen.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+Achten Sie darauf, dass der Projektionsmodus auf “<strong>Erweitern</strong>” gestellt ist, <strong>nicht</strong> auf “Duplizieren”.
+</td>
+</tr>
+</table>
+</div>
+</dd>
+<dt class="hdlist1">Linux (Ubuntu)</dt>
+<dd>
+<p>Öffnen Sie die <strong>Aktivitäten</strong>-Übersicht und tippen “Anzeige” ein, danach klicken Sie auf <em>Anzeigegeräte</em>.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+Achten Sie darauf, dass in der Bildschirmkonfiguration die Option <em>Bildschirm spiegeln</em> <strong>nicht</strong> ausgewählt ist.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Hinweis"></i>
+</td>
+<td class="content">
+Diese Schritte können sich in anderen Linux-Distributionen unterscheiden.
+</td>
+</tr>
+</table>
+</div>
+</dd>
+<dt class="hdlist1">macOS</dt>
+<dd>
+<p>Über das Apple-Menü <span class="image"><img src="./images/icons/apple.svg" alt="apple" width="25"></span> &gt; Systemeinstellungen, und auf <em>Displays</em> klicken.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+Achten Sie darauf, dass das Markierungsfeld <em>Bildschirme synchronisieren</em> <strong>nicht</strong> aktiviert ist.
+</td>
+</tr>
+</table>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_grundlagen_des_arbeitsbereichs">Grundlagen des Arbeitsbereichs</h4>
+<div class="paragraph">
+<p>Starten Sie lecturePresenter über das Startmenü oder den Desktop Shortcut. Sie werden dann mit dem Startbildschirm begrüßt. Hier können Sie entweder eine der zuletzt geöffneten Dateien laden, ein leeres <b class="button">Whiteboard öffnen</b>, oder über den Button <b class="button">Dokument öffnen</b> eine neue Datei auswählen.</p>
+</div>
+<div id="presenter-start" class="imageblock text-center">
+<div class="content">
+<img src="./images/presenter/start.png" alt="start" width="90%">
+</div>
+<div class="title">Abbildung 19. Startbildschirm</div>
+</div>
+<div class="paragraph">
+<p>Sobald Sie ein PDF-Dokument oder ein Whiteboard geöffnet haben, finden Sie die Benutzeroberfläche wie in <a href="#presenter-overview">Abbildung 20</a> dargestellt wieder.</p>
+</div>
+<div id="presenter-overview" class="imageblock text-center">
+<div class="content">
+<img src="./images/presenter/overview.png" alt="overview" width="90%">
+</div>
+<div class="title">Abbildung 20. lecturePresenter</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="toolbar-customize">Werkzeugleiste anpassen</h4>
+<div class="paragraph">
+<p>Die Werkzeugleiste lässt sich Ihren Bedürfnissen nach anpassen. So können Sie zum Beispiel nur die Werkzeuge in der Leiste anzeigen lassen, die Sie tatsächlich brauchen und nutzen. Für eine bessere Übersicht und Struktur können drei verschiedene Abstandshalter zwischen den Werkzeug-Buttons eingefügt werden: Ein vertikaler und schmaler Abstandshalter, ein etwas breiter Abstandshalter mit fester Breite und ein dynamischer Abstandshalter, der den leeren Raum in der Leiste einnimmt und so die Buttons in die Ecken der Werkzeugleiste verschiebt.</p>
+</div>
+<div class="paragraph">
+<p>Die Benutzeroberfläche zur Anpassung der Werkzeugleiste ist in <a href="#presenter-toolbar-config">Abbildung 21</a> zu sehen. Die einzelnen Buttons können aus dem Dialog in die Werkzeugleiste gezogen und an die gewünschte Position hinzugefügt werden. Um die Buttons aus der Werkzeugleiste zu entfernen, ziehen Sie den jeweiligen Button aus der Werkzeugleiste heraus und legen diesen irgendwo im Fenster ab.</p>
+</div>
+<div id="presenter-toolbar-config" class="imageblock text-center">
+<div class="content">
+<img src="./images/toolbar-config.png" alt="toolbar config" width="60%">
+</div>
+<div class="title">Abbildung 21. Werkzeugleiste anpassen</div>
+</div>
+</div>
 <div class="sect3">
 <h4 id="stream-start">Stream starten</h4>
 <div class="paragraph">
@@ -702,13 +1095,13 @@ Um zu überprüfen, ob das Zugriffstoken funktioniert, klicken Sie auf den Butto
 <li>
 <p>Über die Werkzeugleiste mit dem Button <span class="image"><img src="./images/icons/stream.svg" alt="stream" width="25"></span>.</p>
 <div class="paragraph">
-<p>Sobald Sie einen Stream starten, wird zunächst ein Dialog wie in <a href="#stream-start-image">Abbildung 14</a> gezeigt.</p>
+<p>Sobald Sie einen Stream starten, wird zunächst ein Dialog wie in <a href="#stream-start-image">Abbildung 22</a> gezeigt.</p>
 </div>
 <div id="stream-start-image" class="imageblock text-center">
 <div class="content">
 <img src="./images/stream-start.png" alt="stream start" width="60%">
 </div>
-<div class="title">Abbildung 14. Stream starten</div>
+<div class="title">Abbildung 22. Stream starten</div>
 </div>
 </li>
 <li>
@@ -741,17 +1134,16 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 </ol>
 </div>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_statusindikatoren">Statusindikatoren</h3>
+<div class="sect3">
+<h4 id="_statusindikatoren">Statusindikatoren</h4>
 <div class="paragraph">
-<p>lecturePresenter hat in der rechten oberen Ecke der Oberfläche Indikatoren für den aktuellen Status des Streamings integriert (<a href="#stream-indicators">Abbildung 15</a>).</p>
+<p>lecturePresenter hat in der rechten oberen Ecke der Oberfläche Indikatoren für den aktuellen Status des Streamings integriert (<a href="#stream-indicators">Abbildung 23</a>).</p>
 </div>
 <div id="stream-indicators" class="imageblock text-center">
 <div class="content">
 <img src="./images/stream-indicators.png" alt="stream indicators" width="17%">
 </div>
-<div class="title">Abbildung 15. Stream-Indikatoren</div>
+<div class="title">Abbildung 23. Stream-Indikatoren</div>
 </div>
 <div class="hdlist">
 <table>
@@ -790,18 +1182,18 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 </table>
 </div>
 </div>
-<div class="sect2">
-<h3 id="quizzes">Quizze</h3>
 <div class="sect3">
-<h4 id="_quiz_erstellen">Quiz erstellen</h4>
+<h4 id="quizzes">Quizze</h4>
+<div class="sect4">
+<h5 id="_quiz_erstellen">Quiz erstellen</h5>
 <div class="paragraph">
-<p>lecturePresenter erlaubt es Ihnen, während der Vorlesung in Echtzeit Quizze zu starten, an denen die Teilnehmer über einen Browser teilnehmen können. Um ein Quiz zu erstellen, müssen Sie dieses zunächst anlegen. Wählen Sie dazu den Menüpunkt Vortrag Quiz erstellen. Es öffnet sich eine Bedienoberfläche (<a href="#quiz-create">Abbildung 16</a>), über die Sie das Quiz erstellen.</p>
+<p>lecturePresenter erlaubt es Ihnen, während der Vorlesung in Echtzeit Quizze zu starten, an denen die Teilnehmer über einen Browser teilnehmen können. Um ein Quiz zu erstellen, müssen Sie dieses zunächst anlegen. Wählen Sie dazu den Menüpunkt Vortrag Quiz erstellen. Es öffnet sich eine Bedienoberfläche (<a href="#quiz-create">Abbildung 24</a>), über die Sie das Quiz erstellen.</p>
 </div>
 <div id="quiz-create" class="imageblock text-center">
 <div class="content">
 <img src="./images/create-quiz.png" alt="create quiz" width="60%">
 </div>
-<div class="title">Abbildung 16. Quiz erstellen</div>
+<div class="title">Abbildung 24. Quiz erstellen</div>
 </div>
 <div class="paragraph">
 <p>Geben Sie eine Quizfrage ein [1]. Verschiedene Formatierungsmöglichkeiten sind in der Werkzeugleiste [2] zu finden. Die Quizfrage wird mit HTML formatiert. Auf diese Weise wird die Frage in allen Browsern mit der gleichen Formatierung angezeigt.</p>
@@ -809,22 +1201,22 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 <div class="paragraph">
 <p>Wählen Sie den Quizstil [3] aus. Es stehen drei Stile zur Verfügung; <code>Multiple choice</code> (Mehrfachauswahl), <code>Eine Antwort</code> und <code>Numerisch</code>.</p>
 </div>
-<div class="sect4">
-<h5 id="_multiple_choice_und_eine_antwort">Multiple Choice und Eine Antwort</h5>
+<div class="sect5">
+<h6 id="_multiple_choice_und_eine_antwort">Multiple Choice und Eine Antwort</h6>
 <div class="paragraph">
 <p>Die Antwortmöglichkeiten werden im Feld [4] als Text eingegeben. Neue Antwortmöglichkeiten erstellen Sie mit dem Button [5] oder mit der Taste Tab . Um eine Antwort zu löschen, klicken Sie den Button <span class="image"><img src="./images/icons/delete.svg" alt="delete" width="25"></span> [6]. Mit den aufwärts und abwärts Buttons [7] können Sie die Reihenfolge der Antworten verändern.</p>
 </div>
 </div>
-<div class="sect4">
-<h5 id="_numerische_antworten">Numerische Antworten</h5>
+<div class="sect5">
+<h6 id="_numerische_antworten">Numerische Antworten</h6>
 <div class="paragraph">
-<p>Für Fragen vom Stil <code>Numerisch</code> können Sie einen oder mehrere Einträge hinzufügen. Jede Antwortmöglichkeit (<a href="#quiz-create-numeric">Abbildung 17</a>) besitzt eine Beschreibung [1] und ein erlaubtes Werteintervall in Form von Min- und Max-Feldern[2][3], für die Eingabe bei der Teilnahme am Quiz. Numerische Antworten lassen sich ebenfalls sortieren und entfernen, wie im vorherigen Abschnitt beschrieben.</p>
+<p>Für Fragen vom Stil <code>Numerisch</code> können Sie einen oder mehrere Einträge hinzufügen. Jede Antwortmöglichkeit (<a href="#quiz-create-numeric">Abbildung 25</a>) besitzt eine Beschreibung [1] und ein erlaubtes Werteintervall in Form von Min- und Max-Feldern[2][3], für die Eingabe bei der Teilnahme am Quiz. Numerische Antworten lassen sich ebenfalls sortieren und entfernen, wie im vorherigen Abschnitt beschrieben.</p>
 </div>
 <div id="quiz-create-numeric" class="imageblock text-center">
 <div class="content">
 <img src="./images/create-quiz-numeric.png" alt="create quiz numeric" width="60%">
 </div>
-<div class="title">Abbildung 17. Numerische Quizantwort</div>
+<div class="title">Abbildung 25. Numerische Quizantwort</div>
 </div>
 <div class="paragraph">
 <p>Nachdem Sie alles Gewünschte eingegeben haben, haben Sie die Möglichkeit das Quiz zu speichern, bevor Sie das Quiz freigeben. Zum Speichern drücken Sie den Button <b class="button">Quiz speichern</b>. Um das Quiz freizugeben, klicken Sie <b class="button">Quiz stellen</b>.</p>
@@ -834,8 +1226,8 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_quiz_aus_der_quizsammlung_auswählen">Quiz aus der Quizsammlung auswählen</h4>
+<div class="sect4">
+<h5 id="_quiz_aus_der_quizsammlung_auswählen">Quiz aus der Quizsammlung auswählen</h5>
 <div class="paragraph">
 <p>Um den Teilnehmern eine ihrer angelegten Fragen aus ihrer Quizsammlung zu stellen, wählen Sie den Menüpunkt <span class="menuseq"><b class="menu">Vortrag</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Quiz auswählen</b></span>. Es öffnet sich die Fragenliste, in der Sie bestehende Fragen bearbeiten, löschen oder stellen können. Wählen Sie die gewünschte Frage aus und klicken <b class="button">Quiz stellen</b>.</p>
 </div>
@@ -843,11 +1235,11 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 <div class="content">
 <img src="./images/select-quiz.png" alt="select quiz" width="60%">
 </div>
-<div class="title">Abbildung 18. Quiz auswählen</div>
+<div class="title">Abbildung 26. Quiz auswählen</div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_quiz_modi">Quiz-Modi</h4>
+<div class="sect4">
+<h5 id="_quiz_modi">Quiz-Modi</h5>
 <div class="paragraph">
 <p>Ein Quiz kann mit oder ohne einen laufenden Stream gestellt werden. Wird ein Quiz ohne einen gerade laufenden Stream gestellt, so wird das Quiz anstelle des Streams auf der Webseite angezeigt. Ein aktives Quiz kann auf zwei Wegen beendet werden: Durch den Menüpunkt <span class="menuseq"><b class="menu">Vortrag</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Quiz beenden</b></span> oder den Button <b class="button">Beenden</b> unter den Vorschaufolien.</p>
 </div>
@@ -863,25 +1255,22 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 <p>Das Quiz z.B. mit dem Button <b class="button">Beenden</b> stoppen.</p>
 </li>
 <li>
-<p>Mit dem Button <b class="button">Teilen</b> die Ergebnisse an die Teilnehmer freigeben.</p>
-</li>
-<li>
 <p>Die Folien mit Diagrammen, die alle Antworten zusammenfassen, auswählen und präsentieren.</p>
 </li>
 </ol>
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="messages">Empfang von Nachrichten</h3>
+<div class="sect3">
+<h4 id="messages">Empfang von Nachrichten</h4>
 <div class="paragraph">
-<p>Textnachrichten können empfangen werden, wenn die Funktion <code>Messenger</code> aktiviert wurde. Empfangene Nachrichten sind in lecturePresenter unter der Folienanzeige zu sehen (<a href="#presenter-messages">Abbildung 19</a>). Eine Textnachricht enthält den Vor- und Nachnamen des/der Verfassenden, die Uhrzeit und den Text der Nachricht selbst.</p>
+<p>Textnachrichten können empfangen werden, wenn die Funktion <code>Messenger</code> aktiviert wurde. Empfangene Nachrichten sind in lecturePresenter unter der Folienanzeige zu sehen (<a href="#presenter-messages">Abbildung 27</a>). Eine Textnachricht enthält den Vor- und Nachnamen des/der Verfassenden, die Uhrzeit und den Text der Nachricht selbst.</p>
 </div>
 <div id="presenter-messages" class="imageblock text-center">
 <div class="content">
 <img src="./images/presenter-messages.png" alt="presenter messages" width="45%">
 </div>
-<div class="title">Abbildung 19. Empfangene Nachrichten in lecturePresenter</div>
+<div class="title">Abbildung 27. Empfangene Nachrichten in lecturePresenter</div>
 </div>
 <div class="paragraph">
 <p>Während eines Vortrags mit sehr vielen Teilnehmenden kann es vorkommen, dass Sie eine große Anzahl von Nachrichten bekommen. Wenn Sie auf eine Nachricht eingegangen sind oder eine Nachricht für unwichtig halten, dann kann diese mit dem Button <span class="image"><img src="./images/icons/message-check.svg" alt="message check" width="25"></span> entfernt werden.</p>
@@ -890,16 +1279,16 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 <p>Mit dem Button <span class="image"><img src="./images/icons/message-slide.svg" alt="message slide" width="25"></span> kann eine neue Folie mit dem Text der empfangenen Nachricht erstellt werden. Diese Folie wird in lecturePresenter sofort angezeigt, aufgezeichnet und im Stream verteilt, sofern Sie den Vortrag aufzeichnen bzw. streamen.</p>
 </div>
 </div>
-<div class="sect2">
-<h3 id="speeches">Meldungen</h3>
+<div class="sect3">
+<h4 id="speeches">Meldungen</h4>
 <div class="paragraph">
-<p>Meldungen sehen Sie dort, wo auch Textnachrichten in lecturePresenter angezeigt werden, unter der Folienanzeige (<a href="#presenter-speeches">Abbildung 20</a>). Eine Meldung enthält den Vor- und Nachnamen des/der Meldenden und die Uhrzeit. Sie können eine Meldung annehmen <span class="image"><img src="./images/icons/speech-accept.svg" alt="speech accept" width="25"></span> oder ablehnen <span class="image"><img src="./images/icons/speech-decline.svg" alt="speech decline" width="25"></span>. In beiden Fällen wird die Meldung aus der Liste entfernt.</p>
+<p>Meldungen sehen Sie dort, wo auch Textnachrichten in lecturePresenter angezeigt werden, unter der Folienanzeige (<a href="#presenter-speeches">Abbildung 28</a>). Eine Meldung enthält den Vor- und Nachnamen des/der Meldenden und die Uhrzeit. Sie können eine Meldung annehmen <span class="image"><img src="./images/icons/speech-accept.svg" alt="speech accept" width="25"></span> oder ablehnen <span class="image"><img src="./images/icons/speech-decline.svg" alt="speech decline" width="25"></span>. In beiden Fällen wird die Meldung aus der Liste entfernt.</p>
 </div>
 <div id="presenter-speeches" class="imageblock text-center">
 <div class="content">
 <img src="./images/presenter-speech-request.png" alt="presenter speech request" width="45%">
 </div>
-<div class="title">Abbildung 20. Meldungen in lecturePresenter</div>
+<div class="title">Abbildung 28. Meldungen in lecturePresenter</div>
 </div>
 <div class="paragraph">
 <p>Haben Sie eine Meldung angenommen und der/die Meldende hat den Redebeitrag gestartet, dann sehen Sie in lecturePresenter rechts oben über der Folienvorschau den Namen und das Kamerabild, falls aktiviert, des/der Meldenden sowie Steuerelemente für den Redebeitrag. Zu diesem Zeitpunkt ist auch der/die Meldende für Sie und alle Teilnehmer/innen zu hören.</p>
@@ -908,7 +1297,7 @@ All diese Funktionen lassen sich auch während des laufenden Streams ein- und au
 <div class="content">
 <img src="./images/presenter-speech.png" alt="presenter speech" width="38%">
 </div>
-<div class="title">Abbildung 21. Laufender Redebeitrag in lecturePresenter</div>
+<div class="title">Abbildung 29. Laufender Redebeitrag in lecturePresenter</div>
 </div>
 <div class="paragraph">
 <p>Audio und Video des Redebeitrags können Sie steuern.</p>
@@ -958,7 +1347,608 @@ Wurde die Nutzung der Kamera auf Seite des/der Meldenden deaktiviert, dann hat d
 </li>
 </ul>
 </div>
+</div>
+<div class="sect3">
+<h4 id="screen-share">Bildschirmfreigabe</h4>
+<div class="paragraph">
+<p>Mit lecturePresenter können Sie Ihren Bildschirm für andere Teilnehmer/innen teilen. Sie können Ihren gesamten Bildschirm oder nur bestimmte Fenster und Programme freigeben. Das ermöglicht Ihnen beispielsweise, eine Werkzeug-Demo vorzuführen. Hierfür gehen Sie wie folgt vor:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Falls der Button <span class="image"><img src="./images/icons/screen-share.svg" alt="screen share" width="25"></span> in der Werkzeugleiste nicht zu sehen ist, fügen Sie diesen, wie in Abschnitt <a href="#toolbar-customize">Werkzeugleiste anpassen</a> beschrieben ist, hinzu.</p>
+</li>
+<li>
+<p>Starten Sie einen Stream, wie in Abschnitt <a href="#stream-start">Stream starten</a> beschrieben.</p>
+</li>
+<li>
+<p>Klicken Sie in der Werkzeugleiste auf <span class="image"><img src="./images/icons/screen-share.svg" alt="screen share" width="25"></span>.</p>
+</li>
+<li>
+<p>Ihnen wird der Dialog für die Bildschirmfreigabe angezeigt. Ein beispielhafter Dialog ist in <a href="#screen-share-select">Abbildung 30</a> zu sehen.</p>
+<div id="screen-share-select" class="imageblock text-center">
+<div class="content">
+<img src="./images/screen-share-1.png" alt="screen share 1" width="50%">
+</div>
+<div class="title">Abbildung 30. Dialog für Bildschirmfreigabe</div>
+</div>
+</li>
+<li>
+<p>Einen Bildschirm oder ein Fenster für die Freigabe auswählen und <b class="button">Start</b> klicken.</p>
+</li>
+<li>
+<p>Ein neues Dokument wird erstellt und geöffnet. Auf der ersten Folie des Dokuments wird ein Schnappschuss des freizugebenden Bildschirminhalts angezeigt (<a href="#screen-share-doc">Abbildung 31</a>). Dieses Dokument wird gleichzeitig an alle Teilnehmer/innen verteilt und bei allen Teilnehmenden angezeigt. Sie können in diesem Dokument auch alle Annotationswerkzeuge nutzen.</p>
+<div id="screen-share-doc" class="imageblock text-center">
+<div class="content">
+<img src="./images/screen-share-2.png" alt="screen share 2" width="50%">
+</div>
+<div class="title">Abbildung 31. Schnappschuss der Bildschirmfreigabe im neuen Dokument</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+Zu diesem Zeitpunkt hat die Bildschirmfreigabe noch nicht begonnen!
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Die Bildschirmfreigabe beginnen Sie, indem Sie auf <span class="image"><img src="./images/icons/record-tool.svg" alt="record tool" width="25"></span> [1] klicken. Falls ein Fenster freigegeben wurde, wird dieses automatisch fokusiert und bei Ihnen auf dem Bildschirm in den Vordergrund gebracht.</p>
+</li>
+<li>
+<p>Alle Teilnehmer/innen bekommen den freigegebenen Bildschirminhalt in Form von gestreamten Video angezeigt (<a href="#screen-share-stream">Abbildung 32</a>).</p>
+<div id="screen-share-stream" class="imageblock text-center">
+<div class="content">
+<img src="./images/screen-share-3.png" alt="screen share 3" width="50%">
+</div>
+<div class="title">Abbildung 32. Anzeige der Bildschirmfreigabe bei Teilnehmenden</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="sect4">
+<h5 id="_bildschirmfreigabe_pausieren">Bildschirmfreigabe pausieren</h5>
+<div class="paragraph">
+<p>Die Bildschirmfreigabe lässt sich pausieren. Dies ist insbesondere dann hilfreich, wenn Sie einen Schnappschuss des freigegebenen Bildschirminhalts machen möchten, um den aktuellen Zustand der Freigabe auf einer Folie festzuhalten.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Hierfür klicken Sie auf <span class="image"><img src="./images/icons/record-pause-tool.svg" alt="record pause tool" width="25"></span> [1].</p>
+</li>
+<li>
+<p>Eine neue Folie wird mit einem neuen Schnappschuss des freigegebenen Bildschirminhalts im Dokument erstellt und ausgewählt. Diese neue Folie wird an alle Teilnehmenden verteilt und bei allen angezeigt.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_bildschirmfreigabe_beenden">Bildschirmfreigabe beenden</h5>
+<div class="paragraph">
+<p>Um die Bildschirmfreigabe zu beenden, klicken Sie auf <span class="image"><img src="./images/icons/record-stop-tool.svg" alt="record stop tool" width="25"></span> [2]. Das dazu erstellte Dokument wird geschlossen.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="lectureEditor">lectureEditor</h3>
+<div class="sect3">
+<h4 id="_grundlagen_des_arbeitsbereichs_2">Grundlagen des Arbeitsbereichs</h4>
+<div id="lectureEditor-window" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-main.png" alt="editor main" width="90%">
+</div>
+<div class="title">Abbildung 33. lectureEditor</div>
+</div>
+<div class="sect4">
+<h5 id="_bearbeitungs_funktionen">Bearbeitungs-Funktionen</h5>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-export-recording.svg" alt="editor export recording" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Zeigt Bedien- und Einstellungselemente an, um die Aufzeichnung in ein komprimiertes Format zu konvertieren.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-noise-reduction.svg" alt="editor noise reduction" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Zeigt Bedien- und Einstellungselemente für die Rauschunterdrückung an.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-page-events.svg" alt="editor page events" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Zeigt alle Annotationen zu der aktuell angezeigten Folie an. Über diese Ansicht können einzelne Annotationen aus der Folie entfernt werden.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_folienvorschau">Folienvorschau</h5>
+<div class="paragraph">
+<p>In diesem Bereich werden Miniaturbilder für die einzelnen aufgezeichneten Folien angezeigt. Die nächste Folie ist oben sichtbar. Um eine Folie auszuwählen, klicken Sie auf das jeweilige Miniaturbild. Beim Folienwechsel passt sich die Folienvorschau automatisch an und zeigt die nächsten Folien beginnend mit der darauffolgenden Folie von oben nach unten an. Sie haben auch die Möglichkeit die Aufzeichnung durchzublättern, indem Sie die Bildlaufleiste verwenden, um sich vorwärts und rückwärts durch die Aufzeichnung zu bewegen. Der blaue Rahmen um das Miniaturbild kennzeichnet die Folie, die gerade angezeigt wird.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_werkzeuge">Werkzeuge</h5>
+<div id="lectureEditor-toolbar" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-toolbar.png" alt="editor toolbar" width="45%">
+</div>
+<div class="title">Abbildung 34. lectureEditor-Werkzeugleiste</div>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-undo.svg" alt="editor undo" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Letzten Bearbeitungsschritt rückgängig machen.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-redo.svg" alt="editor redo" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Gelöschten Bearbeitungsschritt wiederherstellen.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-cut.svg" alt="editor cut" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Aktuellen Auswahlbereich entfernen.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-adjust-volume.svg" alt="editor adjust volume" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Lautstärke im Auswahlbereich anpassen.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-cut-page.svg" alt="editor cut page" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Aktuelle Folie entfernen.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-replace-page.svg" alt="editor replace page" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Aktuelle Folie durch eine andere ersetzen.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-import.svg" alt="editor import" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Eine Aufzeichnung an die aktuelle Zeitmarker-Position importieren.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-zoom-out.svg" alt="editor zoom out" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>In die Waveform reinzoomen.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-zoom-in.svg" alt="editor zoom in" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Aus der Waveform rauszoomen.</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<span class="image"><img src="./images/icons/editor-collapse-selection.svg" alt="editor collapse selection" width="25"></span>
+</td>
+<td class="hdlist2">
+<p>Auswahlbereich zusammenführen.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_annotationen">Annotationen</h5>
+<div class="paragraph">
+<p>In der Annotationen-Leiste werden Markierungen für alle aufgezeichneten Seitenwechsel und Annotationen angezeigt. Die Markierungen passen sich automatisch an den Zeitabschnitt an, den Sie sich gerade anschauen, reinzoomen oder durchblättern. Die Seitenwechsel werden durch ein Rechteck mit der Seitennummer markiert. Alle Annotationen werden durch jeweils kleine rote Balken markiert. Folgen viele Annotationen, die zeitlich nah beieinander durchgeführt wurden, so kann es zu einem breiten roten Balken führen. Dies ist vor allem bei Stift-Annotationen der Fall, da jeder Punkt, den der Stift durchläuft, als eine einzelne Markierung zählt.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_schneiden">Schneiden</h4>
+<div class="paragraph">
+<p>Um Stille, einen Fehler oder einen unnötigen Abschnitt aus der Aufnahme zu löschen, markieren Sie diesen Bereich in der Waveform mit den Zeitmarkern.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Navigieren Sie in der Waveform an die gewünschte Position.</p>
+</li>
+<li>
+<p>Bewegen Sie den Zeitmarker <span class="image"><img src="./images/icons/editor-slider.svg" alt="editor slider" width="25"></span> oder die sekundären Zeitmarker <span class="image"><img src="./images/icons/editor-slider-left.svg" alt="editor slider left" width="25"></span><span class="image"><img src="./images/icons/editor-slider-right.svg" alt="editor slider right" width="25"></span> nach links oder rechts, um den gewünschten Bereich auszuwählen.</p>
+<div class="paragraph">
+<p>Der ausgewählte Bereich ist vom grünen Rechteck umschlossen (<a href="#lectureEditor-timeline-select">Abbildung 35</a>).</p>
+</div>
+<div id="lectureEditor-timeline-select" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-timeline-select.png" alt="editor timeline select" width="70%">
+</div>
+<div class="title">Abbildung 35. Auswahlbereich</div>
+</div>
+</li>
+<li>
+<p>Klicken Sie auf <em>Ausschneiden</em> <span class="image"><img src="./images/icons/editor-cut.svg" alt="editor cut" width="25"></span> über der Waveform.</p>
+<div class="paragraph">
+<p>Dadurch wird der Auswahlbereich entfernt. Alle darauffolgenden Folien samt Annotationen werden nach links verschoben, um die Lücke zu schließen.</p>
+</div>
+</li>
+</ol>
+</div>
+<div class="sect4">
+<h5 id="_komplette_folie_entfernen">Komplette Folie entfernen</h5>
+<div class="paragraph">
+<p>Folien samt Annotationen lassen sich auch ohne die Auswahl mit Zeitmarkern in der Waveform entfernen.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Navigieren Sie auf eine Folie, die Sie komplett entfernen möchten.</p>
+</li>
+<li>
+<p>Klicken Sie auf <em>Aktuelle Seite entfernen</em> <span class="image"><img src="./images/icons/editor-cut-page.svg" alt="editor cut page" width="25"></span> über der Waveform.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><strong>Alternativ:</strong></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Rechtsklick mit der Maus auf die Folie in der Vorschauleiste (<a href="#lectureEditor-delete-page">Abbildung 36</a>).</p>
+<div id="lectureEditor-delete-page" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-delete-page.png" alt="editor delete page" width="25%">
+</div>
+<div class="title">Abbildung 36. Komplette Folie aus der Aufzeichnung entfernen</div>
+</div>
+</li>
+<li>
+<p>Klicken Sie auf <em>Seite entfernen</em> im Kontextmenü.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_folie_ersetzen">Folie ersetzen</h4>
+<div class="paragraph">
+<p>Sie können Folien im aufgezeichneten Dokument ersetzen. Diese Funktion ist hilfreich, wenn Sie eine Aufzeichnung wiederverwenden und zum Beispiel nur das Datum anpassen möchten, oder Fehler wie bei-
+spielsweise Rechtschreibfehler beheben möchten. Alle Annotationen und Audio, die auf dieser Folie gemacht wurden, bleiben unverändert erhalten.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Navigieren Sie auf eine Folie, die Sie ersetzen möchten.</p>
+</li>
+<li>
+<p>Klicken Sie auf <em>Aktuelle Seite ersetzen</em> <span class="image"><img src="./images/icons/editor-replace-page.svg" alt="editor replace page" width="25"></span> über der Waveform.</p>
+</li>
+<li>
+<p>Im Datei-Auswahl-Dialog einen Foliensatz auswählen, in dem sich die neue Folie befindet.</p>
+</li>
+<li>
+<p>Wählen Sie im Foliensatz die neue Folie aus und klicken <b class="button">Ersetzen</b>.</p>
+</li>
+<li>
+<p>Die ausgewählte Folie wurde ersetzt.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_lautstärke_anpassen">Lautstärke anpassen</h4>
+<div class="paragraph">
+<p>Es kann vorkommen, dass Sie die Lautstärke in einzelnen Passagen ihrer Aufzeichnung verändern möchten. Dies kann zum Beispiel nach dem Einfügen einer neuen Passage der Fall sein.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Navigieren Sie in der Waveform an die gewünschte Position.</p>
+</li>
+<li>
+<p>Bewegen Sie den Zeitmarker <span class="image"><img src="./images/icons/editor-slider.svg" alt="editor slider" width="25"></span> oder die sekundären Zeitmarker <span class="image"><img src="./images/icons/editor-slider-left.svg" alt="editor slider left" width="25"></span><span class="image"><img src="./images/icons/editor-slider-right.svg" alt="editor slider right" width="25"></span> nach links oder rechts, um den gewünschten Bereich auszuwählen.</p>
+<div class="paragraph">
+<p>Der ausgewählte Bereich ist vom grünen Rechteck umschlossen (<a href="#lectureEditor-timeline-adjust-audio">Abbildung 37</a>).</p>
+</div>
+<div id="lectureEditor-timeline-adjust-audio" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-timeline-select-2.png" alt="editor timeline select 2" width="70%">
+</div>
+<div class="title">Abbildung 37. Auswahlbereich zur Anpassung der Lautstärke</div>
+</div>
+</li>
+<li>
+<p>Klicken Sie auf <em>Lautstärke anpassen</em> <span class="image"><img src="./images/icons/editor-adjust-volume.svg" alt="editor adjust volume" width="25"></span> über der Waveform. Es wird ein neuer violetter Auswahlbereich für die Anpassung der Lautstärke erstellt.</p>
+</li>
+<li>
+<p>Im violetten Auswahlbereich können Sie nun die Lautstärke anpassen (<a href="#lectureEditor-timeline-adjust-audio-slider">Abbildung 38</a>). Bewegen Sie den horizontalen Balken nach oben, um die Lautstärke zu erhöhen, oder nach unten, um sie zu senken [1]. Die Änderung ist sofort in der Waveform sichtbar.</p>
+<div id="lectureEditor-timeline-adjust-audio-slider" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-timeline-adjust-volume.png" alt="editor timeline adjust volume" width="70%">
+</div>
+<div class="title">Abbildung 38. Lautstärke anpassen im Auswahlbereich</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Hinweis"></i>
+</td>
+<td class="content">
+Es wird empfohlen den grünen Auswahlbereich mit <span class="image"><img src="./images/icons/editor-collapse-selection.svg" alt="editor collapse selection" width="25"></span> zusammenzufalten.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Sollten Sie es sich anders überlegt haben, so können Sie die Anpassung mit <b class="button">X</b> [2] oder <span class="image"><img src="./images/icons/editor-undo.svg" alt="editor undo" width="25"></span> rückgängig machen.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_rauschunterdrückung">Rauschunterdrückung</h4>
+<div class="paragraph">
+<p>Je nach Qualität des Mikrofons, wird neben der Sprache auch Rauschen aufgezeichnet. Um die Sprachverständlichkeit zu erhöhen, kann ein Rauschunterdrückungsverfahren angewandt werden. Da statistische Rauschsignale sich im Allgemeinen nicht gut komprimieren lassen, führt die Rauschunterdrückung zu einer Reduktion der Dateigröße einer komprimierten Video-Aufzeichnung.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Wählen Sie in der Waveform mit den Zeitmarkern einen Bereich mit Stille aus, d.h. ohne Sprach-/Audiosignal. Die Pegel sind in der Waveform nahe der Mittellinie (<a href="#lectureEditor-timeline-silence">Abbildung 39</a>).</p>
+<div id="lectureEditor-timeline-silence" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-timeline-silence.png" alt="editor timeline silence" width="70%">
+</div>
+<div class="title">Abbildung 39. Stille auswählen</div>
+</div>
+</li>
+<li>
+<p>Über Menü <span class="menuseq"><b class="menu">Effekt</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Markiertes Zeitintervall als Stille definieren</b></span> wird das Rauschsignal analysiert.</p>
+</li>
+<li>
+<p>Über Menü <span class="menuseq"><b class="menu">Effekt</b>&#160;<i class="fa fa-angle-right caret"></i> <b class="menuitem">Entrauschen</b></span> öffnen Sie den Dialog zur Rauschunterdrückung (<a href="#lectureEditor-nr-dialog">Abbildung 40</a>).</p>
+<div id="lectureEditor-nr-dialog" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-nr-dialog.png" alt="editor nr dialog" width="25%">
+</div>
+<div class="title">Abbildung 40. Rauschunterdrückung</div>
+</div>
+</li>
+<li>
+<p>Der Standardwert der Empfindlichkeit ist so eingestellt, dass er für die meisten Aufzeichnungen nicht verändert werden muss. Um sicherzugehen, ob die Empfindlichkeit der Rauschunterdrückung passt, führen Sie den nächsten Schritt aus.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+Je höher der Wert, desto mehr Signale werden aus der Aufzeichnung entfernt. Ein zu hoher Wert beeinträchtigt die Qualität der Sprache, da auch hier die dazugehörenden Frequenzen unterdrückt werden.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Sie können probeweise entrauschen und vorhören. Dazu klicken Sie zunächst <b class="button">Probeweise</b> und dann <span class="image"><img src="./images/icons/editor-play.svg" alt="editor play" width="25"></span>.</p>
+<div class="paragraph">
+<p>Eine Veränderung des Spektrogramms ist in <a href="#lectureEditor-nr-dialog-test">Abbildung 41</a> zu sehen. Es ist zu erkennen, dass hauptsächlich Frequenzen der Sprache übrig geblieben sind.</p>
+</div>
+<div class="paragraph">
+<p>Wenn Sie mit dem Resultat nicht zufrieden sind, dann verstellen Sie die Empfindlichkeit und klicken erneut <b class="button">Probeweise</b>.</p>
+</div>
+<div id="lectureEditor-nr-dialog-test" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-nr-dialog-test.png" alt="editor nr dialog test" width="25%">
+</div>
+<div class="title">Abbildung 41. Probeweise Rauschunterdrückung</div>
+</div>
+</li>
+<li>
+<p>Damit die Rauschunterdrückung auf die gesamte Aufzeichnung angewandt wird, drücken Sie <b class="button">Endgültig</b>.</p>
+<div class="paragraph">
+<p>Der Dialog schließt sich automatisch, nachdem die Rauschunterdrückung erfolgreich durchgelaufen ist.</p>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="lectureEditor-video">Video-Export</h4>
+<div class="paragraph">
+<p>Exportieren Sie Ihre Aufzeichnung als komprimiertes Video, das in allen gängigen Videoplayern wiedergegeben werden kann.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Klicken Sie auf <b class="button">Erstellen</b> im Schnellzugriff für den Video-Export. Es öffnet sich ein Dialog (<a href="#lectureEditor-video-export">Abbildung 42</a>).</p>
+<div id="lectureEditor-video-export" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-video-export.png" alt="editor video export" width="50%">
+</div>
+<div class="title">Abbildung 42. Video-Export</div>
+</div>
+</li>
+<li>
+<p>Wählen Sie den Speicherort aus.</p>
+</li>
+<li>
+<p>Aktivieren Sie die Option <em>Video</em>, um im nächsten Schritt die Videodatei zu erstellen. Zu dem Video wird eine HTML-Datei mit erweiterten Funktionen wie die Textsuche und Anspringen von Folien im Video generiert.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+Die HTML-Datei kann mit dem Video auf den Helios Medienserver der TU Darmstadt geladen und freigegeben werden.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Die HTML-Darstellung einer beispielhaften Aufzeichnung ist in <a href="#lectureEditor-video-export-html">Abbildung 43</a> zu sehen.</p>
+</div>
+<div id="lectureEditor-video-export-html" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-html-export.png" alt="editor html export" width="50%">
+</div>
+<div class="title">Abbildung 43. Video-Export mit HTML-Format</div>
+</div>
+</li>
+<li>
+<p>Aktivieren Sie die Option <em>HTML Vektor Player</em>, wenn zu dem Video eine komprimierte Aufzeichnung im Vektorformat erstellt werden soll. Die damit erzeugte Aufzeichnungsdatei kann über die mitgelieferte HTML-Datei wiedergegeben werden.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+In der Regel haben komprimierte Vektor-Aufzeichnungen eine geringere Dateigröße als komprimierte Videos, haben aber den Nachteil, dass sie nur mit der HTML-Datei, die die Wiedergabe-Funktionalität implementiert, wiedergegeben werden können.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Klicken Sie auf <b class="button">Erstellen</b>.</p>
+</li>
+</ol>
+</div>
+<div class="sect4">
+<h5 id="_alternativ_mit_experteneinstellungen">Alternativ mit Experteneinstellungen</h5>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Um mehr Einfluss auf die Qualität des Videos zu bekommen, klicken Sie auf die Reiter <em>Video</em> und/oder <em>Audio</em>. Sie bekommen die erweiterten Bedienelemente (<a href="#lectureEditor-video-export-extended">Abbildung 44</a>)
+zu sehen.</p>
+<div id="lectureEditor-video-export-extended" class="imageblock text-center">
+<div class="content">
+<img src="./images/editor-extended-video-export.png" alt="editor extended video export" width="25%">
+</div>
+<div class="title">Abbildung 44. Erweiterte Video-Export-Einstellungen</div>
+</div>
+</li>
+<li>
+<p>Nehmen Sie die gewünschten Einstellungen vor. Die Standardwerte sind so eingestellt, dass ein Video mit guter Qualität und geringer Dateigröße erstellt wird.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Anmerkung"></i>
+</td>
+<td class="content">
+Je höher die Werte, desto besser ist die Qualität des Videos. Mit besserer Qualität erhöht sich auch die Dateigröße des Videos.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Anschließend klicken Sie auf <b class="button">Erstellen</b> und fahren mit den zuvor beschriebenen Schritten in Absatz <a href="#lectureEditor-video">Video-Export</a> fort.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_tastenbelegung">Tastenbelegung</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>lectureEditor-Tastenbelegung</p>
+</li>
+</ol>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Tasten</th>
+<th class="tableblock halign-left valign-top">Aktion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><span class="keyseq"><kbd>Strg</kbd>+<kbd>O</kbd></span>,</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aufzeichnung öffnen.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><span class="keyseq"><kbd>Strg</kbd>+<kbd>F4</kbd></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aufzeichnung schließen.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><span class="keyseq"><kbd>Strg</kbd>+<kbd>Q</kbd></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Programm beenden.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><span class="keyseq"><kbd>Alt</kbd>+<kbd>Enter</kbd></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Vollbildmodus umschalten.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><span class="keyseq"><kbd>Strg</kbd>+<kbd>Z</kbd></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Letzten Bearbeitungsschritt rückgängig machen.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><span class="keyseq"><kbd>Strg</kbd>+<kbd>Y</kbd></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Gelöschten Bearbeitungsschritt wiederherstellen.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><span class="keyseq"><kbd>Strg</kbd>+<kbd>X</kbd></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aktuellen Auswahlbereich entfernen.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><span class="keyseq"><kbd>Strg</kbd>+<kbd>D</kbd></span></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Aktuelle Folie entfernen.</p></td>
+</tr>
+</tbody>
+</table>
 <div style="page-break-after: always;"></div>
+</div>
 </div>
 </div>
 </div>
