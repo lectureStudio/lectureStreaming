@@ -1,5 +1,6 @@
 package org.lecturestudio.web.portal.config;
 
+import org.lecturestudio.web.portal.admin.service.CourseBroadcastService;
 import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.service.CoursePresenceService;
 import org.lecturestudio.web.portal.websocket.CourseStateWebSocketHandler;
@@ -24,11 +25,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
 	@Autowired
 	private CoursePresenceService presenceService;
 
+	@Autowired
+	private CourseBroadcastService courseBroadcastService;
+
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		registry
-			.addHandler(new CourseStateWebSocketHandler(courseStates, presenceService), "/api/publisher/course-state")
+			.addHandler(new CourseStateWebSocketHandler(courseStates, presenceService, courseBroadcastService), "/api/publisher/course-state")
 				.setAllowedOrigins("*");
 	}
 

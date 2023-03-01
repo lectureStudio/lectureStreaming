@@ -30,11 +30,18 @@ public class CourseState {
 
 	private boolean isRecorded;
 
+	private final Long courseBroadcastId;
 
-	public CourseState(CoursePresenceService presenceService, long courseId) {
+
+	public CourseState(CoursePresenceService presenceService, long courseId, long courseBroadcastId) {
 		this.presenceService = presenceService;
 		this.courseId = courseId;
 		timestamp = System.currentTimeMillis();
+		this.courseBroadcastId = courseBroadcastId;
+	}
+
+	public long getCourseBroadcastId() {
+		return this.courseBroadcastId;
 	}
 
 	public long getCreatedTimestamp() {

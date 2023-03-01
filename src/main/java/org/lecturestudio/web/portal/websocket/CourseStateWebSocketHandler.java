@@ -6,6 +6,7 @@ import static java.util.Objects.nonNull;
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import org.lecturestudio.web.api.stream.action.StreamPageAction;
 import org.lecturestudio.web.api.stream.action.StreamPageActionsAction;
 import org.lecturestudio.web.api.stream.action.StreamPagePlaybackAction;
 import org.lecturestudio.web.api.stream.action.StreamStartAction;
+import org.lecturestudio.web.portal.admin.service.CourseBroadcastService;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStatePage;
@@ -51,10 +53,13 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 	private final CoursePresenceService presenceService;
 
+	private final CourseBroadcastService broadcastService;
 
-	public CourseStateWebSocketHandler(CourseStates courseStates, CoursePresenceService presenceService) {
+
+	public CourseStateWebSocketHandler(CourseStates courseStates, CoursePresenceService presenceService, CourseBroadcastService broadcastService) {
 		this.courseStates = courseStates;
 		this.presenceService = presenceService;
+		this.broadcastService = broadcastService;
 	}
 
 	@Override
@@ -85,6 +90,8 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 
 		if (nonNull(courseId)) {
 			initStates.remove(courseId);
+			CourseState courseState = courseStates.getCourseState(courseId);
+			this.broadcastService.saveCourseBroadcastEnd(courseState.getCourseBroadcastId(), LocalDateTime.now());
 			courseStates.removeCourseState(courseId);
 		}
 	}
@@ -213,8 +220,10 @@ public class CourseStateWebSocketHandler extends BinaryWebSocketHandler {
 		sessions.put(userName, courseId);
 		userSockets.put(session, courseId);
 
+		long courseBroadcastId = this.broadcastService.saveCourseBroadcastStart(courseId, LocalDateTime.now());
+
 		// Bind course state to the course ID.
-		initStates.put(courseId, new CourseState(presenceService, courseId));
+		initStates.put(courseId, new CourseState(presenceService, courseId, courseBroadcastId));
 	}
 
 	private void sessionStart(StreamStartAction startAction) {
