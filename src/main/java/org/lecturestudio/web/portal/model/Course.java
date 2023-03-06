@@ -52,6 +52,9 @@ public class Course {
 	@Column
 	String passcode;
 
+	@Column(nullable = true)
+	Boolean isConference;
+
 	@OneToMany(mappedBy = "course", fetch = FetchType.EAGER, cascade = { CascadeType.ALL })
 	Set<CourseRegistration> registrations;
 

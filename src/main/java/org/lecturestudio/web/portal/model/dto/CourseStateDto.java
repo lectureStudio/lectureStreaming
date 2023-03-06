@@ -35,6 +35,8 @@ public class CourseStateDto {
 
 	CourseQuizFeature quizFeature;
 
+	boolean isConference;
+
 	boolean isProtected;
 
 	boolean isRecorded;

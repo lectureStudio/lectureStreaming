@@ -77,14 +77,18 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/course")
@@ -153,6 +157,20 @@ public class CourseSubscriberController {
 		});
 	}
 
+	@GetMapping("/user")
+	public UserDto getUser(Authentication authentication) {
+		User user = userService.findById(authentication.getName())
+				.orElseThrow(() -> new UsernameNotFoundException("User could not be found!"));
+
+		UserDto userDto = UserDto.builder()
+				.userId(authentication.getName())
+				.familyName(user.getFamilyName())
+				.firstName(user.getFirstName())
+				.build();
+
+		return userDto;
+	}
+
 	@GetMapping("/state/{id}")
 	public CourseStateDto getCourseState(@PathVariable("id") long id, Authentication authentication) {
 		LectUserDetails details = (LectUserDetails) authentication.getDetails();
@@ -194,6 +212,7 @@ public class CourseSubscriberController {
 
 		var builder = CourseStateDto.builder()
 			.courseId(id)
+			.isConference(course.getIsConference())
 			.userId(details.getUsername())
 			.title(course.getTitle())
 			.description(course.getDescription())
@@ -534,6 +553,18 @@ public class CourseSubscriberController {
 			.contentType(MediaType.parseMediaType(contentType))
 			.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
 			.body(file);
+	}
+
+	@PostMapping("/file/upload")
+	public ResponseEntity<String> uploadFile(@RequestPart("file") MultipartFile file, Authentication authentication) {
+		String fileName = fileStorageService.save(file);
+
+		String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+			.path("/course/file/")
+			.path(fileName)
+			.toUriString();
+
+		return ResponseEntity.status(HttpStatus.OK).body(fileDownloadUri);
 	}
 
 	@MessageExceptionHandler
