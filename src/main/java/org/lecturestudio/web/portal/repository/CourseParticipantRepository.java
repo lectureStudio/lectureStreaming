@@ -24,4 +24,7 @@ public interface CourseParticipantRepository extends CrudRepository<CoursePartic
 	@Query(value = "SELECT user FROM CourseParticipant cp WHERE cp.courseId = ?1")
 	public Iterable<User> findAllUsersByCourseId(Long courseId, Sort sort);
 
+	@Query("SELECT COUNT(cp) FROM CourseParticipant cp WHERE cp.courseId = ?1")
+	public Long getNumOfUsersByCourseId(Long courseId);
+
 }

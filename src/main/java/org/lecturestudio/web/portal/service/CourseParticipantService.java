@@ -32,6 +32,10 @@ public class CourseParticipantService {
 		return featureRepository.findAllUsersByCourseId(courseId, Sort.by(Sort.Direction.ASC, "user.familyName"));
 	}
 
+	public Number getNumOfUsersByCourseId(Long courseId) {
+		return featureRepository.getNumOfUsersByCourseId(courseId);
+	}
+
 	public Optional<CourseParticipant> getParticipantBySessionId(String sessionId) {
 		return featureRepository.findBySessionId(sessionId);
 	}
