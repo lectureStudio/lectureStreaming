@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -52,6 +53,7 @@ import org.lecturestudio.web.portal.model.CourseSpeechRequest;
 import org.lecturestudio.web.portal.model.CourseState;
 import org.lecturestudio.web.portal.model.CourseStateDocument;
 import org.lecturestudio.web.portal.model.CourseStateListener;
+import org.lecturestudio.web.portal.model.CourseStatePage;
 import org.lecturestudio.web.portal.model.CourseStates;
 import org.lecturestudio.web.portal.model.Privilege;
 import org.lecturestudio.web.portal.model.User;
@@ -556,7 +558,7 @@ public class CourseSubscriberController {
 	}
 
 	@PostMapping("/file/upload")
-	public ResponseEntity<String> uploadFile(@RequestPart("file") MultipartFile file, Authentication authentication) {
+	public ResponseEntity<CourseStateDocument> uploadFile(@RequestPart("file") MultipartFile file, Authentication authentication) {
 		String fileName = fileStorageService.save(file);
 
 		String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -564,7 +566,19 @@ public class CourseSubscriberController {
 			.path(fileName)
 			.toUriString();
 
-		return ResponseEntity.status(HttpStatus.OK).body(fileDownloadUri);
+		CourseStateDocument stateDoc = CourseStateDocument.builder()
+			.pages(new ConcurrentHashMap<>())
+			.activePage(CourseStatePage.builder()
+				.pageNumber(0)
+				.actions(new ArrayList<>())
+				.build())
+			.documentId(file.hashCode())
+			.documentFile(fileDownloadUri)
+			.documentName(fileName)
+			.type("PDF")
+			.build();
+
+		return ResponseEntity.status(HttpStatus.OK).body(stateDoc);
 	}
 
 	@MessageExceptionHandler
