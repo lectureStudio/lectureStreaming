@@ -239,6 +239,13 @@ public class CourseSubscriberController {
 
 	@GetMapping("/state/{id}/pages/{docId}")
 	public ResponseEntity<Resource> getPageState(@PathVariable("id") long id, @PathVariable("docId") Long docId) {
+		Course course = courseService.findById(id)
+				.orElseThrow(() -> new CourseNotFoundException());
+
+		if (course.getIsConference()) {
+			return ResponseEntity.ok().build();
+		}
+
 		CourseState courseState = courseStates.getCourseState(id);
 
 		if (isNull(courseState)) {
