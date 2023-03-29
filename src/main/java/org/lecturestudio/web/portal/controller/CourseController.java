@@ -120,7 +120,7 @@ public class CourseController {
 			.authors(authors)
 			.messageFeature(messageFeature)
 			.quizFeature(quizFeature)
-			.isConference(course.getIsConference())
+			.isConference(isNull(course.getIsConference()) ? false : course.getIsConference())
 			.isLive(nonNull(state))
 			.isRecorded(nonNull(state) ? state.getRecordedState() : false)
 			.isProtected(isProtected)

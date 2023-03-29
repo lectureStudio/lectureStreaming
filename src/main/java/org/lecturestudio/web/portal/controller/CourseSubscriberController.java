@@ -214,7 +214,7 @@ public class CourseSubscriberController {
 
 		var builder = CourseStateDto.builder()
 			.courseId(id)
-			.isConference(course.getIsConference())
+			.isConference(isNull(course.getIsConference()) ? false : course.getIsConference())
 			.userId(details.getUsername())
 			.title(course.getTitle())
 			.description(course.getDescription())
