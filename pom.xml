@@ -11,7 +11,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-		<java.version>11</java.version>
+		<java.version>17</java.version>
 		<saml2-core.spring.version>1.0.10.RELEASE</saml2-core.spring.version>
 		<thin.version>1.0.22.RELEASE</thin.version>
 		<spring-boot.version>2.6.1</spring-boot.version>
@@ -54,7 +54,7 @@
 		<dependency>
 			<groupId>org.apache.santuario</groupId>
 			<artifactId>xmlsec</artifactId>
-			<version>2.2.3</version>
+			<version>3.0.2</version>
 		</dependency>
 
 		<dependency>
@@ -143,6 +143,7 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
+			<version>42.6.0</version>
 		</dependency>
 
 		<dependency>
@@ -154,12 +155,12 @@
 		<dependency>
 			<groupId>org.owasp.esapi</groupId>
 			<artifactId>esapi</artifactId>
-			<version>2.2.0.0</version>
+			<version>2.5.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jsoup</groupId>
 			<artifactId>jsoup</artifactId>
-			<version>1.14.2</version>
+			<version>1.16.1</version>
 		</dependency>
 
 		<!-- logging -->
