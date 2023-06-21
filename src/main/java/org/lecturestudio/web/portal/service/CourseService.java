@@ -194,6 +194,7 @@ public class CourseService {
 		form.setUserRoles(formUserRoles);
 		form.setNewUser(new CourseFormUser());
 		form.setPrivilegedUsers(List.of());
+		form.setIsConference(false);
 
 		return form;
 	}
@@ -247,6 +248,7 @@ public class CourseService {
 		form.setUserRoles(formUserRoles);
 		form.setNewUser(new CourseFormUser());
 		form.setPrivilegedUsers(privilegedUsers);
+		form.setIsConference(isNull(course.getIsConference()) ? false : course.getIsConference());
 
 		return form;
 	}

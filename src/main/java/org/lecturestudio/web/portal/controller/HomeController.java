@@ -1,5 +1,6 @@
 package org.lecturestudio.web.portal.controller;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 import java.security.Principal;
@@ -111,7 +112,7 @@ public class HomeController {
 				.messageFeature(messageFeature)
 				.quizFeature(quizFeature)
 				.url(uri)
-				.isConference(course.getIsConference())
+				.isConference(isNull(course.getIsConference()) ? false : course.getIsConference())
 				.isProtected(nonNull(course.getPasscode()) && !course.getPasscode().isEmpty())
 				.isLive(nonNull(state))
 				.isRecorded(nonNull(state) ? state.getRecordedState() : false)
