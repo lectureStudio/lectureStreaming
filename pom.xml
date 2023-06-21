@@ -14,7 +14,7 @@
 		<java.version>17</java.version>
 		<saml2-core.spring.version>1.0.10.RELEASE</saml2-core.spring.version>
 		<thin.version>1.0.22.RELEASE</thin.version>
-		<spring-boot.version>2.6.1</spring-boot.version>
+		<spring-boot.version>2.7.12</spring-boot.version>
 		<rest-assured.version>3.3.0</rest-assured.version>
 		<keycloak.version>19.0.1</keycloak.version>
 
